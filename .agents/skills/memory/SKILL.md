@@ -40,6 +40,7 @@ knowledge/
 │   ├── index.md             # this user's sub-bundle index
 │   ├── profile.md           # OKF "person": who they are
 │   ├── style.md             # taste/personality → theme-factory mapping
+│   ├── commands.json        # learned query→resolver index (see indexation.md)
 │   └── <concept|source|…>.md# one file per durable knowledge entry
 ```
 
@@ -107,6 +108,35 @@ Read `references/artifact-build.md` for the full method. In short:
 4. **Verify** the artifact reflects real memory entries (no invented facts) and
    matches the style profile, then hand it back.
 
+### 4. Resolve a front-end query (learned command index)
+
+When the artifact/front-end asks for something specific ("get the last vacation
+photo", "show my recent intents"), you often don't know up front *where* in
+memory that lives. Rather than re-solving it from scratch every time, each user
+has a **learned command index** at `knowledge/<user_id>/commands.json` that maps
+an intent to a reusable **resolver**. Read `references/indexation.md` for the
+full method and file shape. In short:
+
+1. **Normalize the query** and look it up in `commands.json` (by name/intent/
+   alias).
+2. **Hit** → run the stored resolver and return the result. Two resolver kinds:
+   - `local` — a declarative spec against KB files (which file, a locator, an
+     op like "last"/"extract"). Deterministic, reads memory directly.
+   - `mcp` — a reference to an MCP tool call (server + tool + args). **Data
+     access stays in the MCP**, live; nothing is copied into memory.
+3. **Miss** → resolve it once: search the KB, or discover the right MCP source,
+   get the answer, then **append a new command** (name, example query, resolver,
+   a citation of how it was learned) so next time is a direct hit. Appending a
+   learned command is fine to do automatically; *editing or removing* an
+   existing command follows the propose-before-write rule below.
+
+### 5. Add a data source (MCP-backed)
+
+New data can come in as an MCP source instead of copied text. Register it as an
+OKF `source` entry that describes the MCP server/tool and its shape, then let
+commands reach it through an `mcp` resolver — the entry holds the *reference*,
+the MCP holds the *data*. See `references/indexation.md` ("MCP-backed sources").
+
 ## Guardrails
 
 - **Memory is the user's.** Propose before writing to `knowledge/`; never
@@ -131,9 +161,12 @@ Read `references/artifact-build.md` for the full method. In short:
   `theme-factory` themes.
 - `references/artifact-build.md` — pulling memory through the MCP feed types and
   rendering it in the user's theme.
+- `references/indexation.md` — the `commands.json` learned query→resolver index:
+  resolver kinds (`local`, `mcp`), the resolve/learn flow, and MCP-backed sources.
 
 ## Templates
 
-`templates/profile.md`, `templates/concept.md`, `templates/source.md`, and
-`templates/style.md` are the starting shapes for new entries. Copy one, fill it
-in, and adjust — don't treat the placeholder text as content.
+`templates/profile.md`, `templates/concept.md`, `templates/source.md`,
+`templates/style.md`, and `templates/commands.json` are the starting shapes for
+new entries. Copy one, fill it in, and adjust — don't treat the placeholder text
+as content.

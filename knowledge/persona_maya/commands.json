@@ -1,0 +1,39 @@
+{
+  "okf_version": "0.1",
+  "user_id": "persona_maya",
+  "commands": [
+    {
+      "name": "last_vacation_photo",
+      "intent": "get the last photo of the vacation",
+      "aliases": [
+        "dernière photo des vacances",
+        "latest vacation picture",
+        "show the last vacation photo"
+      ],
+      "resolver": {
+        "type": "local",
+        "source": "vacation.md",
+        "locator": { "match": "PHOTO PLACEHOLDER", "select": "last" },
+        "op": "extract_caption"
+      },
+      "returns": "The caption of the last vacation photo placeholder (golden-hour Miradouro shot).",
+      "learned_from": "Conversation with Claude, 2026-07-18 — front-end query 'get the last vacation photo'.",
+      "timestamp": "2026-07-18T10:00:00+02:00"
+    },
+    {
+      "name": "recent_okf_feed",
+      "intent": "show my recent knowledge feed items",
+      "aliases": ["latest okf entries", "mes derniers items de la mémoire"],
+      "resolver": {
+        "type": "mcp",
+        "server": "App_Next_Media",
+        "tool": "browse_artifact_feed",
+        "args": { "type": "okf", "limit": 8 },
+        "note": "Live data via MCP — not cached in the knowledge base."
+      },
+      "returns": "One page of OKF feed items (title, summary, kind) from the live artifact feed.",
+      "learned_from": "Conversation with Claude, 2026-07-18 — demonstrating an MCP-backed resolver.",
+      "timestamp": "2026-07-18T10:00:00+02:00"
+    }
+  ]
+}
