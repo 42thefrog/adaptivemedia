@@ -8,8 +8,8 @@ description: >-
   memory, build or update a user's knowledge base, or generate an artifact that
   reflects a specific person's stored knowledge and taste. Trigger on phrases
   like "add this to my memory", "extract what matters from this conversation",
-  "feed this doc into the knowledge base", "remember this for <user>", "build an
-  artifact from <user>'s memory", or "make it look like <user>". Each user's
+  "feed this doc into the knowledge base", "remember this for the user", "build an
+  artifact from the user's memory", or "make it look like the user". Each user's
   memory lives in its own folder and each user's artifact is styled from their
   own taste profile via the theme-factory skill.
 ---
