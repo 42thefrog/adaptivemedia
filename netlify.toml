@@ -19,6 +19,20 @@
     "server/data/**",
   ]
 
+# Route the MCP endpoints to the function (belt-and-suspenders alongside the
+# function's own config.path, in case it isn't read from a prebuilt .mjs).
+[[redirects]]
+  from = "/mcp"
+  to = "/.netlify/functions/mcp"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/mcp"
+  status = 200
+  force = true
+
 # Root shows the themed procedural-loop board.
 [[redirects]]
   from = "/"
