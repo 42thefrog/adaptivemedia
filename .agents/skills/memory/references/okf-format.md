@@ -36,9 +36,9 @@ exactly these keys, in this order:
 ```yaml
 ---
 type: Persona Profile          # human-readable kind label (see mapping below)
-title: Maya — Independent Creator
+title: Maya — 42 Paris Code Student
 description: One sentence on what this entry holds and why it exists.
-tags: [persona, creator, medium-budget, beginner]
+tags: [persona, student, medium-budget, paris]
 timestamp: 2026-07-18T10:00:00+02:00
 ---
 ```
