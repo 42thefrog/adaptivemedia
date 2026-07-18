@@ -350,6 +350,26 @@ body {
 .detail-highlights li {
   margin-bottom: 4px;
 }
+.doc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+.doc-file {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 14px;
+  color: #a9d0ff;
+}
+.doc-note {
+  font-size: 12px;
+  color: var(--muted);
+}
 
 /* Schema (OKF ClickHouse) table */
 .schema {

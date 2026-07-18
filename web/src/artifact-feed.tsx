@@ -181,22 +181,6 @@ function localBrowse(cursor?: string): FeedPage {
     total: localData.length,
   };
 }
-function localOpen(itemId: string): { selectedItem: FeedItemDetail } {
-  const item = localData.find((i) => i.id === itemId) ?? localData[0];
-  return {
-    selectedItem: {
-      ...item,
-      detail: {
-        heading: item.title,
-        paragraphs: [item.summary, item.okf?.body ?? "Opened locally."],
-        highlights: [`Tags: ${item.tags.join(", ")}`],
-        table: item.okf?.table,
-        followUpPrompt: `Open the feed item "${item.title}".`,
-      },
-    },
-  };
-}
-
 // --- Data access -----------------------------------------------------------
 
 async function callBrowse(
@@ -222,29 +206,77 @@ async function callBrowse(
   return localBrowse(cursor);
 }
 
-async function callOpen(item: FeedItem): Promise<FeedItemDetail | null> {
+// Render a selected feed item as a readable Markdown document — this is the
+// content that gets added to the conversation as a file/attachment.
+function itemToMarkdown(item: FeedItem): string {
+  const lines: string[] = [];
+  lines.push(`# ${item.title}`, "");
+  lines.push(
+    `**Type:** ${typeLabel[item.type]}${item.okf ? ` · ${item.okf.kind}` : ""}`,
+  );
+  if (item.author) lines.push(`**By:** ${item.author.name} · ${item.author.role}`);
+  if (item.metric) lines.push(`**${item.metric.label}:** ${item.metric.value}`);
+  lines.push(`**Feed id:** \`${item.id}\``, "");
+  lines.push(item.summary, "");
+  if (item.okf?.body) lines.push(item.okf.body, "");
+  if (item.okf?.relations?.length) {
+    lines.push(`**Related nodes:** ${item.okf.relations.join(", ")}`, "");
+  }
+  lines.push(`**Tags:** ${item.tags.map((t) => `#${t}`).join(" ")}`, "");
+  const table = item.okf?.table;
+  if (table) {
+    lines.push(`## Schema — ${table.database}.${table.table} (${table.engine})`);
+    const meta: string[] = [`~${table.rowCountEstimate.toLocaleString()} rows`];
+    if (table.orderBy) meta.push(`ORDER BY ${table.orderBy}`);
+    if (table.partitionKey) meta.push(`PARTITION ${table.partitionKey}`);
+    lines.push(meta.join(" · "), "");
+    lines.push("| Field | Type | Semantic description |");
+    lines.push("| --- | --- | --- |");
+    for (const f of table.fields) {
+      lines.push(`| ${f.name} | \`${f.type}\` | ${f.description} |`);
+    }
+    lines.push("");
+  }
+  lines.push("_Source: Adaptive Media artifact feed_");
+  return lines.join("\n");
+}
+
+export interface AddResult {
+  item: FeedItem;
+  fileName: string;
+  fileId?: string;
+  mode: "uploaded" | "downloaded";
+}
+
+// Add the selected element to the conversation as a document. Preferred path:
+// window.openai.uploadFile → the file lands in the ChatGPT file library and can
+// be referenced like an attached document. Falls back to a local download when
+// the file library is unavailable (local preview, unsupported host).
+async function addAsDocument(item: FeedItem): Promise<AddResult> {
+  const markdown = itemToMarkdown(item);
+  const fileName = `${item.id}.md`;
   const api = bridge();
-  // Preferred path: ask ChatGPT to run the tool so the item becomes a new
-  // interactive artifact rendered beneath the feed in the conversation.
-  if (api?.sendFollowUpMessage) {
+  if (api?.uploadFile) {
     try {
-      await api.sendFollowUpMessage({
-        prompt: `Open the feed item "${item.title}" (id: ${item.id}) as an interactive artifact using the open_feed_item tool.`,
-      });
-      return null; // ChatGPT renders the new artifact; nothing to inline.
+      const file = new File([markdown], fileName, { type: "text/markdown" });
+      const res = await api.uploadFile(file, { library: true });
+      const fileId =
+        typeof res === "string" ? res : (res?.fileId ?? res?.id ?? undefined);
+      return { item, fileName, fileId, mode: "uploaded" };
     } catch {
-      // fall through to the direct-tool fallback
+      // fall through to local download
     }
   }
-  // Fallback: call the MCP tool directly and render the detail inline.
-  if (api?.callTool) {
-    const res = await api.callTool("open_feed_item", { itemId: item.id });
-    const data = (res?.structuredContent ?? {}) as {
-      selectedItem?: FeedItemDetail;
-    };
-    if (data.selectedItem) return data.selectedItem;
-  }
-  return localOpen(item.id).selectedItem;
+  const blob = new Blob([markdown], { type: "text/markdown" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+  return { item, fileName, mode: "downloaded" };
 }
 
 // --- UI --------------------------------------------------------------------
@@ -280,19 +312,19 @@ function Media({ item }: { item: FeedItem }) {
 
 function Card({
   item,
-  onOpen,
+  onSelect,
   busy,
 }: {
   item: FeedItem;
-  onOpen: (item: FeedItem) => void;
+  onSelect: (item: FeedItem) => void;
   busy: boolean;
 }) {
   return (
     <button
       className={`feed-card type-${item.type}`}
-      onClick={() => onOpen(item)}
+      onClick={() => onSelect(item)}
       disabled={busy}
-      aria-label={`Open ${item.title}`}
+      aria-label={`Add ${item.title} to the conversation as a document`}
     >
       <Media item={item} />
       <div className="card-body">
@@ -322,7 +354,9 @@ function Card({
           </div>
         )}
       </div>
-      <span className="card-open">Open as artifact →</span>
+      <span className="card-open">
+        {busy ? "Adding…" : "＋ Add as document"}
+      </span>
     </button>
   );
 }
@@ -367,7 +401,8 @@ function SchemaTable({ table }: { table: OkfTable }) {
   );
 }
 
-function ArtifactDetail({ item }: { item: FeedItemDetail }) {
+function AddedDocument({ result }: { result: AddResult }) {
+  const { item } = result;
   return (
     <section className="artifact-detail">
       <div
@@ -377,23 +412,41 @@ function ArtifactDetail({ item }: { item: FeedItemDetail }) {
         }}
       >
         <span className="detail-kind">
-          {typeLabel[item.type]}
-          {item.okf ? ` · ${item.okf.kind}` : ""}
+          {result.mode === "uploaded"
+            ? "Added to conversation as document"
+            : "Downloaded as document"}
         </span>
-        <h2>{item.detail.heading}</h2>
+        <h2>{item.title}</h2>
       </div>
       <div className="detail-body">
-        {item.detail.paragraphs.map((p, i) => (
-          <p key={i}>{p}</p>
-        ))}
-        {item.detail.highlights.length > 0 && (
-          <ul className="detail-highlights">
-            {item.detail.highlights.map((h, i) => (
-              <li key={i}>{h}</li>
-            ))}
-          </ul>
-        )}
-        {item.detail.table && <SchemaTable table={item.detail.table} />}
+        <div className="doc-meta">
+          <span className="doc-file">📄 {result.fileName}</span>
+          {result.mode === "uploaded" ? (
+            <span className="doc-note">
+              In your ChatGPT file library
+              {result.fileId ? ` · ${result.fileId}` : ""}
+            </span>
+          ) : (
+            <span className="doc-note">
+              File library unavailable here — saved to your downloads instead
+            </span>
+          )}
+        </div>
+        <p>{item.summary}</p>
+        {item.okf?.body && <p>{item.okf.body}</p>}
+        <ul className="detail-highlights">
+          <li>
+            {typeLabel[item.type]}
+            {item.okf ? ` · ${item.okf.kind}` : ""}
+          </li>
+          {item.author && (
+            <li>
+              {item.author.role}: {item.author.name}
+            </li>
+          )}
+          <li>Tags: {item.tags.join(", ")}</li>
+        </ul>
+        {item.okf?.table && <SchemaTable table={item.okf.table} />}
       </div>
     </section>
   );
@@ -411,7 +464,6 @@ function Skeletons({ count }: { count: number }) {
 
 function App() {
   const initial = readOutput();
-  const initialSelected: FeedItemDetail | undefined = initial?.selectedItem;
   const initialPage: FeedItem[] = Array.isArray(initial?.items)
     ? initial.items
     : [];
@@ -426,10 +478,8 @@ function App() {
   const [total, setTotal] = useState<number>(initial?.total ?? 0);
   const [filter, setFilter] = useState<FeedItemType | "all">("all");
   const [loading, setLoading] = useState(false);
-  const [opening, setOpening] = useState<string | null>(null);
-  const [selected, setSelected] = useState<FeedItemDetail | null>(
-    initialSelected ?? null,
-  );
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [added, setAdded] = useState<AddResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const sentinel = useRef<HTMLDivElement | null>(null);
@@ -460,7 +510,7 @@ function App() {
 
   // Initial load (or when there was no server-provided first page).
   useEffect(() => {
-    if (initialPage.length === 0 && !selected) {
+    if (initialPage.length === 0) {
       void loadPage(undefined, true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -514,13 +564,16 @@ function App() {
     return () => observer.disconnect();
   }, [cursor, hasMore, loadPage]);
 
-  const onOpen = useCallback(async (item: FeedItem) => {
-    setOpening(item.id);
+  const onSelect = useCallback(async (item: FeedItem) => {
+    setBusyId(item.id);
+    setError(null);
     try {
-      const detail = await callOpen(item);
-      if (detail) setSelected(detail); // fallback path renders inline
+      const result = await addAsDocument(item);
+      setAdded(result);
+    } catch {
+      setError("Could not add this item as a document.");
     } finally {
-      setOpening(null);
+      setBusyId(null);
     }
   }, []);
 
@@ -562,8 +615,8 @@ function App() {
           <Card
             key={item.id}
             item={item}
-            onOpen={onOpen}
-            busy={opening === item.id}
+            onSelect={onSelect}
+            busy={busyId === item.id}
           />
         ))}
         {loading && <Skeletons count={items.length === 0 ? 8 : 3} />}
@@ -577,12 +630,12 @@ function App() {
       )}
       <div ref={sentinel} className="feed-sentinel" aria-hidden />
 
-      {selected && (
+      {added && (
         <>
           <div className="detail-divider">
-            <span>Opened artifact</span>
+            <span>Added document</span>
           </div>
-          <ArtifactDetail item={selected} />
+          <AddedDocument result={added} />
         </>
       )}
     </main>
