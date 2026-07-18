@@ -206,77 +206,43 @@ async function callBrowse(
   return localBrowse(cursor);
 }
 
-// Render a selected feed item as a readable Markdown document — this is the
-// content that gets added to the conversation as a file/attachment.
-function itemToMarkdown(item: FeedItem): string {
+// Build a compact context blob for a selected item — this is what gets sent
+// into the conversation so the user and the model can discuss the item.
+function buildItemContext(item: FeedItem): string {
   const lines: string[] = [];
-  lines.push(`# ${item.title}`, "");
   lines.push(
-    `**Type:** ${typeLabel[item.type]}${item.okf ? ` · ${item.okf.kind}` : ""}`,
+    "Context for the feed item I just selected — let's discuss it.",
+    "",
+    `Title: ${item.title}`,
+    `Type: ${item.type}${item.okf ? ` · ${item.okf.kind}` : ""}`,
+    `Id: ${item.id}`,
+    `Summary: ${item.summary}`,
   );
-  if (item.author) lines.push(`**By:** ${item.author.name} · ${item.author.role}`);
-  if (item.metric) lines.push(`**${item.metric.label}:** ${item.metric.value}`);
-  lines.push(`**Feed id:** \`${item.id}\``, "");
-  lines.push(item.summary, "");
-  if (item.okf?.body) lines.push(item.okf.body, "");
-  if (item.okf?.relations?.length) {
-    lines.push(`**Related nodes:** ${item.okf.relations.join(", ")}`, "");
-  }
-  lines.push(`**Tags:** ${item.tags.map((t) => `#${t}`).join(" ")}`, "");
+  if (item.okf?.body) lines.push(item.okf.body);
+  if (item.author) lines.push(`By: ${item.author.name} · ${item.author.role}`);
+  lines.push(`Tags: ${item.tags.join(", ")}`);
   const table = item.okf?.table;
   if (table) {
-    lines.push(`## Schema — ${table.database}.${table.table} (${table.engine})`);
-    const meta: string[] = [`~${table.rowCountEstimate.toLocaleString()} rows`];
-    if (table.orderBy) meta.push(`ORDER BY ${table.orderBy}`);
-    if (table.partitionKey) meta.push(`PARTITION ${table.partitionKey}`);
-    lines.push(meta.join(" · "), "");
-    lines.push("| Field | Type | Semantic description |");
-    lines.push("| --- | --- | --- |");
-    for (const f of table.fields) {
-      lines.push(`| ${f.name} | \`${f.type}\` | ${f.description} |`);
-    }
-    lines.push("");
+    lines.push(
+      "",
+      `Source ${table.database}.${table.table} (${table.engine}, ~${table.rowCountEstimate.toLocaleString()} rows). Fields:`,
+      ...table.fields.map((f) => `- ${f.name} (${f.type}): ${f.description}`),
+    );
   }
-  lines.push("_Source: Adaptive Media artifact feed_");
   return lines.join("\n");
 }
 
-export interface AddResult {
-  item: FeedItem;
-  fileName: string;
-  fileId?: string;
-  mode: "uploaded" | "downloaded";
-}
-
-// Add the selected element to the conversation as a document. Preferred path:
-// window.openai.uploadFile → the file lands in the ChatGPT file library and can
-// be referenced like an attached document. Falls back to a local download when
-// the file library is unavailable (local preview, unsupported host).
-async function addAsDocument(item: FeedItem): Promise<AddResult> {
-  const markdown = itemToMarkdown(item);
-  const fileName = `${item.id}.md`;
+// Send the selected item's context into the conversation. Preferred path:
+// window.openai.sendFollowUpMessage posts it as a message so the host chat can
+// discuss it. Falls back to calling the open_feed_item tool directly.
+function sendItemContext(item: FeedItem): void {
   const api = bridge();
-  if (api?.uploadFile) {
-    try {
-      const file = new File([markdown], fileName, { type: "text/markdown" });
-      const res = await api.uploadFile(file, { library: true });
-      const fileId =
-        typeof res === "string" ? res : (res?.fileId ?? res?.id ?? undefined);
-      return { item, fileName, fileId, mode: "uploaded" };
-    } catch {
-      // fall through to local download
-    }
+  const prompt = buildItemContext(item);
+  if (api?.sendFollowUpMessage) {
+    void api.sendFollowUpMessage({ prompt });
+  } else if (api?.callTool) {
+    void api.callTool("open_feed_item", { itemId: item.id });
   }
-  const blob = new Blob([markdown], { type: "text/markdown" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = fileName;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-  return { item, fileName, mode: "downloaded" };
 }
 
 // --- UI --------------------------------------------------------------------
@@ -313,18 +279,17 @@ function Media({ item }: { item: FeedItem }) {
 function Card({
   item,
   onSelect,
-  busy,
+  sent,
 }: {
   item: FeedItem;
   onSelect: (item: FeedItem) => void;
-  busy: boolean;
+  sent: boolean;
 }) {
   return (
     <button
-      className={`feed-card type-${item.type}`}
+      className={`feed-card type-${item.type}${sent ? " sent" : ""}`}
       onClick={() => onSelect(item)}
-      disabled={busy}
-      aria-label={`Add ${item.title} to the conversation as a document`}
+      aria-label={`Discuss ${item.title} in the chat`}
     >
       <Media item={item} />
       <div className="card-body">
@@ -355,100 +320,9 @@ function Card({
         )}
       </div>
       <span className="card-open">
-        {busy ? "Adding…" : "＋ Add as document"}
+        {sent ? "✓ Context sent to chat" : "→ Discuss in chat"}
       </span>
     </button>
-  );
-}
-
-function SchemaTable({ table }: { table: OkfTable }) {
-  return (
-    <div className="schema">
-      <div className="schema-head">
-        <div>
-          <strong>
-            {table.database}.{table.table}
-          </strong>
-          <span className="schema-engine">{table.engine}</span>
-        </div>
-        <div className="schema-meta">
-          <span>~{table.rowCountEstimate.toLocaleString()} rows</span>
-          {table.orderBy && <span>ORDER BY {table.orderBy}</span>}
-          {table.partitionKey && <span>PARTITION {table.partitionKey}</span>}
-        </div>
-      </div>
-      <table className="schema-table">
-        <thead>
-          <tr>
-            <th>Field</th>
-            <th>Type</th>
-            <th>Semantic description</th>
-          </tr>
-        </thead>
-        <tbody>
-          {table.fields.map((f) => (
-            <tr key={f.name}>
-              <td className="f-name">{f.name}</td>
-              <td className="f-type">
-                <code>{f.type}</code>
-              </td>
-              <td className="f-desc">{f.description}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function AddedDocument({ result }: { result: AddResult }) {
-  const { item } = result;
-  return (
-    <section className="artifact-detail">
-      <div
-        className="detail-banner"
-        style={{
-          background: `linear-gradient(135deg, ${item.media.accentFrom}, ${item.media.accentTo})`,
-        }}
-      >
-        <span className="detail-kind">
-          {result.mode === "uploaded"
-            ? "Added to conversation as document"
-            : "Downloaded as document"}
-        </span>
-        <h2>{item.title}</h2>
-      </div>
-      <div className="detail-body">
-        <div className="doc-meta">
-          <span className="doc-file">📄 {result.fileName}</span>
-          {result.mode === "uploaded" ? (
-            <span className="doc-note">
-              In your ChatGPT file library
-              {result.fileId ? ` · ${result.fileId}` : ""}
-            </span>
-          ) : (
-            <span className="doc-note">
-              File library unavailable here — saved to your downloads instead
-            </span>
-          )}
-        </div>
-        <p>{item.summary}</p>
-        {item.okf?.body && <p>{item.okf.body}</p>}
-        <ul className="detail-highlights">
-          <li>
-            {typeLabel[item.type]}
-            {item.okf ? ` · ${item.okf.kind}` : ""}
-          </li>
-          {item.author && (
-            <li>
-              {item.author.role}: {item.author.name}
-            </li>
-          )}
-          <li>Tags: {item.tags.join(", ")}</li>
-        </ul>
-        {item.okf?.table && <SchemaTable table={item.okf.table} />}
-      </div>
-    </section>
   );
 }
 
@@ -478,8 +352,7 @@ function App() {
   const [total, setTotal] = useState<number>(initial?.total ?? 0);
   const [filter, setFilter] = useState<FeedItemType | "all">("all");
   const [loading, setLoading] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [added, setAdded] = useState<AddResult | null>(null);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
   const sentinel = useRef<HTMLDivElement | null>(null);
@@ -564,17 +437,12 @@ function App() {
     return () => observer.disconnect();
   }, [cursor, hasMore, loadPage]);
 
-  const onSelect = useCallback(async (item: FeedItem) => {
-    setBusyId(item.id);
-    setError(null);
-    try {
-      const result = await addAsDocument(item);
-      setAdded(result);
-    } catch {
-      setError("Could not add this item as a document.");
-    } finally {
-      setBusyId(null);
-    }
+  // Selecting a card is an instruction to the chat: it sends the item's
+  // context into the conversation (via sendFollowUpMessage) so the model can
+  // discuss it. The widget itself does not open or store anything.
+  const onSelect = useCallback((item: FeedItem) => {
+    sendItemContext(item);
+    setSentIds((prev) => new Set(prev).add(item.id));
   }, []);
 
   const filters: (FeedItemType | "all")[] = [
@@ -616,7 +484,7 @@ function App() {
             key={item.id}
             item={item}
             onSelect={onSelect}
-            busy={busyId === item.id}
+            sent={sentIds.has(item.id)}
           />
         ))}
         {loading && <Skeletons count={items.length === 0 ? 8 : 3} />}
@@ -629,15 +497,6 @@ function App() {
         </p>
       )}
       <div ref={sentinel} className="feed-sentinel" aria-hidden />
-
-      {added && (
-        <>
-          <div className="detail-divider">
-            <span>Added document</span>
-          </div>
-          <AddedDocument result={added} />
-        </>
-      )}
     </main>
   );
 }

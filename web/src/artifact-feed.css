@@ -144,6 +144,13 @@ body {
   opacity: 0.55;
   cursor: progress;
 }
+.feed-card.sent {
+  opacity: 0.7;
+}
+.feed-card.sent .card-open {
+  opacity: 1;
+  color: #7ee0b8;
+}
 
 .card-media {
   position: relative;
