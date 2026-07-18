@@ -1,14 +1,16 @@
 [build]
-  command = "npm install && npm run build:web && npm run build:nextbound && npm run build:feed"
+  command = "npm install && npm run build:web && npm run build:nextbound && npm run build:feed && npm run build:netlify-fn"
   publish = "web/nextbound-dist"
 
 [build.environment]
   NODE_VERSION = "20"
 
-# Bundle the MCP function (esbuild) and ship the built widget HTML alongside it
-# so the server can read them at runtime (readWidget falls back to cwd).
+# The MCP function is PRE-BUNDLED by build:netlify-fn into
+# netlify/functions/mcp.mjs (self-contained), so Netlify must NOT re-bundle it
+# (its esbuild follows the server graph into frontend CSS imports and fails).
+# Widget HTML is shipped via included_files; readWidget resolves it at runtime.
 [functions]
-  node_bundler = "esbuild"
+  node_bundler = "none"
   included_files = [
     "web/dist/**",
     "web/nextbound-dist/**",
