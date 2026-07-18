@@ -7,10 +7,18 @@ import { AdaptiveMediaService, DemoError } from "./service.js";
 import * as api from "./tools/api.js";
 import { NextboundService, NextboundError } from "../nextbound/service.js";
 import { proceduralSchemas, schemas } from "./nextbound-api.js";
+import {
+  BrowseArtifactFeedInput,
+  OpenFeedItemInput,
+  FeedError,
+  browseFeed,
+  openFeedItem,
+} from "./artifact-feed.js";
 
 const service = new AdaptiveMediaService();
 const WIDGET_URI = "ui://adaptive-media/widget.html";
 export const NEXTBOUND_WIDGET_URI = "ui://nextbound/experience.html";
+const FEED_WIDGET_URI = "ui://adaptive-media/artifact-feed.html";
 const widgetMeta = {
   ui: { resourceUri: WIDGET_URI },
   "openai/outputTemplate": WIDGET_URI,
@@ -85,6 +93,32 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
           ).replace(
             "<head>",
             "<head><script>window.__NEXTBOUND_MODE__='mcp'</script>",
+          ),
+          _meta: { ui: { prefersBorder: false } },
+        },
+      ],
+    }),
+  );
+  server.registerResource(
+    "artifact-feed-widget",
+    FEED_WIDGET_URI,
+    {
+      title: "Adaptive Media Artifact Feed",
+      description:
+        "Infinite masonry feed of artifacts, media, intents and OKF knowledge",
+      mimeType: "text/html;profile=mcp-app",
+    },
+    async () => ({
+      contents: [
+        {
+          uri: FEED_WIDGET_URI,
+          mimeType: "text/html;profile=mcp-app",
+          text: readFileSync(
+            new URL(
+              "../web/artifact-feed-dist/artifact-feed.html",
+              import.meta.url,
+            ),
+            "utf8",
           ),
           _meta: { ui: { prefersBorder: false } },
         },
@@ -342,15 +376,84 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
     ({ seedId, recipientId, sessionId }) =>
       nextbound.replayProceduralSession(seedId, recipientId, sessionId),
   );
+
+  const feedMeta = {
+    ...widgetMeta,
+    ui: { resourceUri: FEED_WIDGET_URI },
+    "openai/outputTemplate": FEED_WIDGET_URI,
+    "openai/toolInvocation/invoking": "Loading Adaptive Media feed…",
+    "openai/toolInvocation/invoked": "Adaptive Media feed ready",
+  };
+  const feedSafe =
+    (fn: (input: any) => object) => async (input: any) => {
+      try {
+        return result(fn(input) as Record<string, unknown>);
+      } catch (error) {
+        const known = error instanceof FeedError;
+        return {
+          ...result({
+            error: {
+              code: known ? error.code : "invalid_request",
+              message: known
+                ? error.message
+                : "The request could not be completed.",
+            },
+          }),
+          isError: true,
+        };
+      }
+    };
+  server.registerTool(
+    "browse_artifact_feed",
+    {
+      title: "Browse the Adaptive Media artifact feed",
+      description:
+        "Return one cursor-paginated page of the unified feed (artifacts, editorial/media, intents, and OKF knowledge-base entries). Pass the returned nextCursor to load the next page for infinite scroll; optionally filter by type.",
+      inputSchema: BrowseArtifactFeedInput,
+      annotations: read,
+      _meta: feedMeta,
+    },
+    feedSafe((input) => browseFeed(input)),
+  );
+  server.registerTool(
+    "open_feed_item",
+    {
+      title: "Open a feed item as an interactive artifact",
+      description:
+        "Open a single feed item by id and return it as a self-contained interactive artifact. For OKF sources backed by a ClickHouse table, the response includes the table schema (field name, type, and semantic description) for readable rendering.",
+      inputSchema: OpenFeedItemInput,
+      annotations: read,
+      _meta: feedMeta,
+    },
+    feedSafe((input) => openFeedItem(input)),
+  );
   return server;
 }
 
 const port = Number(process.env.PORT ?? 3000);
+const host = process.env.HOST ?? "0.0.0.0";
 const httpServer = createServer(async (req, res) => {
-  if (
-    new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`)
-      .pathname !== "/mcp"
-  ) {
+  const pathname = new URL(
+    req.url ?? "/",
+    `http://${req.headers.host ?? "localhost"}`,
+  ).pathname;
+  if (pathname === "/health" || pathname === "/healthz") {
+    res.writeHead(200, {
+      "content-type": "application/json",
+      "cache-control": "no-store",
+    });
+    res.end(
+      JSON.stringify({
+        status: "ok",
+        service: "adaptive-media",
+        version: "0.2.0",
+        transport: "streamable-http",
+        endpoint: "/mcp",
+      }),
+    );
+    return;
+  }
+  if (pathname !== "/mcp") {
     res.writeHead(404, { "content-type": "application/json" });
     res.end(JSON.stringify({ error: "not_found" }));
     return;
@@ -373,6 +476,8 @@ const httpServer = createServer(async (req, res) => {
       res.end(JSON.stringify({ error: "mcp_request_failed" }));
   }
 });
-httpServer.listen(port, "127.0.0.1", () =>
-  console.error(`Adaptive Media MCP server: http://127.0.0.1:${port}/mcp`),
+httpServer.listen(port, host, () =>
+  console.error(
+    `Adaptive Media MCP server: http://${host}:${port}/mcp (health: /health)`,
+  ),
 );

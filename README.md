@@ -55,6 +55,57 @@ npm run inspect
 
 The eight tools are `search_public_intents`, `get_creator_profile`, `get_intent`, `generate_experience`, `like_intent`, `follow_creator`, `save_experience`, and `create_share_link`. All relevant results use the `ui://adaptive-media/widget.html` MCP UI resource.
 
+## Artifact feed MCP App (`feature/chatgpt-artifact-feed`)
+
+A second MCP App widget renders a **unified, infinite masonry feed** that mixes
+four content families behind one paginated stream:
+
+- **artifact** — interactive artifacts
+- **editorial** — editorial / media content
+- **intent** — intentions / creations
+- **okf** — Open Knowledge Format knowledge-base entries (person, concept,
+  document, source, resource). An OKF `source` can be a **ClickHouse table**;
+  its schema is carried inline (each field has a name, a type, and a semantic
+  description) and rendered as a readable table when the item is opened.
+
+Two tools back it:
+
+- `browse_artifact_feed` — returns one cursor-paginated page
+  (`{ items, nextCursor, hasMore, total }`). Pass `nextCursor` back as `cursor`
+  to drive the infinite scroll; optional `type` filters by family; optional
+  `limit` (1–24, default 8).
+- `open_feed_item` — opens a single item by `itemId` and returns it as a
+  self-contained interactive artifact (`{ selectedItem }`), including the OKF
+  ClickHouse schema for sources.
+
+Both resolve to the `ui://adaptive-media/artifact-feed.html` MCP UI resource.
+In the widget, selecting a card asks ChatGPT to run `open_feed_item` via
+`window.openai.sendFollowUpMessage` (so the item appears as a **new artifact in
+the conversation, beneath the feed**); if that API is unavailable it falls back
+to a direct `window.openai.callTool("open_feed_item", …)` and renders the opened
+artifact inline.
+
+Build and run:
+
+```bash
+npm install
+npm run build:all      # build:web + build:nextbound + build:feed
+npm start              # streamable HTTP on 0.0.0.0:3000, health at /health
+```
+
+- Widget preview only: `npm run dev:feed` → `http://127.0.0.1:4176/artifact-feed.html`
+  (works standalone via a local sample when `window.openai` is absent).
+- Health check: `curl http://127.0.0.1:3000/health` →
+  `{"status":"ok","service":"adaptive-media",…}`.
+- The server binds `0.0.0.0` by default; override with `HOST` / `PORT`.
+
+Golden prompts once connected in ChatGPT:
+
+1. `Browse the Adaptive Media artifact feed.`
+2. `Load more of the feed.` (infinite scroll / next cursor page)
+3. `Open the "Source · creator_intents" item as an artifact.` (renders the
+   ClickHouse schema table)
+
 ## Step 8 — temporary ChatGPT Developer Mode connection
 
 Build and start the local MCP server:

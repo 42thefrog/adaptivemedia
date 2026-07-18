@@ -2,4 +2,6 @@ node_modules/
 server/data/store.json
 dist/
 web/nextbound-dist/
+web/artifact-feed-dist/
+web/artifact-dist/
 .DS_Store

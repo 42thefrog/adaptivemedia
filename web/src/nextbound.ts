@@ -454,7 +454,7 @@ Alpine.data("nextbound", () => ({
   moodboardPinned: [] as string[],
   toggleMoodboardPin(id: string) {
     this.moodboardPinned = this.moodboardPinned.includes(id)
-      ? this.moodboardPinned.filter((x) => x !== id)
+      ? this.moodboardPinned.filter((x: string) => x !== id)
       : [...this.moodboardPinned, id];
   },
   // Alex: MSFT is OpenAI's largest outside investor and the closest real,
