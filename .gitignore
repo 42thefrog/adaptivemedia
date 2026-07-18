@@ -4,6 +4,7 @@ dist/
 web/nextbound-dist/
 web/artifact-feed-dist/
 web/artifact-dist/
+web/artifact-singlefile-dist/
 tmp/
 .agents/skills/adaptive-media-use/
 .DS_Store
