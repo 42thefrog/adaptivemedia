@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { AdaptiveMediaService, DemoError } from "./service.js";
@@ -44,6 +46,30 @@ const service = new AdaptiveMediaService();
 const WIDGET_URI = "ui://adaptive-media/widget.html";
 export const NEXTBOUND_WIDGET_URI = "ui://nextbound/experience.html";
 const FEED_WIDGET_URI = "ui://adaptive-media/artifact-feed.html";
+
+// Read a built widget HTML from web/<rel>. Tries the module-relative path first
+// (normal `npm start`), then WIDGET_ROOT / cwd fallbacks so it also resolves
+// when bundled into a serverless function (Netlify) where import.meta.url moves.
+const readWidget = (rel: string): string => {
+  const candidates: string[] = [];
+  try {
+    candidates.push(fileURLToPath(new URL("../web/" + rel, import.meta.url)));
+  } catch {
+    /* ignore */
+  }
+  if (process.env.WIDGET_ROOT) candidates.push(join(process.env.WIDGET_ROOT, rel));
+  candidates.push(join(process.cwd(), "web", rel));
+  candidates.push(join(process.cwd(), rel));
+  for (const p of candidates) {
+    try {
+      return readFileSync(p, "utf8");
+    } catch {
+      /* try next */
+    }
+  }
+  throw new Error("Widget asset not found: web/" + rel);
+};
+
 const widgetMeta = {
   ui: { resourceUri: WIDGET_URI },
   "openai/outputTemplate": WIDGET_URI,
@@ -90,10 +116,7 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
         {
           uri: WIDGET_URI,
           mimeType: "text/html;profile=mcp-app",
-          text: readFileSync(
-            new URL("../web/dist/index.html", import.meta.url),
-            "utf8",
-          ),
+          text: readWidget("dist/index.html"),
           _meta: { ui: { prefersBorder: false } },
         },
       ],
@@ -112,10 +135,7 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
         {
           uri: NEXTBOUND_WIDGET_URI,
           mimeType: "text/html;profile=mcp-app",
-          text: readFileSync(
-            new URL("../web/nextbound-dist/nextbound.html", import.meta.url),
-            "utf8",
-          ).replace(
+          text: readWidget("nextbound-dist/nextbound.html").replace(
             "<head>",
             "<head><script>window.__NEXTBOUND_MODE__='mcp';try{if(!/scenario=/.test(location.search))history.replaceState(null,'','?scenario=procedural-loop')}catch(e){}</script>",
           ),
@@ -138,13 +158,7 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
         {
           uri: FEED_WIDGET_URI,
           mimeType: "text/html;profile=mcp-app",
-          text: readFileSync(
-            new URL(
-              "../web/artifact-feed-dist/artifact-feed.html",
-              import.meta.url,
-            ),
-            "utf8",
-          ),
+          text: readWidget("artifact-feed-dist/artifact-feed.html"),
           _meta: { ui: { prefersBorder: false } },
         },
       ],
@@ -641,8 +655,12 @@ const httpServer = createServer(async (req, res) => {
       res.end(JSON.stringify({ error: "mcp_request_failed" }));
   }
 });
-httpServer.listen(port, host, () =>
-  console.error(
-    `Adaptive Media MCP server: http://${host}:${port}/mcp (health: /health)`,
-  ),
-);
+// Skip binding a port when imported into a serverless function (Netlify), where
+// AM_SERVERLESS=1 is set before the dynamic import; only makeMcpServer is used.
+if (process.env.AM_SERVERLESS !== "1") {
+  httpServer.listen(port, host, () =>
+    console.error(
+      `Adaptive Media MCP server: http://${host}:${port}/mcp (health: /health)`,
+    ),
+  );
+}

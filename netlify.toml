@@ -1,0 +1,24 @@
+[build]
+  command = "npm install && npm run build:web && npm run build:nextbound && npm run build:feed"
+  publish = "web/nextbound-dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Bundle the MCP function (esbuild) and ship the built widget HTML alongside it
+# so the server can read them at runtime (readWidget falls back to cwd).
+[functions]
+  node_bundler = "esbuild"
+  included_files = [
+    "web/dist/**",
+    "web/nextbound-dist/**",
+    "web/artifact-feed-dist/**",
+    "knowledge/**",
+    "server/data/**",
+  ]
+
+# Root shows the themed procedural-loop board.
+[[redirects]]
+  from = "/"
+  to = "/nextbound.html?scenario=procedural-loop"
+  status = 302
