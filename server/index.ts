@@ -109,13 +109,13 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
       title: "Adaptive Media",
       description:
         "Creator discovery and deterministic personalized experiences",
-      mimeType: "text/html;profile=mcp-app",
+      mimeType: "text/html+skybridge",
     },
     async () => ({
       contents: [
         {
           uri: WIDGET_URI,
-          mimeType: "text/html;profile=mcp-app",
+          mimeType: "text/html+skybridge",
           text: readWidget("dist/index.html"),
           _meta: { ui: { prefersBorder: false } },
         },
@@ -128,13 +128,13 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
     {
       title: "Nextbound Experience Engine",
       description: "Deterministic collaborative Nextbound experience",
-      mimeType: "text/html;profile=mcp-app",
+      mimeType: "text/html+skybridge",
     },
     async () => ({
       contents: [
         {
           uri: NEXTBOUND_WIDGET_URI,
-          mimeType: "text/html;profile=mcp-app",
+          mimeType: "text/html+skybridge",
           text: readWidget("nextbound-dist/nextbound.html").replace(
             "<head>",
             "<head><script>window.__NEXTBOUND_MODE__='mcp';try{if(!/scenario=/.test(location.search))history.replaceState(null,'','?scenario=procedural-loop')}catch(e){}</script>",
@@ -151,13 +151,13 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
       title: "Adaptive Media Artifact Feed",
       description:
         "Infinite masonry feed of artifacts, media, intents and OKF knowledge",
-      mimeType: "text/html;profile=mcp-app",
+      mimeType: "text/html+skybridge",
     },
     async () => ({
       contents: [
         {
           uri: FEED_WIDGET_URI,
-          mimeType: "text/html;profile=mcp-app",
+          mimeType: "text/html+skybridge",
           text: readWidget("artifact-feed-dist/artifact-feed.html"),
           _meta: { ui: { prefersBorder: false } },
         },
