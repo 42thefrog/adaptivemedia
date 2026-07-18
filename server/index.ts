@@ -10,9 +10,11 @@ import { proceduralSchemas, schemas } from "./nextbound-api.js";
 import {
   BrowseArtifactFeedInput,
   OpenFeedItemInput,
+  SaveFeedItemInput,
   FeedError,
   browseFeed,
   openFeedItem,
+  saveFeedItem,
 } from "./artifact-feed.js";
 
 const service = new AdaptiveMediaService();
@@ -426,6 +428,18 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
       _meta: feedMeta,
     },
     feedSafe((input) => openFeedItem(input)),
+  );
+  server.registerTool(
+    "save_feed_item",
+    {
+      title: "Save a feed item as a local document",
+      description:
+        "Write the selected feed item as a Markdown document into the local tmp/ directory (deduplicated) so a terminal agent can read it as an attached document. Returns the file path. OKF sources include their ClickHouse schema as a Markdown table.",
+      inputSchema: SaveFeedItemInput,
+      annotations: write,
+      _meta: feedMeta,
+    },
+    feedSafe((input) => saveFeedItem(input)),
   );
   return server;
 }

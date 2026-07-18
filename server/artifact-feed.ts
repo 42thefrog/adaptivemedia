@@ -1,4 +1,11 @@
 import { z } from "zod";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import { join } from "node:path";
 
 /**
  * Unified artifact feed for the ChatGPT MCP App.
@@ -648,6 +655,92 @@ export function openFeedItem(args: OpenFeedItemArgs): {
     throw new FeedError("not_found", `No feed item with id "${args.itemId}".`);
   }
   return { selectedItem: detailFor(item) };
+}
+
+// --- Save a feed item as a local document ---------------------------------
+
+export const SaveFeedItemInput = z
+  .object({ itemId: z.string().min(1).max(120) })
+  .strict();
+export type SaveFeedItemArgs = z.infer<typeof SaveFeedItemInput>;
+
+export interface SaveFeedItemResult {
+  itemId: string;
+  fileName: string;
+  path: string;
+  bytes: number;
+  deduped: boolean;
+}
+
+/** Render a feed item as a self-contained Markdown document. */
+export function renderFeedItemMarkdown(item: FeedItem): string {
+  const lines: string[] = [];
+  lines.push(`# ${item.title}`, "");
+  lines.push(
+    `**Type:** ${item.type}${item.okf ? ` · ${item.okf.kind}` : ""}`,
+  );
+  if (item.author) {
+    lines.push(`**By:** ${item.author.name} · ${item.author.role}`);
+  }
+  if (item.metric) lines.push(`**${item.metric.label}:** ${item.metric.value}`);
+  lines.push(`**Feed id:** \`${item.id}\``, "");
+  lines.push(item.summary, "");
+  if (item.okf?.body) lines.push(item.okf.body, "");
+  if (item.okf?.relations?.length) {
+    lines.push(`**Related nodes:** ${item.okf.relations.join(", ")}`, "");
+  }
+  lines.push(`**Tags:** ${item.tags.map((t) => `#${t}`).join(" ")}`, "");
+  const table = item.okf?.table;
+  if (table) {
+    lines.push(`## Schema — ${table.database}.${table.table} (${table.engine})`);
+    const meta = [`~${table.rowCountEstimate.toLocaleString()} rows`];
+    if (table.orderBy) meta.push(`ORDER BY ${table.orderBy}`);
+    if (table.partitionKey) meta.push(`PARTITION ${table.partitionKey}`);
+    lines.push(meta.join(" · "), "");
+    lines.push("| Field | Type | Semantic description |");
+    lines.push("| --- | --- | --- |");
+    for (const f of table.fields) {
+      lines.push(`| ${f.name} | \`${f.type}\` | ${f.description} |`);
+    }
+    lines.push("");
+  }
+  lines.push("_Source: Adaptive Media artifact feed_", "");
+  return lines.join("\n");
+}
+
+/**
+ * Write the selected feed item as a Markdown file into a local directory
+ * (default `tmp/` under the process working directory) so a terminal agent
+ * (Codex, Claude Code) can pick it up as a document. Deduplicated: if the file
+ * already exists with identical content, it is left untouched and `deduped` is
+ * true. The filename is derived from the canonical, validated item id, so no
+ * caller-controlled path traversal is possible.
+ */
+export function saveFeedItem(
+  args: SaveFeedItemArgs,
+  dir: string = join(process.cwd(), "tmp"),
+): SaveFeedItemResult {
+  const item = byId.get(args.itemId);
+  if (!item) {
+    throw new FeedError("not_found", `No feed item with id "${args.itemId}".`);
+  }
+  const content = renderFeedItemMarkdown(item);
+  const fileName = `${item.id}.md`;
+  const path = join(dir, fileName);
+  mkdirSync(dir, { recursive: true });
+  let deduped = false;
+  if (existsSync(path) && readFileSync(path, "utf8") === content) {
+    deduped = true;
+  } else {
+    writeFileSync(path, content, "utf8");
+  }
+  return {
+    itemId: item.id,
+    fileName,
+    path,
+    bytes: Buffer.byteLength(content, "utf8"),
+    deduped,
+  };
 }
 
 /** Exposed for tests. */

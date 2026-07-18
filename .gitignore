@@ -4,4 +4,5 @@ dist/
 web/nextbound-dist/
 web/artifact-feed-dist/
 web/artifact-dist/
+tmp/
 .DS_Store

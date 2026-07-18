@@ -1,8 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { mkdtempSync, readFileSync, existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   browseFeed,
   openFeedItem,
+  saveFeedItem,
   FeedError,
   BrowseArtifactFeedInput,
   OpenFeedItemInput,
@@ -69,6 +73,30 @@ test("open_feed_item returns detail and an OKF ClickHouse schema", () => {
 
 test("opening an unknown item throws not_found", () => {
   assert.throws(() => openFeedItem({ itemId: "does-not-exist" }), FeedError);
+});
+
+test("save_feed_item writes a Markdown document and dedupes on repeat", () => {
+  const dir = mkdtempSync(join(tmpdir(), "feed-"));
+  const okfSource = __feedInternals.dataset.find(
+    (i) => i.okf?.table !== undefined,
+  )!;
+  const first = saveFeedItem({ itemId: okfSource.id }, dir);
+  assert.equal(first.deduped, false);
+  assert.equal(first.fileName, `${okfSource.id}.md`);
+  assert.ok(existsSync(first.path));
+  const body = readFileSync(first.path, "utf8");
+  assert.ok(body.startsWith(`# ${okfSource.title}`));
+  assert.ok(body.includes("| Field | Type | Semantic description |"));
+  assert.ok(first.bytes > 0);
+
+  const second = saveFeedItem({ itemId: okfSource.id }, dir);
+  assert.equal(second.deduped, true, "identical content should dedupe");
+  assert.equal(second.path, first.path);
+});
+
+test("save_feed_item rejects an unknown item", () => {
+  const dir = mkdtempSync(join(tmpdir(), "feed-"));
+  assert.throws(() => saveFeedItem({ itemId: "nope" }, dir), FeedError);
 });
 
 test("input schemas reject unknown keys", () => {
