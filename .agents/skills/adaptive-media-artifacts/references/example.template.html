@@ -1,0 +1,34 @@
+<!--
+  Adaptive Media artifact template — worked example.
+
+  Parse with parseArtifactTemplate(), run the planned <mcp> calls, resolve the
+  free "hook" intent to a reference path, then hydrateArtifact() to produce the
+  final artifact HTML. See ../SKILL.md.
+-->
+<section class="am-card">
+  <mcp
+    id="exp"
+    tool="generate_experience"
+    args='{"intentId":"intent_luna_main_character","personaId":"maya"}'
+    select="experience"
+  />
+
+  <header class="am-card__head">
+    <p class="am-card__eyebrow">{{ref:exp.creatorAttribution}}</p>
+    <h1 class="am-card__title">
+      <intent ref="exp.personalizedTitle">Untitled scene</intent>
+    </h1>
+  </header>
+
+  <p class="am-card__lead">{{ref:exp.structuredOutcome.summary}}</p>
+
+  <blockquote class="am-card__hook">
+    <intent name="hook"
+      >the confidence line the audience should remember</intent
+    >
+  </blockquote>
+
+  <footer class="am-card__foot">
+    <small>{{ref:exp.commercialDisclosure.label}}</small>
+  </footer>
+</section>
