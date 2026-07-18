@@ -10,9 +10,9 @@
 # (its esbuild follows the server graph into frontend CSS imports and fails).
 # Widget HTML is shipped via included_files; readWidget resolves it at runtime.
 [functions]
-  # nft ships our self-contained prebuilt mcp.mjs without re-bundling the server
+  # Ship our self-contained prebuilt mcp.mjs without re-bundling the server
   # source (Netlify's esbuild would follow it into frontend CSS and fail).
-  node_bundler = "nft"
+  node_bundler = "none"
   included_files = [
     "web/dist/**",
     "web/nextbound-dist/**",
