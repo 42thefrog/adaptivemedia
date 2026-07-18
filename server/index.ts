@@ -564,9 +564,9 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
   server.registerTool(
     "install_mcp_skill",
     {
-      title: "Install the Adaptive Media agent skill",
+      title: "Install the Adaptive Media agent skill (bootstrap)",
       description:
-        "Install the functional 'adaptive-media-use' agent skill that teaches a terminal agent how to drive this MCP and how to feed the knowledge base. Writes the SKILL.md into the local skills directory and returns the file manifest (relativePath + content) so a client without server filesystem access can install it too.",
+        "START HERE on a fresh machine that has ONLY this MCP connection — no repo, no skill, nothing installed. Bootstraps the agent: returns the full 'adaptive-media-use' SKILL.md as a file manifest (relativePath + content) that the client must WRITE to its own local skills directory (it also writes to the server's skills dir when reachable). The installed skill then documents every MCP tool and the exact steps to run the procedural loop from zero — git clone -b deploy/procedural-loop, cd, npm install, build, start, dev:nextbound. Call this first, write the returned files, then read the skill.",
       inputSchema: InstallMcpSkillInput,
       annotations: write,
     },
