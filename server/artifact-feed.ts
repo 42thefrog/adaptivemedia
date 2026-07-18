@@ -587,6 +587,7 @@ export const BrowseArtifactFeedInput = z
     cursor: z.string().min(1).max(200).optional(),
     limit: z.number().int().min(1).max(MAX_LIMIT).optional(),
     type: FeedTypeSchema.optional(),
+    persona: z.enum(["alex", "camille", "maya"]).optional(),
   })
   .strict();
 
@@ -597,11 +598,61 @@ export const OpenFeedItemInput = z
 export type BrowseArtifactFeedArgs = z.infer<typeof BrowseArtifactFeedInput>;
 export type OpenFeedItemArgs = z.infer<typeof OpenFeedItemInput>;
 
+type Persona = "alex" | "camille" | "maya";
+
+/**
+ * Deterministic persona ranking score. Pure function of (item, persona): no
+ * clocks, no randomness, so the "same cursor + same persona → same page"
+ * invariant holds. Ranking (not filtering) preserves `total` and infinite
+ * scroll depth. The client resets the cursor on persona switch, so a cursor
+ * is never carried across personas.
+ */
+function personaScore(item: FeedItem, persona: Persona): number {
+  const k = item.okf?.kind;
+  const m = item.media.kind;
+  const t = item.type;
+  const isSource = k === "source" || Boolean(item.okf?.table);
+  if (persona === "alex")
+    return (
+      (isSource ? 40 : 0) +
+      (t === "okf" ? 20 : 0) +
+      (t === "intent" ? 10 : 0) +
+      (m === "code" || m === "chart" ? 6 : 0)
+    );
+  if (persona === "camille")
+    return (
+      (t === "editorial" ? 40 : 0) +
+      (t === "artifact" ? 24 : 0) +
+      (k === "concept" ? 12 : 0) +
+      (m === "quote" ? 6 : 0)
+    );
+  // maya
+  return (
+    (t === "artifact" ? 36 : 0) +
+    (isSource ? 24 : 0) +
+    (t === "intent" ? 8 : 0) +
+    (m === "gradient" || m === "image" ? 6 : 0)
+  );
+}
+
 export function browseFeed(args: BrowseArtifactFeedArgs = {}): FeedPage {
   const limit = args.limit ?? DEFAULT_LIMIT;
-  const filtered = args.type
+  const base = args.type
     ? dataset.filter((item) => item.type === args.type)
     : dataset;
+  // Stable sort: score desc, then original dataset index asc (deterministic
+  // tie-break). Without a persona the order is identical to `base`.
+  const persona = args.persona as Persona | undefined;
+  const filtered = persona
+    ? base
+        .map((item, index) => ({
+          item,
+          index,
+          score: personaScore(item, persona),
+        }))
+        .sort((a, b) => b.score - a.score || a.index - b.index)
+        .map((r) => r.item)
+    : base;
   const offset = args.cursor ? decodeCursor(args.cursor) : 0;
   if (offset > filtered.length) {
     throw new FeedError("invalid_cursor", "The feed cursor is out of range.");

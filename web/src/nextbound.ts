@@ -1,5 +1,12 @@
 import Alpine from "alpinejs";
 import { createNextboundTransport } from "./nextbound-transport.js";
+import {
+  localBrowse,
+  type FeedItem,
+  type FeedItemType,
+  type FeedPage,
+  type OkfField,
+} from "./feed-shared.js";
 import { profiles } from "../../nextbound/fixtures.js";
 import type {
   CompiledExperience,
@@ -57,6 +64,90 @@ const personaDesignPresets: Record<
 
 const personaPreset = (id: string) =>
   personaDesignPresets[id as PersonaId] ?? personaDesignPresets.maya;
+
+const FEED_TYPE_LABEL: Record<FeedItemType, string> = {
+  artifact: "Interactive artifact",
+  editorial: "Editorial · media",
+  intent: "Intent · creation",
+  okf: "Knowledge · OKF",
+};
+
+// Persona voice distilled from knowledge/persona_{alex,camille,maya}/style.md
+// (# Voice). This is the .agents/skills/memory "Personalize" contract:
+// style.md -> tone.
+const PERSONA_VOICE: Record<PersonaId, string> = {
+  camille:
+    "Respond as if for Camille (artistic director). Voice: concise, composed, assured; avoid generic phrasing and over-explaining. World: Desert Rose — warm neutrals, dusty rose, refined serif.",
+  alex:
+    "Respond as if for Alex (CEO). Voice: direct, concrete, technical; data-first; avoid lifestyle fluff. World: Tech Innovation — dark, high-contrast, one electric accent, code-editor feel.",
+  maya:
+    "Respond as if for Maya (developer student). Voice: warm, first-person, understated; avoid corporate templating. World: Golden Hour — warm saturated pastels, terracotta/golden accent.",
+};
+
+// View-model: normalizes a raw FeedItem into exactly what the template binds,
+// with safe defaults so a malformed server item can never throw an Alpine
+// binding.
+type FeedCardVM = {
+  id: string;
+  type: FeedItemType;
+  order: number;
+  kindLabel: string;
+  okfKind: string;
+  title: string;
+  summary: string;
+  tags: string[];
+  accentFrom: string;
+  accentTo: string;
+  mediaKind: string;
+  mediaLabel: string;
+  mediaHeight: number;
+  author: string;
+  metricLabel: string;
+  metricValue: string;
+  isOkfSource: boolean;
+  schemaLine: string;
+  schemaFields: OkfField[];
+  raw: FeedItem;
+};
+function mapFeedCard(raw: any, index = 0): FeedCardVM {
+  const m = raw?.media ?? {};
+  const type: FeedItemType = ["artifact", "editorial", "intent", "okf"].includes(
+    raw?.type,
+  )
+    ? raw.type
+    : "artifact";
+  const ratio = Number.isFinite(m.ratio) && m.ratio > 0 ? m.ratio : 0.7;
+  const table = raw?.okf?.table;
+  return {
+    id: String(raw?.id ?? `feed-${index}`),
+    type,
+    order: Number.isFinite(raw?.order) ? raw.order : 10000 - index,
+    kindLabel: FEED_TYPE_LABEL[type],
+    okfKind: raw?.okf?.kind ?? "",
+    title: String(raw?.title ?? ""),
+    summary: String(raw?.summary ?? ""),
+    tags: Array.isArray(raw?.tags) ? raw.tags.slice(0, 3) : [],
+    accentFrom: m.accentFrom || "#6366f1",
+    accentTo: m.accentTo || "#0ea5e9",
+    mediaKind: ["gradient", "image", "code", "chart", "quote"].includes(m.kind)
+      ? m.kind
+      : "gradient",
+    mediaLabel: m.label ?? "",
+    mediaHeight: Math.round(120 * ratio),
+    author: raw?.author ? `${raw.author.name} · ${raw.author.role}` : "",
+    metricLabel: raw?.metric?.label ?? "",
+    metricValue: raw?.metric?.value ?? "",
+    isOkfSource: Boolean(table),
+    schemaLine: table
+      ? `${table.database}.${table.table} · ${table.engine} · ~${Number(
+          table.rowCountEstimate,
+        ).toLocaleString()} rows`
+      : "",
+    schemaFields:
+      table && Array.isArray(table.fields) ? table.fields.slice(0, 4) : [],
+    raw: raw as FeedItem,
+  };
+}
 
 const commonsParticipantConfig = [
   {
@@ -385,6 +476,14 @@ Alpine.data("nextbound", () => ({
     accent: string;
     visitNumber: number;
   }>,
+  feedCards: [] as FeedCardVM[],
+  feedCursor: null as string | null,
+  feedHasMore: true,
+  feedTotal: 0,
+  feedFilter: "all" as FeedItemType | "all",
+  feedLoading: false,
+  feedSentIds: new Set<string>(),
+  feedObserver: null as IntersectionObserver | null,
   widgetBranches: [] as Array<{
     id: string;
     parentSchemaId: string;
@@ -626,9 +725,108 @@ Alpine.data("nextbound", () => ({
         sessionId: opened.session.id,
       });
     });
+    await this.loadFeedPage(true);
     this.observeRuntimeFrames();
+    this.observeFeedSentinel();
     this.layoutWidgetBoard();
     this.setupKineticCanvas();
+  },
+  async callFeedBrowse(cursor?: string): Promise<FeedPage> {
+    if ((window as any).__NEXTBOUND_MODE__ === "mcp") {
+      const input: Record<string, unknown> = { persona: this.profileId };
+      if (cursor) input.cursor = cursor;
+      if (this.feedFilter !== "all") input.type = this.feedFilter;
+      // transport unwraps structuredContent -> FeedPage directly.
+      return (await this.transport.call(
+        "browse_artifact_feed",
+        input,
+      )) as FeedPage;
+    }
+    return localBrowse(cursor); // local-preview: type/persona apply in MCP only
+  },
+  async loadFeedPage(replace = false) {
+    if (this.feedLoading) return;
+    this.feedLoading = true;
+    try {
+      const page = await this.callFeedBrowse(
+        replace ? undefined : this.feedCursor ?? undefined,
+      );
+      const vms = page.items.map((it: FeedItem, i: number) =>
+        mapFeedCard(it, i),
+      );
+      this.feedCards = replace ? vms : [...this.feedCards, ...vms];
+      this.feedCursor = page.nextCursor;
+      this.feedHasMore = page.hasMore;
+      this.feedTotal = page.total;
+    } catch {
+      this.feedHasMore = false;
+    } finally {
+      this.feedLoading = false;
+      // Re-pack AFTER Alpine flushes new x-for nodes; layoutWidgetBoard
+      // re-queries the DOM fresh on every call.
+      this.$nextTick(() => this.layoutWidgetBoard());
+    }
+  },
+  async setFeedFilter(next: FeedItemType | "all") {
+    this.feedFilter = next;
+    this.feedCards = [];
+    this.feedCursor = null;
+    this.feedHasMore = true;
+    await this.loadFeedPage(true);
+    this.observeFeedSentinel();
+  },
+  observeFeedSentinel() {
+    requestAnimationFrame(() => {
+      this.feedObserver?.disconnect();
+      const node = document.querySelector("[data-feed-sentinel]");
+      if (!node) return;
+      this.feedObserver = new IntersectionObserver(
+        (entries) => {
+          if (
+            entries[0]?.isIntersecting &&
+            this.feedHasMore &&
+            !this.feedLoading &&
+            this.feedCursor
+          ) {
+            void this.loadFeedPage(false);
+          }
+        },
+        { rootMargin: "600px 0px" },
+      );
+      this.feedObserver.observe(node);
+    });
+  },
+  buildItemContext(item: FeedItem): string {
+    const lines: string[] = [
+      PERSONA_VOICE[this.profileId as PersonaId] ?? "",
+      "",
+      "Context for the feed item I just selected — let's discuss it.",
+      "",
+      `Title: ${item.title}`,
+      `Type: ${item.type}${item.okf ? ` · ${item.okf.kind}` : ""}`,
+      `Id: ${item.id}`,
+      `Summary: ${item.summary}`,
+    ];
+    if (item.okf?.body) lines.push(item.okf.body);
+    if (item.author) lines.push(`By: ${item.author.name} · ${item.author.role}`);
+    lines.push(`Tags: ${item.tags.join(", ")}`);
+    const table = item.okf?.table;
+    if (table) {
+      lines.push(
+        "",
+        `Source ${table.database}.${table.table} (${table.engine}, ~${table.rowCountEstimate.toLocaleString()} rows). Fields:`,
+        ...table.fields.map((f) => `- ${f.name} (${f.type}): ${f.description}`),
+      );
+    }
+    return lines.join("\n");
+  },
+  openFeedCard(card: FeedCardVM) {
+    const api = (window as any).openai;
+    const prompt = this.buildItemContext(card.raw);
+    if (api?.sendFollowUpMessage) void api.sendFollowUpMessage({ prompt });
+    else void this.transport.call("open_feed_item", { itemId: card.id }); // typed fallback
+    // reassign — Alpine won't track Set.add in place.
+    this.feedSentIds = new Set(this.feedSentIds).add(card.id);
   },
   setupKineticCanvas() {
     if (this.kineticReady) return;
@@ -795,6 +993,10 @@ Alpine.data("nextbound", () => ({
     this.videoFloating = false;
     this.discussionVideoId = "";
     this.feedArchive = [];
+    this.feedCards = [];
+    this.feedCursor = null;
+    this.feedHasMore = true;
+    this.feedSentIds = new Set();
     this.runtimeMutations = [];
     this.widgetBranches = [];
     this.nextboundPreviews = [];

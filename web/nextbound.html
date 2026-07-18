@@ -489,6 +489,102 @@
               </section>
             </template>
           </div>
+          <!-- Feed filter chips (single [data-widget]; order:0 sorts it to the top) -->
+          <div
+            class="feed-controls content-widget"
+            data-widget="feed-controls"
+            style="order: 0"
+            x-show="loopMode"
+          >
+            <template
+              x-for="f in ['all','artifact','editorial','intent','okf']"
+              :key="f"
+            >
+              <button
+                type="button"
+                :class="feedFilter===f?'chip active':'chip'"
+                @click="setFeedFilter(f)"
+                x-text="f==='all'?'All':f"
+              ></button>
+            </template>
+          </div>
+
+          <template x-for="card in feedCards" :key="card.id">
+            <article
+              class="feed-card content-widget"
+              data-widget="feed-card"
+              :class="['feed-card-'+card.type, feedSentIds.has(card.id)?'sent':'']"
+              :style="'order:'+card.order+';--accent-from:'+card.accentFrom+';--accent-to:'+card.accentTo"
+              role="button"
+              tabindex="0"
+              @click="openFeedCard(card)"
+              @keydown.enter="openFeedCard(card)"
+            >
+              <!-- media band (accent on inner element; height from media.ratio) -->
+              <div
+                class="feed-card__media"
+                :style="'height:'+card.mediaHeight+'px'"
+              >
+                <span class="feed-card__chip" x-show="card.type==='artifact'"
+                  >▶ interactive</span
+                >
+                <span
+                  class="feed-card__chip"
+                  x-show="card.mediaKind==='chart'"
+                  x-text="'⛃ '+(card.mediaLabel||'data')"
+                ></span>
+                <span class="feed-card__metric" x-show="card.metricValue">
+                  <strong x-text="card.metricValue"></strong>
+                  <span x-text="card.metricLabel"></span>
+                </span>
+              </div>
+
+              <div class="feed-card__body">
+                <small
+                  class="feed-card__kind"
+                  x-text="card.kindLabel + (card.okfKind ? ' · '+card.okfKind : '')"
+                ></small>
+                <b class="feed-card__title" x-text="card.title"></b>
+
+                <!-- editorial variant: pull-quote -->
+                <template x-if="card.type==='editorial' && card.mediaKind==='quote'">
+                  <blockquote
+                    class="feed-card__quote"
+                    x-text="card.summary"
+                  ></blockquote>
+                </template>
+                <template x-if="!(card.type==='editorial' && card.mediaKind==='quote')">
+                  <p class="feed-card__summary" x-text="card.summary"></p>
+                </template>
+
+                <!-- okf SOURCE variant: ClickHouse schema preview -->
+                <div class="feed-card__schema" x-show="card.isOkfSource">
+                  <code x-text="card.schemaLine"></code>
+                  <template x-for="fld in card.schemaFields" :key="fld.name">
+                    <span class="feed-card__field"
+                      ><b x-text="fld.name"></b><i x-text="fld.type"></i
+                    ></span>
+                  </template>
+                </div>
+
+                <footer class="feed-card__foot">
+                  <template x-for="t in card.tags" :key="t"
+                    ><span class="tag" x-text="'#'+t"></span
+                  ></template>
+                </footer>
+                <div
+                  class="feed-card__author"
+                  x-show="card.author"
+                  x-text="card.author"
+                ></div>
+              </div>
+
+              <span
+                class="feed-card__open"
+                x-text="feedSentIds.has(card.id) ? '✓ Context sent to chat' : '→ Discuss in chat'"
+              ></span>
+            </article>
+          </template>
           <div class="runtime-anchors content-widget" data-widget="anchors">
             <template x-for="anchor in runtimeExecution?.activatedAnchors||[]">
               <i x-text="anchor.phrase" :class="anchor.style"></i>
@@ -1303,6 +1399,17 @@
           </div>
         </section>
       </section>
+      <div
+        data-feed-sentinel
+        x-show="loopMode && feedHasMore"
+        aria-hidden="true"
+        style="height: 1px"
+      ></div>
+      <p
+        class="feed-end"
+        x-show="loopMode && !feedHasMore && feedCards.length"
+        x-text="'End of feed · '+feedCards.length+' of '+feedTotal+' items'"
+      ></p>
       <section class="grid" x-show="!loopMode">
         <aside>
           <div class="panel publish">
