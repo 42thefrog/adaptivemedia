@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "persona": {
+      "type": "string",
+      "enum": ["camille", "alex", "maya"],
+      "description": "Viewer persona for the adaptive Nextbound experience."
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 80,
+      "description": "The creative or product goal to frame the experience."
+    },
+    "style": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 80,
+      "description": "Optional visual direction or mood."
+    }
+  },
+  "required": ["persona", "goal"]
+}

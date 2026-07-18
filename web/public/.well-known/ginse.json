@@ -1,0 +1,98 @@
+{
+  "schema_version": "2",
+  "slug": "nextbound-adaptive-media",
+  "display_name": "Nextbound — Team Adaptive Media",
+  "description": "Creates a personalized adaptive media experience link for a selected Nextbound persona and goal.",
+  "presentation": {
+    "action": "Create experience",
+    "input": {
+      "label": "Persona and goal",
+      "icon": "text"
+    },
+    "output": {
+      "label": "Experience link",
+      "icon": "link"
+    }
+  },
+  "price": {
+    "amount_cents": 100,
+    "currency": "EUR"
+  },
+  "run_url": "https://nextbound-adaptive-media.netlify.app/run",
+  "input_schema": {
+    "type": "object",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "persona": {
+        "type": "string",
+        "enum": [
+          "camille",
+          "alex",
+          "maya"
+        ],
+        "description": "Viewer persona for the adaptive Nextbound experience."
+      },
+      "goal": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 80,
+        "description": "The creative or product goal to frame the experience."
+      },
+      "style": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 80,
+        "description": "Optional visual direction or mood."
+      }
+    },
+    "required": [
+      "persona",
+      "goal"
+    ]
+  },
+  "output_schema": {
+    "type": "object",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "experience_url": {
+        "type": "string",
+        "format": "uri"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "persona": {
+        "type": "string",
+        "enum": [
+          "camille",
+          "alex",
+          "maya"
+        ]
+      },
+      "next_steps": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "minItems": 1,
+        "maxItems": 4
+      }
+    },
+    "required": [
+      "experience_url",
+      "summary",
+      "persona",
+      "next_steps"
+    ]
+  },
+  "example": {
+    "input": {
+      "persona": "maya",
+      "goal": "prototype an adaptive media dashboard",
+      "style": "signal grid"
+    }
+  },
+  "ownership_token": "ginse_verify_bc9f2cc1d90b494e98d042f76f6a3c97"
+}

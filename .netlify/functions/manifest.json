@@ -1,0 +1,1 @@
+{"functions":[{"bundler":"esbuild","buildData":{"runtimeAPIVersion":1},"mainFile":"/Users/zlatashvets/Documents/Adaptive media/netlify/functions/run.mjs","name":"run","priority":10,"path":"/Users/zlatashvets/Documents/Adaptive media/.netlify/functions/run.zip","runtime":"js"}],"system":{"arch":"arm64","platform":"darwin"},"timestamp":1784385533576,"version":1}

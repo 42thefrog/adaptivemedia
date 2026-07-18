@@ -1,0 +1,16 @@
+[build]
+  command = "npm run build:nextbound"
+  publish = "web/nextbound-dist"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/"
+  to = "/nextbound.html?scenario=procedural-loop"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/run"
+  to = "/.netlify/functions/run"
+  status = 200
+  force = true

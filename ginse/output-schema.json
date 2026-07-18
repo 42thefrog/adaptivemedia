@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "experience_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "persona": {
+      "type": "string",
+      "enum": ["camille", "alex", "maya"]
+    },
+    "next_steps": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "maxItems": 4
+    }
+  },
+  "required": ["experience_url", "summary", "persona", "next_steps"]
+}
