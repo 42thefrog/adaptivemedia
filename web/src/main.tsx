@@ -41,6 +41,20 @@ const personaMusic: Record<
     playlistId: "37i9dQZF1DWWn6teJIIcfG",
   },
 };
+const generatedMoodTracks: Record<PersonaId, { title: string; src: string }> = {
+  alex: {
+    title: "Alex - Techno",
+    src: "/music/alex-techno.mp3",
+  },
+  camille: {
+    title: "Velvet and Neon",
+    src: "/music/velvet-and-neon-camille.m4a",
+  },
+  maya: {
+    title: "Maya 15s",
+    src: "/music/maya-15s.mp3",
+  },
+};
 const fallbackPersonas = [
   { id: "alex", name: "Alex", label: "Developer Student" },
   { id: "camille", name: "Camille", label: "Curated Chaos Artistic Director" },
@@ -620,6 +634,8 @@ function Experience({
   const [musicGenerating, setMusicGenerating] = useState(false);
   const [moodTrackReady, setMoodTrackReady] = useState(false);
   const music = personaMusic[personaId as PersonaId] ?? personaMusic.alex;
+  const generatedMoodTrack =
+    generatedMoodTracks[personaId as PersonaId] ?? generatedMoodTracks.alex;
 
   const generateMoodTrack = () => {
     setMusicGenerating(true);
@@ -740,12 +756,12 @@ function Experience({
             <div className="generated-track" aria-live="polite">
               <div>
                 <span>Today’s generated track</span>
-                <b>Velvet and Neon</b>
+                <b>{generatedMoodTrack.title}</b>
               </div>
               <audio
                 controls
                 preload="metadata"
-                src="/music/velvet-and-neon-camille.m4a"
+                src={generatedMoodTrack.src}
               >
                 Your browser does not support audio playback.
               </audio>

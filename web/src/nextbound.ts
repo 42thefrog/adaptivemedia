@@ -263,6 +263,21 @@ const moodboardImages = [
   },
 ] as const;
 
+const moodMusicByProfile = {
+  alex: {
+    track: "/music/alex-techno.mp3",
+    title: "Alex - Techno",
+  },
+  camille: {
+    track: "/music/velvet-and-neon-camille.m4a",
+    title: "Velvet and Neon",
+  },
+  maya: {
+    track: "/music/maya-15s.mp3",
+    title: "Maya 15s",
+  },
+} as const;
+
 const storyFrameComponents = [
   [
     {
@@ -524,8 +539,8 @@ Alpine.data("nextbound", () => ({
   imageSaved: false,
   moodMusicStatus: "idle" as "idle" | "generating" | "ready",
   moodMusicPlaying: false,
-  moodMusicTrack: "/music/velvet-and-neon-camille.m4a",
-  moodMusicTitle: "Velvet and Neon",
+  moodMusicTrack: moodMusicByProfile.camille.track,
+  moodMusicTitle: moodMusicByProfile.camille.title,
   reactionSequence: 0,
   floatingReactions: [] as Array<{
     id: string;
@@ -762,8 +777,15 @@ Alpine.data("nextbound", () => ({
   async switchRuntimeProfile(id: string) {
     this.profileId = id;
     const preset = personaPreset(id);
+    const moodMusic =
+      moodMusicByProfile[id as keyof typeof moodMusicByProfile] ??
+      moodMusicByProfile.camille;
     this.designMode = preset.designMode;
     this.userVisualStyle = preset.userVisualStyle;
+    this.moodMusicTrack = moodMusic.track;
+    this.moodMusicTitle = moodMusic.title;
+    this.moodMusicStatus = "idle";
+    this.moodMusicPlaying = false;
     this.playingVideoId = "";
     this.videoFloatObserver?.disconnect();
     if (this.videoScrollHandler) {
