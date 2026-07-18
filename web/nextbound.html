@@ -19,6 +19,52 @@
       :class="['app theme-'+profileId,'design-'+designMode,'user-world-'+profileId,'user-style-'+userVisualStyle,'content-world-'+(runtimeExecution?.contractId||'visual-lab'),loopMode?'loop-layout news-feed':'']"
       :style="loopMode?adaptiveBackdrop:''"
     >
+      <div
+        x-show="floatingCreatorVideo"
+        x-transition.opacity
+        class="floating-video-player"
+      >
+        <template x-if="floatingCreatorVideo">
+          <div class="floating-video-shell">
+            <template x-if="floatingCreatorVideo.kind==='audio'">
+              <iframe
+                :src="'https://w.soundcloud.com/player/?url='+encodeURIComponent(floatingCreatorVideo.url)+'&color=%23ff5500&auto_play=true&show_user=true&visual=true'"
+                :title="profileId+' floating track'"
+                allow="autoplay"
+                frameborder="0"
+              ></iframe>
+            </template>
+            <template x-if="floatingCreatorVideo.kind!=='audio'">
+              <iframe
+                :src="'https://www.youtube-nocookie.com/embed/'+floatingCreatorVideo.id+'?autoplay=1&rel=0'"
+                :title="profileId+' floating video'"
+                allow="
+                  accelerometer;
+                  autoplay;
+                  clipboard-write;
+                  encrypted-media;
+                  gyroscope;
+                  picture-in-picture;
+                  web-share;
+                "
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen
+              ></iframe>
+            </template>
+            <button
+              class="video-float-close"
+              title="Close"
+              @click.stop="closeFloatingVideo()"
+            >
+              ✕
+            </button>
+            <div class="video-float-controls">
+              <button type="button" @click.stop="stopFloatingVideo()">Stop</button>
+              <button type="button" @click.stop="closeFloatingVideo()">Close</button>
+            </div>
+          </div>
+        </template>
+      </div>
       <header class="top">
         <a class="wordmark" href="/nextbound.html?scenario=procedural-loop"
           ><i>N</i> NEXTBOUND</a
@@ -1123,7 +1169,9 @@
                 :style="'--piece-span:'+videoGridSpan(video)+';order:'+(100-video.score)"
               >
                 <div class="video-stage">
-                  <template x-if="playingVideoId===video.id && video.kind==='audio'">
+                  <template
+                    x-if="playingVideoId===video.id && !videoFloating && video.kind==='audio'"
+                  >
                     <iframe
                       :src="'https://w.soundcloud.com/player/?url='+encodeURIComponent(video.url)+'&color=%23ff5500&auto_play=true&show_user=true&visual=true'"
                       :title="profileId+' track '+(index+1)"
@@ -1131,7 +1179,9 @@
                       frameborder="0"
                     ></iframe>
                   </template>
-                  <template x-if="playingVideoId===video.id && video.kind!=='audio'">
+                  <template
+                    x-if="playingVideoId===video.id && !videoFloating && video.kind!=='audio'"
+                  >
                     <iframe
                       :src="'https://www.youtube-nocookie.com/embed/'+video.id+'?autoplay=1&rel=0'"
                       :title="profileId+' video '+(index+1)"
@@ -1186,10 +1236,21 @@
                     x-show="playingVideoId===video.id && videoFloating"
                     class="video-float-close"
                     title="Close"
-                    @click.stop="toggleCreatorVideo(video.id)"
+                    @click.stop="closeFloatingVideo()"
                   >
                     ✕
                   </button>
+                  <div
+                    x-show="playingVideoId===video.id && videoFloating"
+                    class="video-float-controls"
+                  >
+                    <button type="button" @click.stop="stopFloatingVideo()">
+                      Stop
+                    </button>
+                    <button type="button" @click.stop="closeFloatingVideo()">
+                      Close
+                    </button>
+                  </div>
                 </div>
                 <footer>
                   <button

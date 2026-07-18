@@ -628,6 +628,7 @@ body {
   overflow: hidden;
   box-shadow: 0 18px 55px #0007;
 }
+
 .runtime-execution.editorial {
   color: #17130f;
   font-family:
@@ -4728,23 +4729,56 @@ footer {
   transform: scale(0.985);
 }
 .feed-video.video-floating {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  width: min(300px, 38vw);
-  max-height: 70vh;
+  position: absolute;
   grid-column: auto;
-  z-index: 500;
   opacity: 1;
   transform: none;
-  border-radius: 12px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
 }
 .feed-video.video-floating .video-discussion {
   display: none;
 }
 .feed-video.video-floating footer {
   padding: 6px 10px;
+}
+.feed-video.video-floating .video-stage {
+  min-height: 170px;
+}
+.feed-video.video-floating .video-stage::after {
+  content: "Playing in mini-player";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(6, 10, 18, 0.88), rgba(16, 18, 31, 0.78));
+  color: rgba(255, 255, 255, 0.72);
+  font: 9px var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.floating-video-player {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: min(360px, 38vw);
+  z-index: 5000;
+  pointer-events: none;
+}
+.floating-video-shell {
+  position: relative;
+  min-height: 205px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  background: #070b12;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58);
+  pointer-events: auto;
+}
+.floating-video-shell iframe {
+  display: block;
+  width: 100%;
+  height: 205px;
+  border: 0;
 }
 .video-float-close {
   position: absolute;
@@ -4769,11 +4803,43 @@ footer {
   background: rgba(6, 10, 18, 0.92);
   border-color: rgba(255, 255, 255, 0.45);
 }
+.video-float-controls {
+  position: absolute;
+  left: 8px;
+  right: 40px;
+  bottom: 8px;
+  z-index: 6;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  pointer-events: auto;
+}
+.video-float-controls button {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(6, 10, 18, 0.78);
+  color: #fff;
+  font: 8px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+}
+.video-float-controls button:hover {
+  background: rgba(6, 10, 18, 0.94);
+  border-color: rgba(255, 255, 255, 0.46);
+}
 @media (max-width: 640px) {
-  .feed-video.video-floating {
+  .floating-video-player {
     width: min(220px, 48vw);
     right: 12px;
     bottom: 12px;
+  }
+  .floating-video-shell,
+  .floating-video-shell iframe {
+    min-height: 150px;
+    height: 150px;
   }
 }
 .video-tetris .video-portrait.attention-focus {
@@ -5817,10 +5883,33 @@ footer {
 .news-feed .runtime-demo .stock-widget[data-widget] {
   grid-column: span 5 !important;
 }
+
+.news-feed .runtime-demo .team-game-panel[data-widget],
+.news-feed .runtime-demo .feed-game[data-widget] {
+  grid-column: 4 / span 6 !important;
+  justify-self: stretch;
+}
+
+.news-feed .runtime-demo .team-game-panel[data-widget] {
+  order: 12;
+}
+
+.news-feed .runtime-demo .feed-game[data-widget] {
+  order: 13;
+}
+
+.news-feed .runtime-demo .team-game-panel[data-widget],
+.news-feed .runtime-demo .feed-game[data-widget] {
+  translate: 0 0 !important;
+  scale: 1 !important;
+}
+
 @media (max-width: 760px) {
   .news-feed .runtime-demo .terminal-widget[data-widget],
   .news-feed .runtime-demo .moodboard-widget[data-widget],
-  .news-feed .runtime-demo .stock-widget[data-widget] {
+  .news-feed .runtime-demo .stock-widget[data-widget],
+  .news-feed .runtime-demo .team-game-panel[data-widget],
+  .news-feed .runtime-demo .feed-game[data-widget] {
     grid-column: 1 / -1 !important;
   }
 }

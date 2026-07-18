@@ -808,6 +808,15 @@ Alpine.data("nextbound", () => ({
       this.creatorVideos.maya
     );
   },
+  get floatingCreatorVideo() {
+    if (!this.playingVideoId || !this.videoFloating) return null;
+    return (
+      this.currentCreatorVideos.find(
+        (video: (typeof creatorVideos)[keyof typeof creatorVideos][number]) =>
+          video.id === this.playingVideoId,
+      ) ?? null
+    );
+  },
   videoGridSpan(video: { orientation: string; score: number }) {
     if (video.orientation === "portrait") return 3;
     if (video.orientation === "square") return video.score >= 85 ? 5 : 4;
@@ -856,7 +865,22 @@ Alpine.data("nextbound", () => ({
   },
   toggleCreatorVideo(id: string) {
     this.playingVideoId = this.playingVideoId === id ? "" : id;
+    this.videoFloating = false;
     this.$nextTick(() => this.watchPlayingVideoScroll());
+  },
+  stopFloatingVideo() {
+    this.playingVideoId = "";
+    this.videoFloating = false;
+    this.videoFloatObserver?.disconnect();
+    if (this.videoScrollHandler) {
+      window.removeEventListener("scroll", this.videoScrollHandler);
+      this.videoScrollHandler = null;
+    }
+  },
+  closeFloatingVideo() {
+    this.stopFloatingVideo();
+    this.focusedContentId = "";
+    this.discussionVideoId = "";
   },
   watchPlayingVideoScroll() {
     this.videoFloatObserver?.disconnect();
@@ -879,6 +903,7 @@ Alpine.data("nextbound", () => ({
     // Fix: measure the card's natural in-flow top ONCE, while we know it
     // isn't floating yet, and from then on just compare scrollY to that
     // fixed number — no re-measuring an element that we're the ones moving.
+    const startScrollY = window.scrollY;
     const anchorTop = el.getBoundingClientRect().top + window.scrollY;
 
     const applyFloat = (goingFloating: boolean) => {
@@ -934,7 +959,7 @@ Alpine.data("nextbound", () => ({
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        applyFloat(window.scrollY > anchorTop - 24);
+        applyFloat(window.scrollY > startScrollY + 16 || window.scrollY > anchorTop - 24);
         ticking = false;
       });
     };
@@ -1410,12 +1435,17 @@ Alpine.data("nextbound", () => ({
           const columnHeights = Array.from({ length: columns }, () => 0);
 
           for (const widget of visibleWidgets) {
-            const targetColumn = columnHeights.indexOf(
-              Math.min(...columnHeights),
-            );
+            const widgetKind = widget.dataset.widget;
+            const targetColumn =
+              columns >= 3 && (widgetKind === "team-game" || widgetKind === "game")
+                ? 1
+                : columnHeights.indexOf(Math.min(...columnHeights));
             widget.style.position = "absolute";
             widget.style.width = `${columnWidth}px`;
-            widget.style.left = `${targetColumn * (columnWidth + gap)}px`;
+            widget.style.left =
+              columns >= 3 && (widgetKind === "team-game" || widgetKind === "game")
+                ? `${(width - columnWidth) / 2 - columnWidth * 0.82}px`
+                : `${targetColumn * (columnWidth + gap)}px`;
             widget.style.top = `${columnHeights[targetColumn]}px`;
             widget.style.gridColumn = "auto";
             widget.style.gridRowEnd = "auto";
