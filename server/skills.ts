@@ -266,10 +266,13 @@ experiences stay reproducible.
 
 ## Run locally — the procedural loop board
 
-The elaborate themed masonry ("procedural loop") is the Nextbound board. Run the
-MCP server and the board locally:
+The elaborate themed masonry ("procedural loop") is the Nextbound board. On a
+fresh machine that does not have the repo yet, clone the right branch first,
+then cd in, then install and run:
 
 \`\`\`bash
+git clone -b deploy/procedural-loop https://github.com/42thefrog/adaptivemedia.git
+cd adaptivemedia
 npm install
 npm run build:all          # web + nextbound + feed widgets
 npm start                  # MCP server on 0.0.0.0:3000 (/mcp, /health)
