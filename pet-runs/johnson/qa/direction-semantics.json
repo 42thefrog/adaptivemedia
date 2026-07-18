@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "reviewed_by": "independent visual QA worker",
+  "directions": [
+    {"direction":"000","expected":"up","observed":"face disk and features rise to the upper torso","verdict":"pass","reason":"vertical up cue is unmistakable"},
+    {"direction":"022.5","expected":"up-right","observed":"face is high and shifts screen-right","verdict":"pass","reason":"both axes visible"},
+    {"direction":"045","expected":"up-right","observed":"face high on screen-right plane","verdict":"pass","reason":"both axes clear"},
+    {"direction":"067.5","expected":"up-right","observed":"strong right profile with elevated face","verdict":"pass","reason":"both axes clear"},
+    {"direction":"090","expected":"right","observed":"face projects from screen-right side","verdict":"pass","reason":"right cardinal unmistakable"},
+    {"direction":"112.5","expected":"down-right","observed":"right profile clear; downward shift subtle","verdict":"warning","reason":"accepted in labeled clockwise loop"},
+    {"direction":"135","expected":"down-right","observed":"face lower and right-biased","verdict":"warning","reason":"horizontal cue weakens near frontal pose"},
+    {"direction":"157.5","expected":"down-right","observed":"face visibly low; right cue subtle","verdict":"warning","reason":"accepted one step before down cardinal"},
+    {"direction":"180","expected":"down","observed":"face disk and features sit at torso bottom","verdict":"pass","reason":"down cardinal unmistakable"},
+    {"direction":"202.5","expected":"down-left","observed":"face low and shifted screen-left","verdict":"pass","reason":"both axes visible"},
+    {"direction":"225","expected":"down-left","observed":"low face with left-oriented body plane","verdict":"warning","reason":"left cue relies partly on loop context"},
+    {"direction":"247.5","expected":"down-left","observed":"left body orientation clear; down cue subtle","verdict":"warning","reason":"accepted near left cardinal"},
+    {"direction":"270","expected":"left","observed":"face projects from screen-left side","verdict":"pass","reason":"left cardinal unmistakable"},
+    {"direction":"292.5","expected":"up-left","observed":"elevated face with left-oriented body","verdict":"warning","reason":"left cue clearest in ordered loop"},
+    {"direction":"315","expected":"up-left","observed":"face remains high with restrained left cue","verdict":"warning","reason":"accepted in labeled loop"},
+    {"direction":"337.5","expected":"up-left","observed":"up clear with residual screen-left cue","verdict":"warning","reason":"accepted one step before up cardinal"}
+  ],
+  "review_notes": "Blind cardinal gates pass. Intermediate blind disagreements are minor warnings; labeled normal-size review confirms a coherent clockwise loop without reversal."
+}

@@ -1,0 +1,5 @@
+node_modules/
+server/data/store.json
+dist/
+web/nextbound-dist/
+.DS_Store
