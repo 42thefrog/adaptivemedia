@@ -41,7 +41,7 @@ const ArtifactScene = lazy(() =>
 
 type PersonaId = "alex" | "camille" | "maya";
 
-// Alex (Developer Student) / Camille (Aesthetic Executive) / Maya
+// Alex (Developer Student) / Camille (Curated Chaos Artistic Director) / Maya
 // (Independent Creator) map onto the artifact system's three Adaptive
 // Identity profiles — the same pairing the standalone artifact.html demo
 // uses for its own identity copy ("Structured motion", "Fluid form",

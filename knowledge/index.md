@@ -14,5 +14,9 @@ generated images later using the same captions.
 # Personas
 
 * [Alex — Developer Student](persona_alex/) - low budget, technical, Paris.
-* [Camille — Aesthetic Executive](persona_camille/) - premium budget, non-technical, Paris.
+* [Camille — Curated Chaos Artistic Director](persona_camille/) - premium budget, aesthetic creator, Paris.
 * [Maya — Independent Creator](persona_maya/) - medium budget, AI-curious, London.
+
+# OKF Persona Artifacts
+
+* [Camille artifact persona](camille-artifact-persona.okf) - curated chaos, digital art, wellness and cozy jazz mood.

@@ -7,8 +7,16 @@ import {
 } from "../nextbound/adapter.js";
 import { NextboundService } from "../nextbound/service.js";
 import { luna, profiles } from "../nextbound/fixtures.js";
-import { proceduralSchemas, schemas } from "./nextbound-api.js";
+import {
+  knowledgeSchemas,
+  proceduralSchemas,
+  schemas,
+} from "./nextbound-api.js";
 import { MCPNextboundTransport } from "../web/src/nextbound-transport.js";
+import {
+  getLocalKnowledgeProfile,
+  listLocalKnowledgeProfiles,
+} from "./local-knowledge.js";
 
 describe("Step 7 Nextbound MCP capability layer", () => {
   it("declares all 13 tools with strict schemas", () => {
@@ -45,6 +53,28 @@ describe("Step 7 Nextbound MCP capability layer", () => {
     });
     assert.equal(opened.execution.contractId, "visual-lab");
     assert.equal(trace.session.contextWeights.liveSession, 0.6);
+  });
+  it("exposes local knowledge profiles for MCP inline artifacts", () => {
+    assert.deepEqual(Object.keys(knowledgeSchemas), [
+      "list_local_knowledge_profiles",
+      "open_local_knowledge_artifact",
+    ]);
+    assert.equal(
+      knowledgeSchemas.open_local_knowledge_artifact.safeParse({
+        profileId: "maya",
+        extra: true,
+      }).success,
+      false,
+    );
+    const maya = getLocalKnowledgeProfile("maya");
+    assert.ok(maya);
+    assert.equal(maya.name, "Maya");
+    assert.ok(maya.knowledge.length > 0);
+    assert.ok(
+      listLocalKnowledgeProfiles()
+        .map((profile) => profile.id)
+        .includes("maya"),
+    );
   });
   it("rejects unknown fixture IDs safely", () => {
     const s = new NextboundService();

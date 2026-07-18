@@ -1951,7 +1951,7 @@ footer {
    Ordering is score-driven (inline style) now, so this one video no longer
    force-leads regardless of its match score — see the final override below. */
 .news-feed .video-field .feed-video[data-video-id="lwLLFbC1H0c"] {
-  grid-column: span 3 !important;
+  grid-column: span 4 !important;
 }
 
 .news-feed .runtime-demo .feed-chat,
@@ -1968,14 +1968,14 @@ footer {
 
 .news-feed .runtime-demo .feed-chat {
   order: 10;
-  grid-column: span 6;
+  grid-column: span 4;
 }
 .news-feed .reddit-field > article:nth-of-type(1) {
   order: 11;
 }
 .news-feed .runtime-demo .feed-game {
   order: 12;
-  grid-column: span 5;
+  grid-column: span 4;
 }
 .news-feed .video-field .feed-video:nth-of-type(1) {
   order: 13;
@@ -1992,7 +1992,7 @@ footer {
 }
 .news-feed .runtime-demo .feed-paris {
   order: 17;
-  grid-column: span 7;
+  grid-column: span 4;
 }
 .news-feed .runtime-demo .feed-story {
   order: 18;
@@ -2005,7 +2005,7 @@ footer {
 }
 .news-feed .runtime-demo .feed-postits {
   order: 21;
-  grid-column: span 5;
+  grid-column: span 4;
 }
 .news-feed .video-field .feed-video:nth-of-type(4) {
   order: 22;
@@ -2041,7 +2041,7 @@ footer {
   }
   .news-feed .runtime-demo .feed-chat,
   .news-feed .runtime-demo .feed-paris {
-    grid-column: span 6;
+    grid-column: span 3;
   }
 }
 
@@ -2057,14 +2057,12 @@ footer {
   }
 }
 
-/* Mixed-content Tetris board: wrappers stop creating isolated vertical feeds. */
+/* Responsive masonry board: wrappers stop creating isolated vertical feeds. */
 .news-feed .runtime-demo {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-auto-rows: auto;
-  grid-auto-flow: dense;
-  align-items: start;
-  gap: 10px;
+  position: relative;
+  display: block;
+  gap: clamp(6px, 0.9vw, 12px);
+  column-gap: clamp(6px, 0.9vw, 12px);
   max-width: 1180px;
 }
 
@@ -2076,10 +2074,39 @@ footer {
   display: contents;
 }
 
+.news-feed .runtime-demo > [data-widget],
+.news-feed .runtime-demo .adaptive-piece,
+.news-feed .runtime-demo .feed-video,
+.news-feed .runtime-demo .feed-story,
+.news-feed .runtime-demo .story-component,
+.news-feed .runtime-demo .commons-participant,
+.news-feed .runtime-demo .runtime-frame,
+.news-feed .runtime-demo .nextbound-widget,
+.news-feed .runtime-demo .nextbound-preview-widget,
+.news-feed .runtime-demo .inline-mutation {
+  display: inline-block;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  vertical-align: top;
+}
+
+.news-feed .runtime-demo .runtime-content-widgets,
+.news-feed .runtime-demo .runtime-frames,
+.news-feed .runtime-demo .video-library,
+.news-feed .runtime-demo .video-field,
+.news-feed .runtime-demo .reddit-field,
+.news-feed .runtime-demo .story-cluster,
+.news-feed .runtime-demo .story-components {
+  display: contents;
+}
+
 .news-feed .video-library > header,
 .news-feed .reddit-field > header {
-  grid-column: span 3;
+  grid-column: span 4;
   align-self: stretch;
+  margin: 0;
   min-height: 180px;
   padding: 18px;
   border: 1px solid color-mix(in srgb, var(--live-accent) 42%, #394458);
@@ -2103,11 +2130,11 @@ footer {
 }
 
 .news-feed .story-cluster .feed-story {
-  grid-column: span 5;
+  grid-column: span 4;
   order: 180;
 }
 .news-feed .story-component:first-child {
-  grid-column: span 3;
+  grid-column: span 4;
   order: 182;
 }
 .news-feed .story-component:nth-child(2) {
@@ -2120,6 +2147,65 @@ footer {
 }
 .news-feed .reddit-field > article {
   grid-column: span 4;
+}
+.article-preview {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin: 11px 0 12px;
+  padding: 10px;
+  border: 1px solid hsl(var(--preview-hue) 85% 56% / 0.55);
+  background:
+    linear-gradient(
+      135deg,
+      hsl(var(--preview-hue) 80% 44% / 0.24),
+      rgb(0 0 0 / 0.12)
+    ),
+    linear-gradient(90deg, hsl(var(--preview-hue) 90% 55%) var(--preview-score), transparent 0);
+  background-size: auto, 100% 2px;
+  background-position: 0 0, 0 100%;
+  background-repeat: no-repeat;
+  color: inherit;
+  text-decoration: none;
+}
+.article-preview:hover {
+  background-color: hsl(var(--preview-hue) 70% 36% / 0.18);
+}
+.article-preview-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: hsl(var(--preview-hue) 90% 58%);
+  color: #031016;
+  font: 800 11px var(--mono);
+}
+.article-preview span:nth-child(2) {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.article-preview b,
+.article-preview em,
+.article-preview i {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.article-preview b {
+  font-size: 12px;
+}
+.article-preview em {
+  color: color-mix(in srgb, currentColor 62%, transparent);
+  font: normal 9px var(--mono);
+}
+.article-preview i {
+  color: hsl(var(--preview-hue) 90% 68%);
+  font: normal 10px var(--mono);
 }
 .news-feed .reddit-field > article:nth-of-type(1) {
   order: 183;
@@ -2160,20 +2246,20 @@ footer {
 }
 
 .news-feed .video-field .recommendation-primary {
-  grid-column: span 6;
+  grid-column: span 4;
 }
 .news-feed .video-field .recommendation-secondary {
   grid-column: span 4;
 }
 .news-feed .video-field .recommendation-signal {
-  grid-column: span 3;
+  grid-column: span 4;
 }
 .news-feed .video-field .video-portrait {
-  grid-column: span 3;
+  grid-column: span 4;
   max-width: none;
 }
 .news-feed .video-field .feed-video.attention-focus {
-  grid-column: span 8;
+  grid-column: span 4;
 }
 .news-feed .video-field .feed-video.attention-dim {
   grid-column: span 4;
@@ -2181,10 +2267,10 @@ footer {
 }
 .news-feed .video-field .video-portrait.attention-focus {
   grid-column: span 4;
-  width: min(100%, 420px);
+  width: 100%;
 }
 .news-feed .reddit-field > article.attention-focus {
-  grid-column: span 8;
+  grid-column: span 4;
 }
 .news-feed .reddit-field:has(.attention-focus) > article:not(.attention-focus) {
   grid-column: span 4;
@@ -2415,6 +2501,14 @@ footer {
   border-radius: 999px !important;
   background: #ffe86f !important;
   color: #27203b !important;
+}
+.design-playful.news-feed button.moodboard-tile {
+  background-color: #f5efe6 !important;
+  background-image: var(--moodboard-image) !important;
+  background-size: cover !important;
+  background-position: var(--moodboard-position, center) !important;
+  border-radius: 14px !important;
+  color: #fff8d8 !important;
 }
 .design-playful.news-feed .nextbound-word {
   color: #ff398c !important;
@@ -3044,6 +3138,95 @@ footer {
     var(--nested-surface)
   ) !important;
   color: var(--nested-ink) !important;
+}
+
+/* Internet content cards participate in the selected design system. */
+.news-feed .reddit-field > header,
+.news-feed .reddit-field > article,
+.news-feed .profile-reddit,
+.news-feed .profile-reddit > article {
+  border-color: var(--nested-line) !important;
+  border-radius: var(--nested-radius) !important;
+  background: var(--nested-surface) !important;
+  background-image: none !important;
+  color: var(--nested-ink) !important;
+}
+.news-feed .reddit-field > article,
+.news-feed .profile-reddit > article {
+  box-shadow: var(--internet-shadow, none) !important;
+}
+.news-feed .reddit-field > header h2,
+.news-feed .reddit-field > article h3,
+.news-feed .reddit-field > article p,
+.news-feed .reddit-field > article small,
+.news-feed .profile-reddit > header h2,
+.news-feed .profile-reddit > header p,
+.news-feed .profile-reddit > article h3,
+.news-feed .profile-reddit > article p,
+.news-feed .profile-reddit > article small {
+  color: inherit !important;
+}
+.news-feed .reddit-field > article p,
+.news-feed .profile-reddit > article p,
+.news-feed .profile-reddit > header p {
+  color: var(--nested-muted) !important;
+}
+.news-feed .reddit-field > article a,
+.news-feed .profile-reddit > article a {
+  border-color: var(--nested-line) !important;
+  border-radius: var(--nested-radius) !important;
+  color: var(--nested-ink) !important;
+}
+.design-glass.news-feed .reddit-field > header,
+.design-glass.news-feed .reddit-field > article,
+.design-glass.news-feed .profile-reddit,
+.design-glass.news-feed .profile-reddit > article {
+  backdrop-filter: blur(22px) saturate(1.35);
+  box-shadow:
+    0 22px 70px #0007,
+    inset 0 1px #ffffff2e !important;
+}
+.design-playful.news-feed {
+  --internet-shadow: 8px 10px 0 #ff93c9;
+}
+.design-playful.news-feed .reddit-field > header,
+.design-playful.news-feed .reddit-field > article,
+.design-playful.news-feed .profile-reddit,
+.design-playful.news-feed .profile-reddit > article {
+  border-width: 3px !important;
+}
+.design-playful.news-feed .reddit-field > article:nth-of-type(4n),
+.design-playful.news-feed .profile-reddit > article:nth-of-type(4n) {
+  border-radius: 46px 14px 38px 18px !important;
+  transform: rotate(-0.7deg);
+}
+.design-playful.news-feed .reddit-field > article:nth-of-type(4n + 1),
+.design-playful.news-feed .profile-reddit > article:nth-of-type(4n + 1) {
+  border-radius: 18px 52px 16px 42px !important;
+  transform: rotate(0.55deg);
+}
+.design-playful.news-feed .reddit-field > article:nth-of-type(4n + 2),
+.design-playful.news-feed .profile-reddit > article:nth-of-type(4n + 2) {
+  border-radius: 50px !important;
+  box-shadow: 8px 10px 0 #73dcff !important;
+}
+.design-brutalist.news-feed .reddit-field > header,
+.design-brutalist.news-feed .reddit-field > article,
+.design-brutalist.news-feed .profile-reddit,
+.design-brutalist.news-feed .profile-reddit > article,
+.design-neobrutalist.news-feed .reddit-field > header,
+.design-neobrutalist.news-feed .reddit-field > article,
+.design-neobrutalist.news-feed .profile-reddit,
+.design-neobrutalist.news-feed .profile-reddit > article {
+  border-width: 4px !important;
+  box-shadow: 9px 9px 0 #080808 !important;
+}
+.design-minimal.news-feed .reddit-field > header,
+.design-minimal.news-feed .reddit-field > article,
+.design-minimal.news-feed .profile-reddit,
+.design-minimal.news-feed .profile-reddit > article {
+  border-width: 0 0 1px !important;
+  box-shadow: none !important;
 }
 
 /* Dense recipient atmospheres: the feed background is an active visual field. */
@@ -4652,14 +4835,36 @@ footer {
   position: relative;
   padding: 0;
   border-radius: 0;
-  background-size: cover;
-  background-position: center;
+  background:
+    repeating-radial-gradient(
+      ellipse at center,
+      #8affa922 0 4px,
+      transparent 5px 20px
+    ),
+    linear-gradient(120deg, #101c35, #281439);
   color: #fff;
   cursor: pointer;
+}
+.video-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.08) 36%, rgb(0 0 0 / 0.78));
+}
+.video-thumbnail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #111827;
 }
 .video-play {
   position: absolute;
   inset: 50% auto auto 50%;
+  z-index: 2;
   display: grid;
   place-items: center;
   width: 64px;
@@ -4669,8 +4874,22 @@ footer {
   transform: translate(-50%, -50%);
   box-shadow: 0 12px 40px #0008;
 }
+.media-preview-badge {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  right: 12px;
+  padding: 5px 8px;
+  border: 1px solid rgb(255 255 255 / 0.42);
+  background: rgb(0 0 0 / 0.58);
+  color: #fff;
+  font: 800 8px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .video-cover-copy {
   position: absolute;
+  z-index: 2;
   left: 18px;
   right: 18px;
   bottom: 18px;
@@ -5722,55 +5941,83 @@ footer {
 .moodboard-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  grid-auto-flow: dense;
+  gap: 8px;
 }
 .moodboard-tile {
   position: relative;
   aspect-ratio: 3 / 4;
-  border: 1px solid #2c283a;
-  border-radius: 4px;
+  border: 2px solid color-mix(in srgb, #231e35 72%, var(--live-accent));
+  border-radius: 14px;
+  background-image: var(--moodboard-image);
   background-size: cover;
-  background-position: center;
-  background-color: #17141f;
+  background-position: var(--moodboard-position, center);
+  background-color: #f5efe6;
   cursor: pointer;
   overflow: hidden;
   padding: 0;
+  box-shadow: 0 8px 0 color-mix(in srgb, #ff79bd 72%, transparent);
   transition:
     border-color 0.2s ease,
+    box-shadow 0.2s ease,
     transform 0.2s ease;
+}
+.moodboard-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 48%, rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+.moodboard-tile:nth-child(1),
+.moodboard-tile:nth-child(2) {
+  grid-column: span 2;
+  aspect-ratio: 4 / 3;
 }
 .moodboard-tile:hover {
   transform: translateY(-2px);
 }
 .moodboard-tile.pinned {
-  border-color: #c9a8ff;
-  box-shadow: 0 0 0 1px #c9a8ff;
+  border-color: #ffe86a;
+  box-shadow:
+    0 8px 0 color-mix(in srgb, #ff79bd 72%, transparent),
+    0 0 0 3px #ffe86a inset;
 }
 .moodboard-tag {
   position: absolute;
-  left: 5px;
-  bottom: 5px;
-  padding: 2px 5px;
-  background: #000a;
-  color: #ddd;
-  font: 7px var(--mono);
+  left: 8px;
+  bottom: 8px;
+  z-index: 1;
+  max-width: calc(100% - 16px);
+  padding: 4px 7px;
+  background: rgba(9, 8, 15, 0.72);
+  color: #fff8d8;
+  font: 8px var(--mono);
   text-transform: uppercase;
-  border-radius: 3px;
+  border-radius: 999px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .moodboard-pin {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  padding: 2px 5px;
-  background: #c9a8ff;
-  color: #1a0f2e;
-  font: 7px var(--mono);
+  top: 7px;
+  right: 7px;
+  z-index: 1;
+  padding: 4px 7px;
+  background: #ffe86a;
+  color: #1f1930;
+  font: 8px var(--mono);
   font-weight: 700;
-  border-radius: 3px;
+  border-radius: 999px;
 }
 @media (max-width: 640px) {
   .moodboard-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .moodboard-tile:nth-child(1),
+  .moodboard-tile:nth-child(2) {
+    grid-column: span 2;
   }
 }
 
