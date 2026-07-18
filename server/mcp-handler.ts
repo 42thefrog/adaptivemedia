@@ -13,6 +13,13 @@ export async function handleMcpRequest(request: Request): Promise<Response> {
   const { makeMcpServer } = await import("./index.js");
 
   const url = new URL(request.url);
+  if (url.pathname === "/run" || url.pathname === "/.well-known/ginse.json") {
+    return Response.json(
+      { error: "ginse_integration_retired" },
+      { status: 410, headers: { "cache-control": "no-store" } },
+    );
+  }
+
   // Health: a GET (MCP uses POST) or an explicit /health path. Robust to how
   // the host rewrites the request URL to the function.
   if (

@@ -632,6 +632,14 @@ const httpServer = createServer(async (req, res) => {
     );
     return;
   }
+  if (pathname === "/run" || pathname === "/.well-known/ginse.json") {
+    res.writeHead(410, {
+      "content-type": "application/json",
+      "cache-control": "no-store",
+    });
+    res.end(JSON.stringify({ error: "ginse_integration_retired" }));
+    return;
+  }
   if (pathname !== "/mcp") {
     res.writeHead(404, { "content-type": "application/json" });
     res.end(JSON.stringify({ error: "not_found" }));
