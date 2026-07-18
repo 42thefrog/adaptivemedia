@@ -1,8 +1,8 @@
 ---
 type: Style Profile
 title: Maya — Style Profile
-description: Maya's taste — warm, pastel, film-like and shareable — mapped to the Golden Hour theme.
-tags: [style, taste, golden-hour]
+description: Maya's taste — a playful, meme-fluent 42 Paris code student — bound to the app's theme-maya (dark, monospace, cyan/lime).
+tags: [style, taste, theme-maya]
 timestamp: 2026-07-18T10:00:00+02:00
 ---
 
@@ -10,34 +10,40 @@ timestamp: 2026-07-18T10:00:00+02:00
 
 | Field | Value |
 |---|---|
-| Theme | Golden Hour |
-| Palette leaning | warm and saturated — pastel tiles, terracotta, a golden accent; film-like warmth |
-| Fonts mood | friendly humanist sans, soft display for titles |
-| Density | airy and visual-first — images lead, text supports, easy to reshare |
-| Imagery | candid, natural warm light, golden-hour tones, a consistent "found color" thread |
+| App theme | `theme-maya` — the source of truth for her look (see `commands.json` → `theme`) |
+| Palette | base `#061421` (deep night-blue background), accent `#38d9ff` (cyan), secondary `#9dff57` (lime) |
+| Fonts | `"DM Mono", monospace` for body/code, `Inter` for display |
+| Radius | `8px` — soft-but-utilitarian |
+| Feel | dark, terminal-adjacent, neon accents; a build-log that happens to look good |
+
+The concrete render target is the app theme, not a theme-factory preset: the
+embedded feed applies `theme-maya` and its CSS vars exactly as
+`web/src/nextbound.ts` (`profilePalette.maya`) does. Source of truth for the
+palette is `knowledge/persona_maya/commands.json` → `theme`.
 
 # Voice
 
 | Field | Value |
 |---|---|
-| Tone | warm, first-person, understated |
-| Do | short lines, sensory detail, sound like something she'd post as her own |
-| Avoid | corporate templating, exclamation stacking, jargon, anything that genericizes her voice |
+| Tone | funny, practical, social; sounds like a 42 Paris group chat |
+| Do | short and useful, meme-fluent, turn a bug into a joke before fixing it, ship-first |
+| Avoid | corporate polish, over-explained theory, anything too serious to paste in a project channel |
 
 # Notes
 
-Maya treats experience and content as the same activity and protects a
-consistent personal visual voice across both. Anything that reads as a template
-should be softened into something she could post herself. The design should feel
-inspirational and shareable rather than instructional — a feed she'd be proud to
-have made.
+Maya wants to take code seriously without being boring about it. Content should
+feel useful inside the rhythms of 42 Paris — peer review, late-night debugging,
+campus jokes, hoodie weather, post-project beers. The dark neon-mono theme is
+part of that identity: it reads as a dev who has taste, not a lifestyle brand.
 
 # Related
 
 - [Profile](/persona_maya/profile.md)
+- [Command index](/persona_maya/commands.json)
 - [Bundle index](/persona_maya/index.md)
 
 # Citations
 
-[1] [server/data/seed.ts](../../server/data/seed.ts) — `audiencePersonas`, `persona_maya` (preferred format: inspirational, visual, shareable).
-[2] [Profile](/persona_maya/profile.md) and [Vacation memory](/persona_maya/vacation.md) — "found color" visual series, pastel Alfama tiles, golden-hour shooting.
+[1] [server/data/seed.ts](../../server/data/seed.ts) — `audiencePersonas`, `persona_maya` (42 Paris code student; funny, practical, social, low-friction).
+[2] [web/src/nextbound.ts](../../web/src/nextbound.ts) — `profilePalette.maya` (the app theme this style is bound to).
+[3] [Profile](/persona_maya/profile.md) — 42 Paris coding student, meme-fluent, peer-driven.

@@ -1,0 +1,43 @@
+{
+  "okf_version": "0.1",
+  "user_id": "persona_alex",
+  "profile_id": "alex",
+  "theme": {
+    "app_class": "theme-alex",
+    "source": "web/src/nextbound.ts (profilePalette.alex) + web/src/nextbound.css (.theme-alex)",
+    "palette": {
+      "accent": "#3157c8",
+      "secondary": "#f4efe2",
+      "base": "#0b1020",
+      "font": "Inter, Arial, sans-serif",
+      "display": "Inter, Arial, sans-serif",
+      "radius": "2px"
+    },
+    "applies_to": "the artifact feed embedded in the chat (and the Nextbound experience widget)",
+    "deterministic": true
+  },
+  "commands": [
+    {
+      "name": "feed_theme",
+      "intent": "which theme should the embedded feed use for this persona",
+      "aliases": ["theme du feed", "persona theme", "set feed theme", "thème d'Alex"],
+      "resolver": {
+        "type": "theme",
+        "ref": "$.theme",
+        "apply": {
+          "css_class": "theme-alex",
+          "css_vars": {
+            "--live-accent": "#3157c8",
+            "--live-secondary": "#f4efe2",
+            "--profile-font": "Inter, Arial, sans-serif",
+            "--profile-display": "Inter, Arial, sans-serif"
+          }
+        },
+        "note": "Deterministic — the MCP feed embed applies theme-alex + these vars exactly as web/src/nextbound.ts does via profilePalette. Always the same theme for persona_alex."
+      },
+      "returns": "The app theme (class + palette + CSS vars) that themes Alex's embedded feed.",
+      "learned_from": "web/src/nextbound.ts profilePalette.alex + .theme-alex in web/src/nextbound.css.",
+      "timestamp": "2026-07-18T10:00:00+02:00"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "okf_version": "0.1",
+  "user_id": "persona_camille",
+  "profile_id": "camille",
+  "theme": {
+    "app_class": "theme-camille",
+    "source": "web/src/nextbound.ts (profilePalette.camille) + web/src/nextbound.css (.theme-camille)",
+    "palette": {
+      "accent": "#ff79b8",
+      "secondary": "#ffc857",
+      "base": "#21131d",
+      "font": "\"Playfair Display\", Georgia, serif",
+      "display": "\"Playfair Display\", Georgia, serif",
+      "radius": "34px"
+    },
+    "applies_to": "the artifact feed embedded in the chat (and the Nextbound experience widget)",
+    "deterministic": true
+  },
+  "commands": [
+    {
+      "name": "feed_theme",
+      "intent": "which theme should the embedded feed use for this persona",
+      "aliases": ["theme du feed", "persona theme", "set feed theme", "thème de Camille"],
+      "resolver": {
+        "type": "theme",
+        "ref": "$.theme",
+        "apply": {
+          "css_class": "theme-camille",
+          "css_vars": {
+            "--live-accent": "#ff79b8",
+            "--live-secondary": "#ffc857",
+            "--profile-font": "\"Playfair Display\", Georgia, serif",
+            "--profile-display": "\"Playfair Display\", Georgia, serif"
+          }
+        },
+        "note": "Deterministic — the MCP feed embed applies theme-camille + these vars exactly as web/src/nextbound.ts does via profilePalette. Always the same theme for persona_camille."
+      },
+      "returns": "The app theme (class + palette + CSS vars) that themes Camille's embedded feed.",
+      "learned_from": "web/src/nextbound.ts profilePalette.camille + .theme-camille in web/src/nextbound.css.",
+      "timestamp": "2026-07-18T10:00:00+02:00"
+    }
+  ]
+}

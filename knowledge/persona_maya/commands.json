@@ -1,7 +1,44 @@
 {
   "okf_version": "0.1",
   "user_id": "persona_maya",
+  "profile_id": "maya",
+  "theme": {
+    "app_class": "theme-maya",
+    "source": "web/src/nextbound.ts (profilePalette.maya) + web/src/nextbound.css (.theme-maya)",
+    "palette": {
+      "accent": "#38d9ff",
+      "secondary": "#9dff57",
+      "base": "#061421",
+      "font": "\"DM Mono\", monospace",
+      "display": "Inter, Arial, sans-serif",
+      "radius": "8px"
+    },
+    "applies_to": "the artifact feed embedded in the chat (and the Nextbound experience widget)",
+    "deterministic": true
+  },
   "commands": [
+    {
+      "name": "feed_theme",
+      "intent": "which theme should the embedded feed use for this persona",
+      "aliases": ["theme du feed", "persona theme", "set feed theme", "thème de Maya"],
+      "resolver": {
+        "type": "theme",
+        "ref": "$.theme",
+        "apply": {
+          "css_class": "theme-maya",
+          "css_vars": {
+            "--live-accent": "#38d9ff",
+            "--live-secondary": "#9dff57",
+            "--profile-font": "\"DM Mono\", monospace",
+            "--profile-display": "Inter, Arial, sans-serif"
+          }
+        },
+        "note": "Deterministic — the MCP feed embed applies theme-maya + these vars exactly as web/src/nextbound.ts does via profilePalette. Always the same theme for persona_maya."
+      },
+      "returns": "The app theme (class + palette + CSS vars) that themes Maya's embedded feed.",
+      "learned_from": "web/src/nextbound.ts profilePalette.maya + .theme-maya in web/src/nextbound.css.",
+      "timestamp": "2026-07-18T10:00:00+02:00"
+    },
     {
       "name": "last_vacation_photo",
       "intent": "get the last photo of the vacation",
@@ -16,7 +53,7 @@
         "locator": { "match": "PHOTO PLACEHOLDER", "select": "last" },
         "op": "extract_caption"
       },
-      "returns": "The caption of the last vacation photo placeholder (golden-hour Miradouro shot).",
+      "returns": "The caption of the last vacation photo placeholder.",
       "learned_from": "Conversation with Claude, 2026-07-18 — front-end query 'get the last vacation photo'.",
       "timestamp": "2026-07-18T10:00:00+02:00"
     },
@@ -29,9 +66,9 @@
         "server": "App_Next_Media",
         "tool": "browse_artifact_feed",
         "args": { "type": "okf", "limit": 8 },
-        "note": "Live data via MCP — not cached in the knowledge base."
+        "note": "Live data via MCP — not cached in the knowledge base. Render the returned feed with the persona theme above (theme-maya)."
       },
-      "returns": "One page of OKF feed items (title, summary, kind) from the live artifact feed.",
+      "returns": "One page of OKF feed items (title, summary, kind) from the live artifact feed, themed theme-maya.",
       "learned_from": "Conversation with Claude, 2026-07-18 — demonstrating an MCP-backed resolver.",
       "timestamp": "2026-07-18T10:00:00+02:00"
     }

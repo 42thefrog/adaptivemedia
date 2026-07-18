@@ -1,5 +1,14 @@
 # Style profile — a user's taste, mapped to a theme
 
+> **Personas in this repo are bound to the app's real theme, not a theme-factory
+> preset.** The source of truth for a persona's look is
+> `knowledge/<user_id>/commands.json` → `theme` (mirroring `profilePalette` in
+> `web/src/nextbound.ts` and `.theme-<persona>` in `web/src/nextbound.css`), so
+> the feed embedded in the chat matches the Nextbound experience. `style.md`
+> references that app theme and adds the taste/voice narrative around it. Use the
+> theme-factory mapping below only for standalone artifacts that are *not* the
+> app's embedded feed. See `references/indexation.md` → "Persona theme block".
+
 `style.md` is what makes each user's artifact look like *theirs*. Memory holds
 *what* to say; `style.md` holds *how it should feel and look*. The artifact
 builder reads it and drives colors and fonts through the `theme-factory` skill,

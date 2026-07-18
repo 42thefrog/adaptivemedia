@@ -91,6 +91,66 @@ Fill `args` from the query when needed (e.g. a persona id, a cursor). If a call
 needs a value the query doesn't supply, that's a resolve-time input to ask for,
 not something to guess.
 
+### `theme` — the persona's fixed app theme
+
+The look of a persona is not a theme-factory abstraction: it is the app's real
+per-persona theme, so the feed embedded in the chat matches the Nextbound
+experience widget. The index file carries a top-level `theme` block (below), and
+a `feed_theme` command whose resolver returns it and says how to apply it:
+
+```json
+"resolver": {
+  "type": "theme",
+  "ref": "$.theme",
+  "apply": {
+    "css_class": "theme-maya",
+    "css_vars": {
+      "--live-accent": "#38d9ff",
+      "--live-secondary": "#9dff57",
+      "--profile-font": "\"DM Mono\", monospace",
+      "--profile-display": "Inter, Arial, sans-serif"
+    }
+  },
+  "note": "Deterministic — apply theme-maya + these vars exactly as web/src/nextbound.ts does via profilePalette."
+}
+```
+
+This is **deterministic**: a given persona always resolves to the same theme.
+To theme anything for a persona, resolve `feed_theme` and apply the returned
+class + CSS vars — never invent colors.
+
+## Persona theme block
+
+Each `commands.json` has a top-level `theme` object binding the persona to the
+app's real theme (the source of truth is `web/src/nextbound.ts` →
+`profilePalette[profile_id]` and the `.theme-<persona>` rules in
+`web/src/nextbound.css`):
+
+```json
+{
+  "user_id": "persona_maya",
+  "profile_id": "maya",
+  "theme": {
+    "app_class": "theme-maya",
+    "source": "web/src/nextbound.ts (profilePalette.maya) + web/src/nextbound.css (.theme-maya)",
+    "palette": {
+      "accent": "#38d9ff", "secondary": "#9dff57", "base": "#061421",
+      "font": "\"DM Mono\", monospace", "display": "Inter, Arial, sans-serif",
+      "radius": "8px"
+    },
+    "applies_to": "the artifact feed embedded in the chat (and the experience widget)",
+    "deterministic": true
+  },
+  "commands": [ /* feed_theme first, then learned commands */ ]
+}
+```
+
+`base` is the background; `accent`/`secondary`/`font`/`display`/`radius` are the
+front. Keep the values in sync with `profilePalette` — if the app theme changes,
+update the block. This is what lets the personality set the embedded feed's
+theme: the `memory` build step and any `mcp` feed resolver render the returned
+items under the persona's `theme` block.
+
 ## The resolve / learn flow
 
 1. **Normalize** the incoming query (lowercase, trim, strip filler).
