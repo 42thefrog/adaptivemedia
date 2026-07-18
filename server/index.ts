@@ -31,6 +31,14 @@ import {
   installMcpSkill,
   installPersonality,
 } from "./skills.js";
+import { z } from "zod";
+
+const RunProceduralLoopInput = z
+  .object({
+    persona: z.enum(["alex", "camille", "maya"]).optional(),
+    seedId: z.string().min(1).max(120).optional(),
+  })
+  .strict();
 
 const service = new AdaptiveMediaService();
 const WIDGET_URI = "ui://adaptive-media/widget.html";
@@ -453,6 +461,38 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
       _meta: feedMeta,
     },
     feedSafe((input) => saveFeedItem(input)),
+  );
+  server.registerTool(
+    "run_procedural_loop",
+    {
+      title: "Run the Nextbound procedural loop",
+      description:
+        "Open the Nextbound procedural-loop board (themed masonry: DESIGN modes, WORLD backgrounds, VIEW-AS persona, with the artifact feed rendered inside) as an inline interactive artifact. Optionally view as a persona (alex, camille, maya).",
+      inputSchema: RunProceduralLoopInput,
+      annotations: read,
+      _meta: nbMeta,
+    },
+    nbSafe(({ persona = "camille", seedId } = {}) => {
+      const seed = seedId ?? "seed-afterlight-maya";
+      let opened: Record<string, unknown> = {};
+      try {
+        opened = nextbound.openSeed(seed, persona) as Record<string, unknown>;
+      } catch {
+        opened = {};
+      }
+      return {
+        ...opened,
+        view: "procedural_loop" as const,
+        scenario: "procedural-loop" as const,
+        persona,
+        artifact: {
+          id: "nextbound-procedural-loop",
+          title: "Nextbound Procedural Loop",
+          resourceUri: NEXTBOUND_WIDGET_URI,
+          surface: "conversation_inline_artifact",
+        },
+      };
+    }),
   );
   const kAdd = (
     name: keyof typeof knowledgeSchemas,
