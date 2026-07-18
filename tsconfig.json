@@ -15,5 +15,9 @@
     "nextbound/**/*.ts",
     "web/**/*.ts",
     "web/**/*.tsx"
+  ],
+  "exclude": [
+    "web/src/living-artifact/**",
+    "web/living-artifact.vite.config.ts"
   ]
 }

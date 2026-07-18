@@ -14,5 +14,13 @@ interface Window {
       prompt: string;
       scrollToBottom?: boolean;
     }) => Promise<void>;
+    uploadFile?: (
+      file: File,
+      options?: { library?: boolean },
+    ) => Promise<{ fileId?: string; id?: string } | string>;
+    selectFiles?: () => Promise<unknown>;
+    getFileDownloadUrl?: (args: {
+      fileId: string;
+    }) => Promise<{ url?: string } | string>;
   };
 }

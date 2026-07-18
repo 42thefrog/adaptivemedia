@@ -38,20 +38,6 @@ export const luna: NextboundIntent = {
 };
 export const profiles: OKFProfile[] = [
   {
-    id: "alex",
-    name: "Alex",
-    role: "CEO",
-    knowledge: [
-      "startups",
-      "SaaS",
-      "customer acquisition",
-      "company building",
-      "product strategy",
-      "leadership",
-    ],
-    preferences: ["strategic", "concise", "practical", "growth-focused"],
-  },
-  {
     id: "camille",
     name: "Camille",
     role: "Artistic Director",
@@ -64,6 +50,20 @@ export const profiles: OKFProfile[] = [
       "creative direction",
     ],
     preferences: ["visual", "editorial", "refined", "trend-aware"],
+  },
+  {
+    id: "alex",
+    name: "Alex",
+    role: "CEO",
+    knowledge: [
+      "startups",
+      "SaaS",
+      "customer acquisition",
+      "company building",
+      "product strategy",
+      "leadership",
+    ],
+    preferences: ["strategic", "concise", "practical", "growth-focused"],
   },
   {
     id: "maya",

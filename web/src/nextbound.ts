@@ -1,5 +1,12 @@
 import Alpine from "alpinejs";
 import { createNextboundTransport } from "./nextbound-transport.js";
+import {
+  localBrowse,
+  type FeedItem,
+  type FeedItemType,
+  type FeedPage,
+  type OkfField,
+} from "./feed-shared.js";
 import { profiles } from "../../nextbound/fixtures.js";
 import type {
   CompiledExperience,
@@ -25,6 +32,122 @@ import { redditArticlesByProfile } from "./reddit-articles.js";
 import { newsArticlesByProfile } from "./news-articles.js";
 import { initTeamGames } from "./team-games.js";
 import "./nextbound.css";
+
+type PersonaId = "maya" | "camille" | "alex";
+type DesignMode =
+  | "wireframe"
+  | "minimal"
+  | "glass"
+  | "brutalist"
+  | "playful"
+  | "swiss"
+  | "bauhaus"
+  | "editorial"
+  | "bento"
+  | "material"
+  | "neobrutalist"
+  | "clay"
+  | "neumorphic"
+  | "y2k"
+  | "cyberpunk"
+  | "retrofuturist";
+type UserVisualStyle = "primary" | "secondary" | "ambient";
+
+const personaDesignPresets: Record<
+  PersonaId,
+  { designMode: DesignMode; userVisualStyle: UserVisualStyle }
+> = {
+  maya: { designMode: "retrofuturist", userVisualStyle: "primary" },
+  camille: { designMode: "playful", userVisualStyle: "primary" },
+  alex: { designMode: "neumorphic", userVisualStyle: "secondary" },
+};
+
+const personaPreset = (id: string) =>
+  personaDesignPresets[id as PersonaId] ?? personaDesignPresets.maya;
+
+const FEED_TYPE_LABEL: Record<FeedItemType, string> = {
+  artifact: "Interactive artifact",
+  editorial: "Editorial · media",
+  intent: "Intent · creation",
+  okf: "Knowledge · OKF",
+};
+
+// Persona voice distilled from knowledge/persona_{alex,camille,maya}/style.md
+// (# Voice). This is the .agents/skills/memory "Personalize" contract:
+// style.md -> tone.
+const PERSONA_VOICE: Record<PersonaId, string> = {
+  camille:
+    "Respond as if for Camille (artistic director). Voice: concise, composed, assured; avoid generic phrasing and over-explaining. World: Desert Rose — warm neutrals, dusty rose, refined serif.",
+  alex:
+    "Respond as if for Alex (CEO). Voice: direct, concrete, technical; data-first; avoid lifestyle fluff. World: Tech Innovation — dark, high-contrast, one electric accent, code-editor feel.",
+  maya:
+    "Respond as if for Maya (developer student). Voice: warm, first-person, understated; avoid corporate templating. World: Golden Hour — warm saturated pastels, terracotta/golden accent.",
+};
+
+// View-model: normalizes a raw FeedItem into exactly what the template binds,
+// with safe defaults so a malformed server item can never throw an Alpine
+// binding.
+type FeedCardVM = {
+  id: string;
+  type: FeedItemType;
+  order: number;
+  kindLabel: string;
+  okfKind: string;
+  title: string;
+  summary: string;
+  tags: string[];
+  accentFrom: string;
+  accentTo: string;
+  mediaKind: string;
+  mediaLabel: string;
+  mediaHeight: number;
+  author: string;
+  metricLabel: string;
+  metricValue: string;
+  isOkfSource: boolean;
+  schemaLine: string;
+  schemaFields: OkfField[];
+  raw: FeedItem;
+};
+function mapFeedCard(raw: any, index = 0): FeedCardVM {
+  const m = raw?.media ?? {};
+  const type: FeedItemType = ["artifact", "editorial", "intent", "okf"].includes(
+    raw?.type,
+  )
+    ? raw.type
+    : "artifact";
+  const ratio = Number.isFinite(m.ratio) && m.ratio > 0 ? m.ratio : 0.7;
+  const table = raw?.okf?.table;
+  return {
+    id: String(raw?.id ?? `feed-${index}`),
+    type,
+    order: Number.isFinite(raw?.order) ? raw.order : 10000 - index,
+    kindLabel: FEED_TYPE_LABEL[type],
+    okfKind: raw?.okf?.kind ?? "",
+    title: String(raw?.title ?? ""),
+    summary: String(raw?.summary ?? ""),
+    tags: Array.isArray(raw?.tags) ? raw.tags.slice(0, 3) : [],
+    accentFrom: m.accentFrom || "#6366f1",
+    accentTo: m.accentTo || "#0ea5e9",
+    mediaKind: ["gradient", "image", "code", "chart", "quote"].includes(m.kind)
+      ? m.kind
+      : "gradient",
+    mediaLabel: m.label ?? "",
+    mediaHeight: Math.round(120 * ratio),
+    author: raw?.author ? `${raw.author.name} · ${raw.author.role}` : "",
+    metricLabel: raw?.metric?.label ?? "",
+    metricValue: raw?.metric?.value ?? "",
+    isOkfSource: Boolean(table),
+    schemaLine: table
+      ? `${table.database}.${table.table} · ${table.engine} · ~${Number(
+          table.rowCountEstimate,
+        ).toLocaleString()} rows`
+      : "",
+    schemaFields:
+      table && Array.isArray(table.fields) ? table.fields.slice(0, 4) : [],
+    raw: raw as FeedItem,
+  };
+}
 
 const commonsParticipantConfig = [
   {
@@ -175,53 +298,76 @@ const msftSnapshot = {
 const moodboardImages = [
   {
     id: "mb-1",
-    url: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=480&q=70&auto=format",
-    label: "Concrete stair, hard light",
-    tag: "architecture",
+    url: "/moodboard/camille/studio-board.png",
+    label: "Pinned studio references with objects, swatches and silhouettes",
+    tag: "studio wall",
+    position: "center",
   },
   {
     id: "mb-2",
-    url: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=480&q=70&auto=format",
-    label: "Draped silhouette",
-    tag: "fashion",
+    url: "/moodboard/camille/abstract-field.png",
+    label: "Landscape collage with olive, amber and translucent geometry",
+    tag: "palette",
+    position: "center",
   },
   {
     id: "mb-3",
-    url: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?w=480&q=70&auto=format",
-    label: "Spiral stair, museum",
-    tag: "architecture",
+    url: "/moodboard/camille/red-tulip-set.png",
+    label: "Red floral couture set with dense textile backdrop",
+    tag: "floral set",
+    position: "center",
   },
   {
     id: "mb-4",
-    url: "https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=480&q=70&auto=format",
-    label: "Glass facade grid",
-    tag: "architecture",
+    url: "/moodboard/camille/blue-floral-couture.png",
+    label: "Blue flower silhouette with painterly couture volume",
+    tag: "couture",
+    position: "center",
   },
   {
     id: "mb-5",
-    url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=480&q=70&auto=format",
-    label: "Studio portrait",
-    tag: "fashion",
+    url: "/moodboard/camille/runner-roses.png",
+    label: "Motion study with roses, dress and saturated open sky",
+    tag: "movement",
+    position: "center",
   },
   {
     id: "mb-6",
-    url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=480&q=70&auto=format",
-    label: "Quiet ridge line",
-    tag: "wellness",
+    url: "/moodboard/camille/pink-forest.png",
+    label: "Surreal forest walk through oversized pink mushroom forms",
+    tag: "surreal",
+    position: "center",
   },
   {
     id: "mb-7",
-    url: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=480&q=70&auto=format",
-    label: "Textile close-up",
-    tag: "art",
+    url: "/moodboard/camille/cyan-floral-couture.png",
+    label: "Cyan floral volume and soft sculptural fabric",
+    tag: "texture",
+    position: "center",
   },
   {
     id: "mb-8",
-    url: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=480&q=70&auto=format",
-    label: "Layered shadow",
-    tag: "architecture",
+    url: "/moodboard/camille/pink-monochrome.png",
+    label: "Monochrome pink fashion world with birds and foliage",
+    tag: "monochrome",
+    position: "center top",
   },
 ] as const;
+
+const moodMusicByProfile = {
+  alex: {
+    track: "/music/alex-techno.mp3",
+    title: "Alex - Techno",
+  },
+  camille: {
+    track: "/music/velvet-and-neon-camille.m4a",
+    title: "Velvet and Neon",
+  },
+  maya: {
+    track: "/music/maya-15s.mp3",
+    title: "Maya 15s",
+  },
+} as const;
 
 const storyFrameComponents = [
   [
@@ -290,9 +436,9 @@ Alpine.data("nextbound", () => ({
   error: "",
   share: null as any,
   profiles,
-  profileId: "maya",
-  designMode: "wireframe",
-  userVisualStyle: "primary",
+  profileId: "camille",
+  designMode: personaDesignPresets.camille.designMode,
+  userVisualStyle: personaDesignPresets.camille.userVisualStyle,
   inbox: [] as InboxMessage[],
   context: null as NormalizedContext | null,
   experience: null as CompiledExperience | null,
@@ -302,8 +448,9 @@ Alpine.data("nextbound", () => ({
   teamGamePlayers: [] as string[],
   teamGameInviteName: "",
   loopMode:
+    Boolean((window as any).__NEXTBOUND_ARTIFACT__) ||
     new URLSearchParams(window.location.search).get("scenario") ===
-    "procedural-loop",
+      "procedural-loop",
   transition: null as null | {
     from: ArtifactExecution;
     to: ArtifactExecution;
@@ -329,6 +476,14 @@ Alpine.data("nextbound", () => ({
     accent: string;
     visitNumber: number;
   }>,
+  feedCards: [] as FeedCardVM[],
+  feedCursor: null as string | null,
+  feedHasMore: true,
+  feedTotal: 0,
+  feedFilter: "all" as FeedItemType | "all",
+  feedLoading: false,
+  feedSentIds: new Set<string>(),
+  feedObserver: null as IntersectionObserver | null,
   widgetBranches: [] as Array<{
     id: string;
     parentSchemaId: string;
@@ -454,8 +609,11 @@ Alpine.data("nextbound", () => ({
   moodboardPinned: [] as string[],
   toggleMoodboardPin(id: string) {
     this.moodboardPinned = this.moodboardPinned.includes(id)
-      ? this.moodboardPinned.filter((x) => x !== id)
+      ? this.moodboardPinned.filter((x: string) => x !== id)
       : [...this.moodboardPinned, id];
+  },
+  moodboardTileStyle(image: (typeof moodboardImages)[number]) {
+    return `--moodboard-image:url("${image.url}");--moodboard-position:${image.position}`;
   },
   // Alex: MSFT is OpenAI's largest outside investor and the closest real,
   // publicly-traded proxy — OpenAI itself has no ticker. Numbers are a real
@@ -480,8 +638,8 @@ Alpine.data("nextbound", () => ({
   imageSaved: false,
   moodMusicStatus: "idle" as "idle" | "generating" | "ready",
   moodMusicPlaying: false,
-  moodMusicTrack: "/music/one-little-doorway.mp3",
-  moodMusicTitle: "One Little Doorway",
+  moodMusicTrack: moodMusicByProfile.camille.track,
+  moodMusicTitle: moodMusicByProfile.camille.title,
   reactionSequence: 0,
   floatingReactions: [] as Array<{
     id: string;
@@ -548,10 +706,10 @@ Alpine.data("nextbound", () => ({
       await this.transport.call("publish_intent", { intentId: "afterlight" });
       const delivered: any = await this.transport.call("deliver_to_inbox", {
         intentId: "afterlight",
-        profileIds: ["alex", "camille", "maya"],
+        profileIds: ["camille", "alex", "maya"],
       });
       this.inbox = delivered.deliveries;
-      await this.selectProfile("maya");
+      await this.selectProfile("camille");
     });
   },
   async initProceduralRuntime() {
@@ -567,9 +725,108 @@ Alpine.data("nextbound", () => ({
         sessionId: opened.session.id,
       });
     });
+    await this.loadFeedPage(true);
     this.observeRuntimeFrames();
+    this.observeFeedSentinel();
     this.layoutWidgetBoard();
     this.setupKineticCanvas();
+  },
+  async callFeedBrowse(cursor?: string): Promise<FeedPage> {
+    if ((window as any).__NEXTBOUND_MODE__ === "mcp") {
+      const input: Record<string, unknown> = { persona: this.profileId };
+      if (cursor) input.cursor = cursor;
+      if (this.feedFilter !== "all") input.type = this.feedFilter;
+      // transport unwraps structuredContent -> FeedPage directly.
+      return (await this.transport.call(
+        "browse_artifact_feed",
+        input,
+      )) as FeedPage;
+    }
+    return localBrowse(cursor); // local-preview: type/persona apply in MCP only
+  },
+  async loadFeedPage(replace = false) {
+    if (this.feedLoading) return;
+    this.feedLoading = true;
+    try {
+      const page = await this.callFeedBrowse(
+        replace ? undefined : this.feedCursor ?? undefined,
+      );
+      const vms = page.items.map((it: FeedItem, i: number) =>
+        mapFeedCard(it, i),
+      );
+      this.feedCards = replace ? vms : [...this.feedCards, ...vms];
+      this.feedCursor = page.nextCursor;
+      this.feedHasMore = page.hasMore;
+      this.feedTotal = page.total;
+    } catch {
+      this.feedHasMore = false;
+    } finally {
+      this.feedLoading = false;
+      // Re-pack AFTER Alpine flushes new x-for nodes; layoutWidgetBoard
+      // re-queries the DOM fresh on every call.
+      this.$nextTick(() => this.layoutWidgetBoard());
+    }
+  },
+  async setFeedFilter(next: FeedItemType | "all") {
+    this.feedFilter = next;
+    this.feedCards = [];
+    this.feedCursor = null;
+    this.feedHasMore = true;
+    await this.loadFeedPage(true);
+    this.observeFeedSentinel();
+  },
+  observeFeedSentinel() {
+    requestAnimationFrame(() => {
+      this.feedObserver?.disconnect();
+      const node = document.querySelector("[data-feed-sentinel]");
+      if (!node) return;
+      this.feedObserver = new IntersectionObserver(
+        (entries) => {
+          if (
+            entries[0]?.isIntersecting &&
+            this.feedHasMore &&
+            !this.feedLoading &&
+            this.feedCursor
+          ) {
+            void this.loadFeedPage(false);
+          }
+        },
+        { rootMargin: "600px 0px" },
+      );
+      this.feedObserver.observe(node);
+    });
+  },
+  buildItemContext(item: FeedItem): string {
+    const lines: string[] = [
+      PERSONA_VOICE[this.profileId as PersonaId] ?? "",
+      "",
+      "Context for the feed item I just selected — let's discuss it.",
+      "",
+      `Title: ${item.title}`,
+      `Type: ${item.type}${item.okf ? ` · ${item.okf.kind}` : ""}`,
+      `Id: ${item.id}`,
+      `Summary: ${item.summary}`,
+    ];
+    if (item.okf?.body) lines.push(item.okf.body);
+    if (item.author) lines.push(`By: ${item.author.name} · ${item.author.role}`);
+    lines.push(`Tags: ${item.tags.join(", ")}`);
+    const table = item.okf?.table;
+    if (table) {
+      lines.push(
+        "",
+        `Source ${table.database}.${table.table} (${table.engine}, ~${table.rowCountEstimate.toLocaleString()} rows). Fields:`,
+        ...table.fields.map((f) => `- ${f.name} (${f.type}): ${f.description}`),
+      );
+    }
+    return lines.join("\n");
+  },
+  openFeedCard(card: FeedCardVM) {
+    const api = (window as any).openai;
+    const prompt = this.buildItemContext(card.raw);
+    if (api?.sendFollowUpMessage) void api.sendFollowUpMessage({ prompt });
+    else void this.transport.call("open_feed_item", { itemId: card.id }); // typed fallback
+    // reassign — Alpine won't track Set.add in place.
+    this.feedSentIds = new Set(this.feedSentIds).add(card.id);
   },
   setupKineticCanvas() {
     if (this.kineticReady) return;
@@ -717,6 +974,16 @@ Alpine.data("nextbound", () => ({
   },
   async switchRuntimeProfile(id: string) {
     this.profileId = id;
+    const preset = personaPreset(id);
+    const moodMusic =
+      moodMusicByProfile[id as keyof typeof moodMusicByProfile] ??
+      moodMusicByProfile.camille;
+    this.designMode = preset.designMode;
+    this.userVisualStyle = preset.userVisualStyle;
+    this.moodMusicTrack = moodMusic.track;
+    this.moodMusicTitle = moodMusic.title;
+    this.moodMusicStatus = "idle";
+    this.moodMusicPlaying = false;
     this.playingVideoId = "";
     this.videoFloatObserver?.disconnect();
     if (this.videoScrollHandler) {
@@ -725,8 +992,11 @@ Alpine.data("nextbound", () => ({
     }
     this.videoFloating = false;
     this.discussionVideoId = "";
-    this.userVisualStyle = "primary";
     this.feedArchive = [];
+    this.feedCards = [];
+    this.feedCursor = null;
+    this.feedHasMore = true;
+    this.feedSentIds = new Set();
     this.runtimeMutations = [];
     this.widgetBranches = [];
     this.nextboundPreviews = [];
@@ -745,17 +1015,32 @@ Alpine.data("nextbound", () => ({
     if (video.orientation === "square") return video.score >= 85 ? 5 : 4;
     return video.score >= 85 ? 6 : video.score >= 65 ? 4 : 3;
   },
-  videoCoverStyle(video: { id: string; kind?: string; cover?: string }) {
-    if (video.kind === "audio")
-      return (
-        "background-image:linear-gradient(180deg,transparent 40%,rgba(10,6,20,.88))" +
-        (video.cover ? ",url(" + video.cover + ")" : "")
-      );
-    return (
-      "background-image:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.82)),url(https://i.ytimg.com/vi/" +
-      video.id +
-      "/hqdefault.jpg)"
-    );
+  youtubeThumbnail(videoId: string) {
+    return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+  },
+  fallbackYoutubeThumbnail(event: Event, videoId: string) {
+    const image = event.currentTarget as HTMLImageElement | null;
+    if (!image || image.dataset.fallback === "true") return;
+    image.dataset.fallback = "true";
+    image.src = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+  },
+  sourceHost(url: string) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, "");
+    } catch {
+      return "external source";
+    }
+  },
+  articlePreviewStyle(article: {
+    url: string;
+    source?: string;
+    community?: string;
+    relevance: number;
+  }) {
+    const hue =
+      Array.from(article.url).reduce((total, char) => total + char.charCodeAt(0), 0) %
+      360;
+    return `--preview-hue:${hue};--preview-score:${article.relevance}%`;
   },
   redditGridSpan(article: {
     title: string;
@@ -1173,6 +1458,17 @@ Alpine.data("nextbound", () => ({
     this.observeRuntimeFrames();
     this.layoutWidgetBoard();
   },
+  async runtimeInteractFromAction(
+    action: RuntimeExecution["availableInteractions"][number],
+  ) {
+    const nextbound = this.runtimeExecution?.resolvedNextbounds.find(
+      (item: RuntimeNextbound) =>
+        item.destination.targetId === action.targetId ||
+        item.presentation.label === action.label,
+    );
+    if (!nextbound || !action.targetId) return;
+    await this.runtimeInteract(nextbound.id, action.targetId);
+  },
   async mutateRuntimeWithoutNavigation(topic = "collaborative") {
     this.emitReaction("✦");
     await this.run(async () => {
@@ -1282,14 +1578,68 @@ Alpine.data("nextbound", () => ({
       const board = document.querySelector<HTMLElement>(".runtime-demo");
       if (!board) return;
       const widgets = Array.from(
-        board.querySelectorAll<HTMLElement>("[data-widget]"),
+        board.querySelectorAll<HTMLElement>(
+          ".news-feed [data-widget], .news-feed .adaptive-piece, .news-feed .runtime-frame, .news-feed .nextbound-widget, .news-feed .nextbound-preview-widget, .news-feed .inline-mutation, .news-feed .video-library > header, .news-feed .reddit-field > header, [data-widget]",
+        ),
       );
       if (board.closest(".news-feed")) {
+        const placeMasonry = () => {
+          const visibleWidgets = widgets
+            .filter((widget) => {
+              const styles = getComputedStyle(widget);
+              return (
+                styles.display !== "none" &&
+                styles.display !== "contents" &&
+                styles.visibility !== "hidden"
+              );
+            })
+            .sort((left, right) => {
+              const leftOrder = Number.parseInt(getComputedStyle(left).order, 10);
+              const rightOrder = Number.parseInt(
+                getComputedStyle(right).order,
+                10,
+              );
+              return (
+                (Number.isFinite(leftOrder) ? leftOrder : 0) -
+                (Number.isFinite(rightOrder) ? rightOrder : 0)
+              );
+            });
+          const styles = getComputedStyle(board);
+          const gap = Number.parseFloat(styles.columnGap) || 12;
+          const width = board.clientWidth;
+          const columns = width >= 980 ? 3 : width >= 640 ? 2 : 1;
+          const columnWidth = (width - gap * (columns - 1)) / columns;
+          const columnHeights = Array.from({ length: columns }, () => 0);
+
+          for (const widget of visibleWidgets) {
+            const targetColumn = columnHeights.indexOf(
+              Math.min(...columnHeights),
+            );
+            widget.style.position = "absolute";
+            widget.style.width = `${columnWidth}px`;
+            widget.style.left = `${targetColumn * (columnWidth + gap)}px`;
+            widget.style.top = `${columnHeights[targetColumn]}px`;
+            widget.style.gridColumn = "auto";
+            widget.style.gridRowEnd = "auto";
+            const height = Math.max(
+              widget.scrollHeight,
+              widget.getBoundingClientRect().height,
+            );
+            columnHeights[targetColumn] += height + gap;
+          }
+          board.style.height = `${Math.max(...columnHeights) - gap}px`;
+        };
         this.widgetResizeObserver?.disconnect();
-        for (const widget of widgets) widget.style.gridRowEnd = "auto";
+        this.widgetResizeObserver = new ResizeObserver(() => placeMasonry());
+        for (const widget of widgets) this.widgetResizeObserver.observe(widget);
+        this.widgetResizeObserver.observe(board);
+        placeMasonry();
+        window.setTimeout(placeMasonry, 250);
+        window.setTimeout(placeMasonry, 900);
         return;
       }
       const place = (widget: HTMLElement) => {
+        if (getComputedStyle(widget).display === "contents") return;
         const styles = getComputedStyle(board);
         const rowHeight = Number.parseFloat(styles.gridAutoRows) || 10;
         const gap = Number.parseFloat(styles.rowGap) || 18;

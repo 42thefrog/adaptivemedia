@@ -20,7 +20,9 @@
       :style="loopMode?adaptiveBackdrop:''"
     >
       <header class="top">
-        <a class="wordmark" href="/"><i>N</i> NEXTBOUND</a>
+        <a class="wordmark" href="/nextbound.html?scenario=procedural-loop"
+          ><i>N</i> NEXTBOUND</a
+        >
         <span>NEXTBOUND EXPERIENCE ENGINE · LOCAL / MCP</span>
         <span class="loop-badge" x-show="loopMode">PROCEDURAL LOOP</span>
         <label class="persona-switcher" x-show="loopMode">
@@ -30,9 +32,9 @@
             @change="switchRuntimeProfile($el.value)"
             :disabled="loading"
           >
-            <option value="maya">Maya · Developer student</option>
             <option value="camille">Camille · Artistic director</option>
             <option value="alex">Alex · CEO</option>
+            <option value="maya">Maya · Developer student</option>
           </select>
         </label>
         <label class="design-switcher" x-show="loopMode">
@@ -382,6 +384,12 @@
                   <div></div><button id="tg-snake-down" style="width:30px;height:30px;padding:0;">▼</button><div></div>
                 </div>
                 <p id="tg-snake-status" style="text-align:center;margin:0;">score: 0</p>
+                <button
+                  id="tg-snake-restart"
+                  style="display:block;margin:8px auto 0;height:30px;padding:0 10px;"
+                >
+                  Restart
+                </button>
               </div>
 
               <div id="tg-maze" x-show="profileId==='camille'">
@@ -481,6 +489,102 @@
               </section>
             </template>
           </div>
+          <!-- Feed filter chips (single [data-widget]; order:0 sorts it to the top) -->
+          <div
+            class="feed-controls content-widget"
+            data-widget="feed-controls"
+            style="order: 0"
+            x-show="loopMode"
+          >
+            <template
+              x-for="f in ['all','artifact','editorial','intent','okf']"
+              :key="f"
+            >
+              <button
+                type="button"
+                :class="feedFilter===f?'chip active':'chip'"
+                @click="setFeedFilter(f)"
+                x-text="f==='all'?'All':f"
+              ></button>
+            </template>
+          </div>
+
+          <template x-for="card in feedCards" :key="card.id">
+            <article
+              class="feed-card content-widget"
+              data-widget="feed-card"
+              :class="['feed-card-'+card.type, feedSentIds.has(card.id)?'sent':'']"
+              :style="'order:'+card.order+';--accent-from:'+card.accentFrom+';--accent-to:'+card.accentTo"
+              role="button"
+              tabindex="0"
+              @click="openFeedCard(card)"
+              @keydown.enter="openFeedCard(card)"
+            >
+              <!-- media band (accent on inner element; height from media.ratio) -->
+              <div
+                class="feed-card__media"
+                :style="'height:'+card.mediaHeight+'px'"
+              >
+                <span class="feed-card__chip" x-show="card.type==='artifact'"
+                  >▶ interactive</span
+                >
+                <span
+                  class="feed-card__chip"
+                  x-show="card.mediaKind==='chart'"
+                  x-text="'⛃ '+(card.mediaLabel||'data')"
+                ></span>
+                <span class="feed-card__metric" x-show="card.metricValue">
+                  <strong x-text="card.metricValue"></strong>
+                  <span x-text="card.metricLabel"></span>
+                </span>
+              </div>
+
+              <div class="feed-card__body">
+                <small
+                  class="feed-card__kind"
+                  x-text="card.kindLabel + (card.okfKind ? ' · '+card.okfKind : '')"
+                ></small>
+                <b class="feed-card__title" x-text="card.title"></b>
+
+                <!-- editorial variant: pull-quote -->
+                <template x-if="card.type==='editorial' && card.mediaKind==='quote'">
+                  <blockquote
+                    class="feed-card__quote"
+                    x-text="card.summary"
+                  ></blockquote>
+                </template>
+                <template x-if="!(card.type==='editorial' && card.mediaKind==='quote')">
+                  <p class="feed-card__summary" x-text="card.summary"></p>
+                </template>
+
+                <!-- okf SOURCE variant: ClickHouse schema preview -->
+                <div class="feed-card__schema" x-show="card.isOkfSource">
+                  <code x-text="card.schemaLine"></code>
+                  <template x-for="fld in card.schemaFields" :key="fld.name">
+                    <span class="feed-card__field"
+                      ><b x-text="fld.name"></b><i x-text="fld.type"></i
+                    ></span>
+                  </template>
+                </div>
+
+                <footer class="feed-card__foot">
+                  <template x-for="t in card.tags" :key="t"
+                    ><span class="tag" x-text="'#'+t"></span
+                  ></template>
+                </footer>
+                <div
+                  class="feed-card__author"
+                  x-show="card.author"
+                  x-text="card.author"
+                ></div>
+              </div>
+
+              <span
+                class="feed-card__open"
+                x-text="feedSentIds.has(card.id) ? '✓ Context sent to chat' : '→ Discuss in chat'"
+              ></span>
+            </article>
+          </template>
           <div class="runtime-anchors content-widget" data-widget="anchors">
             <template x-for="anchor in runtimeExecution?.activatedAnchors||[]">
               <i x-text="anchor.phrase" :class="anchor.style"></i>
@@ -686,7 +790,7 @@
               <button
                 class="moodboard-tile"
                 :class="moodboardPinned.includes(img.id)?'pinned':''"
-                :style="'background-image:url('+img.url+')'"
+                :style="moodboardTileStyle(img)"
                 @click="toggleMoodboardPin(img.id)"
                 :title="img.label"
               >
@@ -1009,6 +1113,21 @@
               <small
                 x-text="article.community+' · '+article.relevance+'% match'"
               ></small>
+              <a
+                class="article-preview reddit-preview"
+                :href="article.url"
+                target="_blank"
+                rel="noreferrer"
+                :style="articlePreviewStyle(article)"
+                :aria-label="'Preview '+article.title"
+              >
+                <span class="article-preview-mark">r/</span>
+                <span>
+                  <b x-text="sourceHost(article.url)"></b>
+                  <em x-text="article.community"></em>
+                </span>
+                <i x-text="article.relevance+'%'"></i>
+              </a>
               <h3 x-text="article.title"></h3>
               <p x-text="article.summary"></p>
               <footer>
@@ -1045,6 +1164,21 @@
               <small
                 x-text="article.source+' · '+article.date+' · '+article.relevance+'% match'"
               ></small>
+              <a
+                class="article-preview news-preview"
+                :href="article.url"
+                target="_blank"
+                rel="noreferrer"
+                :style="articlePreviewStyle(article)"
+                :aria-label="'Preview '+article.title"
+              >
+                <span class="article-preview-mark">↗</span>
+                <span>
+                  <b x-text="sourceHost(article.url)"></b>
+                  <em x-text="article.source+' · '+article.date"></em>
+                </span>
+                <i x-text="article.relevance+'%'"></i>
+              </a>
               <h3 x-text="article.title"></h3>
               <p x-text="article.summary"></p>
               <footer>
@@ -1114,9 +1248,27 @@
                     x-show="playingVideoId!==video.id"
                     class="video-cover"
                     @click="toggleCreatorVideo(video.id)"
-                    :style="videoCoverStyle(video)"
                   >
+                    <img
+                      x-show="video.kind!=='audio'"
+                      class="video-thumbnail"
+                      :src="youtubeThumbnail(video.id)"
+                      :alt="profileId+' video preview '+(index+1)"
+                      loading="lazy"
+                      @error="fallbackYoutubeThumbnail($event, video.id)"
+                    />
+                    <img
+                      x-show="video.kind==='audio'&&video.cover"
+                      class="video-thumbnail"
+                      :src="video.cover"
+                      :alt="(video.title||profileId+' audio')+' cover'"
+                      loading="lazy"
+                    />
                     <span class="video-play" x-text="video.kind==='audio'?'♫':'▶'"></span>
+                    <span
+                      class="media-preview-badge"
+                      x-text="video.kind==='audio'?'SoundCloud preview':'YouTube preview'"
+                    ></span>
                     <span class="video-cover-copy">
                       <small
                         x-text="'@'+profileId+' · '+String(index+1).padStart(2,'0')"
@@ -1247,6 +1399,17 @@
           </div>
         </section>
       </section>
+      <div
+        data-feed-sentinel
+        x-show="loopMode && feedHasMore"
+        aria-hidden="true"
+        style="height: 1px"
+      ></div>
+      <p
+        class="feed-end"
+        x-show="loopMode && !feedHasMore && feedCards.length"
+        x-text="'End of feed · '+feedCards.length+' of '+feedTotal+' items'"
+      ></p>
       <section class="grid" x-show="!loopMode">
         <aside>
           <div class="panel publish">

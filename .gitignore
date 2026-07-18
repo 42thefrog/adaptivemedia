@@ -2,4 +2,8 @@ node_modules/
 server/data/store.json
 dist/
 web/nextbound-dist/
+web/artifact-feed-dist/
+web/artifact-dist/
+tmp/
+.agents/skills/adaptive-media-use/
 .DS_Store

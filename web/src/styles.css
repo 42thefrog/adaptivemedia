@@ -153,21 +153,37 @@ h1 {
   flex: 0 0 auto;
 }
 .result-list {
-  border-top: 1px solid #dcdcdc;
+  column-count: 2;
+  column-gap: 18px;
+  padding-top: 2px;
 }
 .result {
-  display: grid;
-  grid-template-columns: 38px 1fr;
+  display: inline-grid;
+  width: 100%;
+  grid-template-columns: 34px 1fr;
   gap: 12px;
-  padding: 22px 0;
-  border-bottom: 1px solid #e2e2e2;
+  margin: 0 0 18px;
+  padding: 18px;
+  border: 1px solid #e2e2e2;
+  background: #fff;
+  break-inside: avoid;
+  box-shadow: 0 12px 32px rgb(17 17 17 / 6%);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+.result:hover {
+  border-color: #c9d8ff;
+  box-shadow: 0 18px 42px rgb(23 105 255 / 12%);
+  transform: translateY(-2px);
 }
 .result-index {
   font:
     italic 13px Georgia,
     serif;
   color: #8a8a8a;
-  padding-top: 5px;
+  padding-top: 4px;
 }
 .creator-link {
   display: flex;
@@ -215,9 +231,15 @@ h1 {
 .result h2 {
   font-family: Georgia, serif;
   font-weight: 500;
-  font-size: 22px;
+  font-size: clamp(20px, 2.8vw, 26px);
   line-height: 1.15;
   margin: 13px 0 9px;
+}
+.result-body > p:not(.match) {
+  color: #5f5f5f;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 13px;
 }
 .match {
   color: #525252;
@@ -238,6 +260,7 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  flex-wrap: wrap;
 }
 .metrics {
   display: flex;
@@ -926,6 +949,12 @@ blockquote footer {
   .result {
     grid-template-columns: 28px 1fr;
     gap: 5px;
+    margin-bottom: 14px;
+    padding: 16px;
+  }
+  .result-list {
+    column-count: 1;
+    column-gap: 0;
   }
   .result-footer {
     align-items: flex-end;

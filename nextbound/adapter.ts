@@ -26,7 +26,16 @@ export const proceduralToolNames = [
   "replay_session",
 ] as const;
 export type ProceduralToolName = (typeof proceduralToolNames)[number];
-export type NextboundRuntimeToolName = NextboundToolName | ProceduralToolName;
+export const feedToolNames = [
+  "browse_artifact_feed",
+  "open_feed_item",
+  "save_feed_item",
+] as const;
+export type FeedToolName = (typeof feedToolNames)[number];
+export type NextboundRuntimeToolName =
+  | NextboundToolName
+  | ProceduralToolName
+  | FeedToolName;
 
 export class LocalToolAdapter {
   constructor(private service = new NextboundService()) {}

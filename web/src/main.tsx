@@ -31,9 +31,9 @@ const personaMusic: Record<
     playlistId: "37i9dQZF1DWZeKCadgRdKQ",
   },
   camille: {
-    title: "Peaceful Piano",
-    note: "Elegant, unhurried piano for a softer pace.",
-    playlistId: "37i9dQZF1DX4sWSpwq3LiO",
+    title: "Jazz Vibes",
+    note: "Cozy, low-noise jazz for a curated night in.",
+    playlistId: "37i9dQZF1DX0SM0LYsmbMT",
   },
   maya: {
     title: "Creative Focus",
@@ -41,9 +41,23 @@ const personaMusic: Record<
     playlistId: "37i9dQZF1DWWn6teJIIcfG",
   },
 };
+const generatedMoodTracks: Record<PersonaId, { title: string; src: string }> = {
+  alex: {
+    title: "Alex - Techno",
+    src: "/music/alex-techno.mp3",
+  },
+  camille: {
+    title: "Velvet and Neon",
+    src: "/music/velvet-and-neon-camille.m4a",
+  },
+  maya: {
+    title: "Maya 15s",
+    src: "/music/maya-15s.mp3",
+  },
+};
 const fallbackPersonas = [
   { id: "alex", name: "Alex", label: "Developer Student" },
-  { id: "camille", name: "Camille", label: "Aesthetic Executive" },
+  { id: "camille", name: "Camille", label: "Curated Chaos Artistic Director" },
   { id: "maya", name: "Maya", label: "Independent Creator" },
 ];
 const isLocalPreview = installLocalPreview();
@@ -82,6 +96,19 @@ function App() {
   const intent = data.intent;
   const experience = data.experience;
   const personas = data.availablePersonas ?? fallbackPersonas;
+
+  // Lifted above <Experience>: every like/follow/save/share action flips
+  // `loading` true→false, which unmounts and remounts <Experience> (it only
+  // renders while `!loading`). If the artifact's traits lived inside
+  // Experience, that remount would wipe them back to a fresh seed on every
+  // single interaction. Keeping the hook here means the artifact survives
+  // the loading flicker.
+  const {
+    traits: artifactTraits,
+    complete: artifactComplete,
+    signal: signalArtifact,
+    markComplete: completeArtifact,
+  } = useExperienceArtifact(personaId, experience?.id);
 
   useEffect(() => {
     window.openai?.setWidgetState?.({
@@ -345,6 +372,10 @@ function App() {
         <Experience
           data={data}
           personaId={personaId}
+          artifactTraits={artifactTraits}
+          artifactComplete={artifactComplete}
+          signalArtifact={signalArtifact}
+          completeArtifact={completeArtifact}
           setPersonaId={async (id: PersonaId) => {
             setPersonaId(id);
             await run(
@@ -593,19 +624,18 @@ function Experience({
   onFollow,
   onSave,
   onShare,
+  artifactTraits,
+  artifactComplete,
+  signalArtifact,
+  completeArtifact,
 }: any) {
   const experience = data.experience;
   const steps = experience.structuredOutcome?.steps ?? [];
   const [musicGenerating, setMusicGenerating] = useState(false);
   const [moodTrackReady, setMoodTrackReady] = useState(false);
   const music = personaMusic[personaId as PersonaId] ?? personaMusic.alex;
-
-  const {
-    traits: artifactTraits,
-    complete: artifactComplete,
-    signal: signalArtifact,
-    markComplete: completeArtifact,
-  } = useExperienceArtifact(personaId as PersonaId, experience?.id);
+  const generatedMoodTrack =
+    generatedMoodTracks[personaId as PersonaId] ?? generatedMoodTracks.alex;
 
   const generateMoodTrack = () => {
     setMusicGenerating(true);
@@ -726,12 +756,12 @@ function Experience({
             <div className="generated-track" aria-live="polite">
               <div>
                 <span>Today’s generated track</span>
-                <b>One Little Doorway</b>
+                <b>{generatedMoodTrack.title}</b>
               </div>
               <audio
                 controls
                 preload="metadata"
-                src="/music/one-little-doorway.mp3"
+                src={generatedMoodTrack.src}
               >
                 Your browser does not support audio playback.
               </audio>

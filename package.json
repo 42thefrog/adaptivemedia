@@ -7,10 +7,15 @@
     "dev": "vite --config web/vite.config.ts",
     "dev:nextbound": "vite --config web/nextbound.vite.config.ts",
     "dev:artifact": "vite --config web/artifact.vite.config.ts",
+    "dev:feed": "vite --config web/artifact-feed.vite.config.ts",
+    "dev:living-artifact": "vite --config web/living-artifact.vite.config.ts",
     "dev:all": "sh -c 'npm start & trap \"kill $!\" EXIT INT TERM; npm run dev'",
     "build:web": "vite build --config web/vite.config.ts",
     "build:nextbound": "vite build --config web/nextbound.vite.config.ts",
     "build:artifact": "vite build --config web/artifact.vite.config.ts",
+    "build:feed": "vite build --config web/artifact-feed.vite.config.ts",
+    "build:living-artifact": "vite build --config web/living-artifact.vite.config.ts",
+    "build:all": "npm run build:web && npm run build:nextbound && npm run build:feed && npm run build:living-artifact",
     "start": "tsx server/index.ts",
     "inspect": "npx @modelcontextprotocol/inspector http://127.0.0.1:3000/mcp",
     "test": "tsx --test server/**/*.test.ts",
@@ -31,7 +36,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "^0.170.0",
-    "zod": "^3.25.0"
+    "zod": "^3.25.0",
+    "zustand": "^4.5.7"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
