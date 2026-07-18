@@ -10,6 +10,7 @@
     "dev:feed": "vite --config web/artifact-feed.vite.config.ts",
     "dev:living-artifact": "vite --config web/living-artifact.vite.config.ts",
     "dev:all": "sh -c 'npm start & trap \"kill $!\" EXIT INT TERM; npm run dev'",
+    "open_nextbound": "node scripts/open_nextbound.mjs",
     "build:web": "vite build --config web/vite.config.ts",
     "build:nextbound": "vite build --config web/nextbound.vite.config.ts",
     "build:artifact": "vite build --config web/artifact.vite.config.ts",

@@ -540,7 +540,20 @@ Alpine.data("nextbound", () => ({
         break;
       case "help":
         out(
-          "help · whoami · ls · cat afterlight.md · git status · npm run dev:nextbound · match · clear",
+          "help · open_nextbound · whoami · ls · cat afterlight.md · git status · npm run dev:nextbound · match · clear",
+        );
+        break;
+      case "open_nextbound":
+        window.open(
+          "/nextbound-loop/Nextbound%20Loop.dc.html",
+          "nextbound-loop-artifact",
+        );
+        window.open(
+          "https://nextbound-adaptive-media.netlify.app/nextbound.html?scenario=procedural-loop",
+          "nextbound-procedural-loop",
+        );
+        out(
+          "opened Loop 3D animation Nextbound artifact and procedural-loop in browser",
         );
         break;
       case "whoami":
