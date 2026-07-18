@@ -1,5 +1,66 @@
 # Adaptive Media ChatGPT App — Step 7
 
+## Quickstart — run the MCP locally + install personalities (`deploy/procedural-loop`)
+
+On a fresh machine (only git + Node 20+ needed):
+
+```bash
+# 1. Clone the deploy branch
+git clone -b deploy/procedural-loop https://github.com/42thefrog/adaptivemedia.git
+cd adaptivemedia
+
+# 2. Install deps and build every widget the server serves
+npm install
+npm run build:all          # web + nextbound + feed (+ living-artifact)
+
+# 3. Start the MCP server (Streamable HTTP)
+npm start                  # http://0.0.0.0:3000/mcp   ·   health: /health
+
+# 4. (other terminals) live UIs
+npm run dev:nextbound      # procedural-loop board → http://127.0.0.1:4174/nextbound.html?scenario=procedural-loop
+npm run dev:feed           # interactive feed widget → http://127.0.0.1:4176/artifact-feed.html
+```
+
+Expose the MCP over HTTPS for ChatGPT / Claude:
+
+```bash
+cloudflared tunnel --url http://127.0.0.1:3000 --no-autoupdate
+# use the printed https://<domain>/mcp
+```
+
+### MCP tools
+
+- Feed: `browse_artifact_feed` (cursor pagination + type filter), `open_feed_item`
+  (returns the item + OKF/ClickHouse schema), `save_feed_item` (write it to `tmp/`).
+- Board: `run_procedural_loop` — open the themed procedural-loop board as an artifact.
+- Bootstrap / knowledge base: `install_mcp_skill`, `install_personality`.
+
+### Install personalities (audience personas)
+
+Personas are `alex`, `camille`, `maya`. Each has a knowledge bundle under
+`knowledge/persona_<id>/` (profile + `style.md` = its Desert Rose / retrofuturist /
+neumorphic design + voice). Install one via the MCP:
+
+- In ChatGPT/Claude, say **"get camille personnalité"** → the agent calls
+  `install_personality { "personality": "camille" }`.
+- It writes the bundle to `adaptive-media-use/personalities/camille.md` (the path the
+  functional skill loads from) **and** returns a `files` manifest, so a client without
+  server filesystem access can write the files itself.
+- The persona also drives the per-user design (VIEW AS) in the feed widget and the
+  board's 16 design modes.
+
+### Bootstrap from zero (machine with only the MCP connection)
+
+Call `install_mcp_skill` first: it returns the `adaptive-media-use/SKILL.md` manifest
+to write locally, whose instructions include the full clone → cd → `npm install` →
+`build:all` → `npm start` → `dev:nextbound` sequence and how to install personalities.
+
+### Deploy
+
+- **Render** (runs the Node server as-is): `render.yaml` is included — New → Blueprint.
+- **Netlify** (static board + MCP function): `netlify.toml` builds the widgets and
+  a pre-bundled Web-Standard function at `/mcp` (root redirects to the board).
+
 The deterministic Nextbound engine supports two explicit widget transports: `local-preview` (the default browser preview) and `mcp` (injected by the MCP UI resource). Both call the same domain service layer. The self-contained MCP Apps widget resource is `ui://nextbound/experience.html` and includes Alpine, CSS, and JavaScript without CDN dependencies.
 
 The existing server now also registers 13 Nextbound tools: `publish_intent`, `deliver_to_inbox`, `resolve_okf_context`, `compile_experience`, `resolve_next_action`, `match_tool`, `connect_artifact`, `get_experience_session`, `pause_experience`, `resume_experience`, `stop_experience`, `restart_experience`, and `share_experience`.
