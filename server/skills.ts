@@ -263,6 +263,26 @@ Two knowledge bases back this MCP:
 
 Keep everything deterministic: no clocks, no randomness, so pages and
 experiences stay reproducible.
+
+## Run locally — the procedural loop board
+
+The elaborate themed masonry ("procedural loop") is the Nextbound board. Run the
+MCP server and the board locally:
+
+\`\`\`bash
+npm install
+npm run build:all          # web + nextbound + feed widgets
+npm start                  # MCP server on 0.0.0.0:3000 (/mcp, /health)
+npm run dev:nextbound      # (other terminal) vite on 127.0.0.1:4174
+\`\`\`
+
+Open \`http://127.0.0.1:4174/nextbound.html?scenario=procedural-loop\` — the
+masonry board with the DESIGN (16 modes), WORLD, and VIEW-AS persona controls,
+and the feed cards rendered inside it. To expose the MCP over HTTPS for
+ChatGPT/Claude: \`cloudflared tunnel --url http://127.0.0.1:3000\` then use
+\`https://<domain>/mcp\`. In ChatGPT the loop board renders on the side via the
+\`ui://nextbound/experience.html\` resource (it defaults to the procedural-loop
+scenario).
 `;
 }
 

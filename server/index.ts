@@ -109,7 +109,7 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
             "utf8",
           ).replace(
             "<head>",
-            "<head><script>window.__NEXTBOUND_MODE__='mcp'</script>",
+            "<head><script>window.__NEXTBOUND_MODE__='mcp';try{if(!/scenario=/.test(location.search))history.replaceState(null,'','?scenario=procedural-loop')}catch(e){}</script>",
           ),
           _meta: { ui: { prefersBorder: false } },
         },
