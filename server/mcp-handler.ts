@@ -13,7 +13,13 @@ export async function handleMcpRequest(request: Request): Promise<Response> {
   const { makeMcpServer } = await import("./index.js");
 
   const url = new URL(request.url);
-  if (url.pathname.endsWith("/health") || url.pathname.endsWith("/healthz")) {
+  // Health: a GET (MCP uses POST) or an explicit /health path. Robust to how
+  // the host rewrites the request URL to the function.
+  if (
+    request.method === "GET" ||
+    url.pathname.endsWith("/health") ||
+    url.pathname.endsWith("/healthz")
+  ) {
     return Response.json({
       status: "ok",
       service: "adaptive-media",
