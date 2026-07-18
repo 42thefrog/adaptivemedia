@@ -501,6 +501,122 @@ const seeds: Seed[] = [
       relations: ["document:okf-spec", "concept:adaptive-media"],
     },
   },
+  // --- External / creative content (added from outside the OKF knowledge base:
+  // playable media, audio/video previews, moodboards, generated images, memory
+  // places, consumable warps, cross-widget quests, living canvas, stories). ---
+  {
+    type: "artifact",
+    slug: "trace-catcher",
+    title: "Afterlight Arcade · 01 — Trace Catcher",
+    summary:
+      "Playable media: touch the light before it crosses into the next artifact. Every hit transforms the surrounding feed.",
+    tags: ["game", "playable", "arcade"],
+    media: "gradient",
+    ratio: 1.3,
+    author: { name: "Afterlight Arcade", role: "Playable media" },
+    metric: { label: "Level", value: "01 · catch 3" },
+  },
+  {
+    type: "editorial",
+    slug: "soundcloud-camille",
+    title: "SoundCloud preview · @camille",
+    summary:
+      "Audio media pulled into the feed — moodboards, audio, media for Camille's curated night in.",
+    tags: ["audio", "soundcloud", "media"],
+    media: "quote",
+    ratio: 0.7,
+    author: { name: "Camille", role: "Audio" },
+  },
+  {
+    type: "editorial",
+    slug: "youtube-afterlight",
+    title: "YouTube preview · Afterlight",
+    summary:
+      "Video media embedded in the stream; watch, then discuss it with ChatGPT.",
+    tags: ["video", "youtube", "media"],
+    media: "gradient",
+    ratio: 0.9,
+    author: { name: "Video", role: "Media" },
+  },
+  {
+    type: "editorial",
+    slug: "moodboard-studio-wall",
+    title: "Moodboard · Studio Wall",
+    summary:
+      "Tap-to-pin moodboard: pinned studio references — objects, swatches and silhouettes.",
+    tags: ["moodboard", "visual", "pins"],
+    media: "image",
+    ratio: 1.1,
+    author: { name: "Camille", role: "Moodboard" },
+  },
+  {
+    type: "artifact",
+    slug: "generated-afterlight-04",
+    title: "Generated image · Afterlight 04",
+    summary: "A memory reorganized as weather. Save the image or reshape it.",
+    tags: ["generated", "image", "memory"],
+    media: "gradient",
+    ratio: 1.0,
+    author: { name: "Afterlight", role: "Generated" },
+  },
+  {
+    type: "intent",
+    slug: "paris-pont-des-arts",
+    title: "Paris · Pont des Arts",
+    summary:
+      "A place where objects become promises. A memory location woven into the experience.",
+    tags: ["memory", "place", "paris"],
+    media: "quote",
+    ratio: 1.2,
+    author: { name: "Memory", role: "Place" },
+    metric: { label: "Where", value: "Paris" },
+  },
+  {
+    type: "artifact",
+    slug: "warp-one-use",
+    title: "Warp · one use",
+    summary:
+      "Consumable window into source space — open a temporary passage between artifacts.",
+    tags: ["warp", "consumable", "portal"],
+    media: "code",
+    ratio: 0.7,
+    author: { name: "Source space", role: "Consumable" },
+    metric: { label: "Uses", value: "1" },
+  },
+  {
+    type: "intent",
+    slug: "cross-widget-quest",
+    title: "Cross-widget quest — meet on the bridge",
+    summary:
+      "Win the lock, meet on the bridge, attach together. A collaborative quest across two widgets.",
+    tags: ["quest", "multiplayer", "collab"],
+    media: "gradient",
+    ratio: 0.9,
+    author: { name: "Cross-widget", role: "Quest" },
+    metric: { label: "Players", value: "2 required" },
+  },
+  {
+    type: "artifact",
+    slug: "living-canvas-noa",
+    title: "Living Canvas · Noa",
+    summary:
+      "A shared living canvas: Noa releases a precise line into the field and it keeps growing.",
+    tags: ["canvas", "collaborative", "generative"],
+    media: "gradient",
+    ratio: 1.15,
+    author: { name: "Noa", role: "Living Canvas" },
+  },
+  {
+    type: "editorial",
+    slug: "story-the-trace-arrives",
+    title: "Story · The trace arrives",
+    summary:
+      "Living Canvas narrative: Maya releases a precise line into the shared field.",
+    tags: ["story", "narrative", "canvas"],
+    media: "quote",
+    ratio: 0.65,
+    author: { name: "Story", role: "Living Canvas" },
+  },
 ];
 
 function buildItem(seed: Seed, order: number, cycle: number): FeedItem {
