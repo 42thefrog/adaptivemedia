@@ -361,6 +361,7 @@ function App() {
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<FeedItem | null>(null);
+  const [themeP, setThemeP] = useState<"alex" | "camille" | "maya">("camille");
 
   const sentinel = useRef<HTMLDivElement | null>(null);
   const loadingRef = useRef(false);
@@ -463,8 +464,23 @@ function App() {
     "okf",
   ];
 
+  const personaTheme = (p: "alex" | "camille" | "maya") => {
+    setThemeP(p);
+    const api = bridge();
+    // VIEW AS also pulls the persona from the knowledge base skill when a host
+    // is connected (design par user + KB profile).
+    if (api?.sendFollowUpMessage) {
+      void api.sendFollowUpMessage({
+        prompt: `View the feed as "${p}": install that persona from the knowledge base (install_personality) and apply its style.`,
+      });
+    } else if (api?.callTool) {
+      void api.callTool("install_personality", { personality: p });
+    }
+  };
+  const personas: ("alex" | "camille" | "maya")[] = ["alex", "camille", "maya"];
+
   return (
-    <main className="feed-root">
+    <main className={`feed-root theme-${themeP}`}>
       <header className="feed-header">
         <div className="feed-title">
           <span className="brand-symbol">N</span>
@@ -487,6 +503,19 @@ function App() {
           ))}
         </div>
       </header>
+
+      <div className="view-as">
+        <span>VIEW AS · design par user :</span>
+        {personas.map((p) => (
+          <button
+            key={p}
+            className={themeP === p ? "view-btn active" : "view-btn"}
+            onClick={() => personaTheme(p)}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
 
       <div className="masonry">
         {items.map((item) => (
