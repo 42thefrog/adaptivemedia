@@ -207,51 +207,59 @@ const msftSnapshot = {
 const moodboardImages = [
   {
     id: "mb-1",
-    url: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=480&q=70&auto=format",
-    label: "Concrete stair, hard light",
-    tag: "architecture",
+    url: "/moodboard/camille/studio-board.png",
+    label: "Pinned studio references with objects, swatches and silhouettes",
+    tag: "studio wall",
+    position: "center",
   },
   {
     id: "mb-2",
-    url: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=480&q=70&auto=format",
-    label: "Draped silhouette",
-    tag: "fashion",
+    url: "/moodboard/camille/abstract-field.png",
+    label: "Landscape collage with olive, amber and translucent geometry",
+    tag: "palette",
+    position: "center",
   },
   {
     id: "mb-3",
-    url: "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?w=480&q=70&auto=format",
-    label: "Spiral stair, museum",
-    tag: "architecture",
+    url: "/moodboard/camille/red-tulip-set.png",
+    label: "Red floral couture set with dense textile backdrop",
+    tag: "floral set",
+    position: "center",
   },
   {
     id: "mb-4",
-    url: "https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=480&q=70&auto=format",
-    label: "Glass facade grid",
-    tag: "architecture",
+    url: "/moodboard/camille/blue-floral-couture.png",
+    label: "Blue flower silhouette with painterly couture volume",
+    tag: "couture",
+    position: "center",
   },
   {
     id: "mb-5",
-    url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=480&q=70&auto=format",
-    label: "Studio portrait",
-    tag: "fashion",
+    url: "/moodboard/camille/runner-roses.png",
+    label: "Motion study with roses, dress and saturated open sky",
+    tag: "movement",
+    position: "center",
   },
   {
     id: "mb-6",
-    url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=480&q=70&auto=format",
-    label: "Quiet ridge line",
-    tag: "wellness",
+    url: "/moodboard/camille/pink-forest.png",
+    label: "Surreal forest walk through oversized pink mushroom forms",
+    tag: "surreal",
+    position: "center",
   },
   {
     id: "mb-7",
-    url: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=480&q=70&auto=format",
-    label: "Textile close-up",
-    tag: "art",
+    url: "/moodboard/camille/cyan-floral-couture.png",
+    label: "Cyan floral volume and soft sculptural fabric",
+    tag: "texture",
+    position: "center",
   },
   {
     id: "mb-8",
-    url: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=480&q=70&auto=format",
-    label: "Layered shadow",
-    tag: "architecture",
+    url: "/moodboard/camille/pink-monochrome.png",
+    label: "Monochrome pink fashion world with birds and foliage",
+    tag: "monochrome",
+    position: "center top",
   },
 ] as const;
 
@@ -334,8 +342,9 @@ Alpine.data("nextbound", () => ({
   teamGamePlayers: [] as string[],
   teamGameInviteName: "",
   loopMode:
+    Boolean((window as any).__NEXTBOUND_ARTIFACT__) ||
     new URLSearchParams(window.location.search).get("scenario") ===
-    "procedural-loop",
+      "procedural-loop",
   transition: null as null | {
     from: ArtifactExecution;
     to: ArtifactExecution;
@@ -486,8 +495,11 @@ Alpine.data("nextbound", () => ({
   moodboardPinned: [] as string[],
   toggleMoodboardPin(id: string) {
     this.moodboardPinned = this.moodboardPinned.includes(id)
-      ? this.moodboardPinned.filter((x) => x !== id)
+      ? this.moodboardPinned.filter((x: string) => x !== id)
       : [...this.moodboardPinned, id];
+  },
+  moodboardTileStyle(image: (typeof moodboardImages)[number]) {
+    return `--moodboard-image:url("${image.url}");--moodboard-position:${image.position}`;
   },
   // Alex: MSFT is OpenAI's largest outside investor and the closest real,
   // publicly-traded proxy — OpenAI itself has no ticker. Numbers are a real
@@ -512,8 +524,8 @@ Alpine.data("nextbound", () => ({
   imageSaved: false,
   moodMusicStatus: "idle" as "idle" | "generating" | "ready",
   moodMusicPlaying: false,
-  moodMusicTrack: "/music/one-little-doorway.mp3",
-  moodMusicTitle: "One Little Doorway",
+  moodMusicTrack: "/music/velvet-and-neon-camille.m4a",
+  moodMusicTitle: "Velvet and Neon",
   reactionSequence: 0,
   floatingReactions: [] as Array<{
     id: string;
@@ -1221,6 +1233,17 @@ Alpine.data("nextbound", () => ({
     });
     this.observeRuntimeFrames();
     this.layoutWidgetBoard();
+  },
+  async runtimeInteractFromAction(
+    action: RuntimeExecution["availableInteractions"][number],
+  ) {
+    const nextbound = this.runtimeExecution?.resolvedNextbounds.find(
+      (item: RuntimeNextbound) =>
+        item.destination.targetId === action.targetId ||
+        item.presentation.label === action.label,
+    );
+    if (!nextbound || !action.targetId) return;
+    await this.runtimeInteract(nextbound.id, action.targetId);
   },
   async mutateRuntimeWithoutNavigation(topic = "collaborative") {
     this.emitReaction("✦");

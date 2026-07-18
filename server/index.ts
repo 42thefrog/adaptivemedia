@@ -6,7 +6,15 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { AdaptiveMediaService, DemoError } from "./service.js";
 import * as api from "./tools/api.js";
 import { NextboundService, NextboundError } from "../nextbound/service.js";
-import { proceduralSchemas, schemas } from "./nextbound-api.js";
+import {
+  knowledgeSchemas,
+  proceduralSchemas,
+  schemas,
+} from "./nextbound-api.js";
+import {
+  getLocalKnowledgeProfile,
+  listLocalKnowledgeProfiles,
+} from "./local-knowledge.js";
 
 const service = new AdaptiveMediaService();
 const WIDGET_URI = "ui://adaptive-media/widget.html";
@@ -341,6 +349,50 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
     "Replay deterministic session",
     ({ seedId, recipientId, sessionId }) =>
       nextbound.replayProceduralSession(seedId, recipientId, sessionId),
+  );
+  const kAdd = (
+    name: keyof typeof knowledgeSchemas,
+    title: string,
+    fn: (input: any) => Record<string, unknown>,
+  ) =>
+    server.registerTool(
+      name,
+      {
+        title,
+        description: `${title} from the user's local knowledge base and display it in the inline Nextbound artifact.`,
+        inputSchema: knowledgeSchemas[name],
+        annotations: read,
+        _meta: nbMeta,
+      },
+      nbSafe(fn),
+    );
+  kAdd("list_local_knowledge_profiles", "List local knowledge profiles", () => ({
+    view: "local_knowledge" as const,
+    profiles: listLocalKnowledgeProfiles(),
+  }));
+  kAdd(
+    "open_local_knowledge_artifact",
+    "Open local knowledge artifact",
+    ({ profileId = "maya", seedId = "seed-afterlight-maya" }) => {
+      const profile = getLocalKnowledgeProfile(profileId);
+      if (!profile)
+        throw new NextboundError(
+          "unknown_profile",
+          "That local knowledge profile is not available.",
+        );
+      const opened = nextbound.openSeed(seedId, profile.id);
+      return {
+        ...opened,
+        view: "local_knowledge_artifact" as const,
+        localKnowledge: profile,
+        artifact: {
+          id: "nextbound-procedural-loop-artifact",
+          title: "Nextbound Experience Engine",
+          resourceUri: NEXTBOUND_WIDGET_URI,
+          surface: "conversation_inline_artifact",
+        },
+      };
+    },
   );
   return server;
 }

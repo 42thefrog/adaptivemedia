@@ -1,8 +1,8 @@
 ---
 type: Persona Profile
-title: Maya — Independent Creator
-description: Medium-budget, beginner-but-AI-curious audience persona used to test personalization for Noah, Amélie and Luna's intents.
-tags: [persona, creator, medium-budget, beginner]
+title: Maya — 42 Paris Code Student
+description: Medium-budget, project-driven 42 Paris coding student persona used to test personalization for Noah, Amélie and Luna's intents.
+tags: [persona, student, programming, medium-budget, paris]
 timestamp: 2026-07-18T10:00:00+02:00
 ---
 
@@ -12,25 +12,25 @@ timestamp: 2026-07-18T10:00:00+02:00
 |---|---|
 | Persona ID | `persona_maya` |
 | Name | Maya |
-| Label | Independent Creator |
-| Age | 28 |
-| Location | London |
-| Occupation | Independent visual and lifestyle creator |
+| Label | 42 Paris Code Student |
+| Age | 23 |
+| Location | Paris |
+| Occupation | Programming student at 42 Paris |
 | Budget | Medium |
-| Technical level | Beginner but AI-curious |
-| Interests | Music, visual culture, beauty, fashion, social media |
-| Preferred format | Inspirational, visual, shareable |
-| Primary motivation | Create original work, grow an audience and preserve a distinct voice |
+| Technical level | Intermediate, project-driven and meme-fluent |
+| Interests | Programming memes, peer coding, hanging out with friends, hoodies, beer, Paris student life |
+| Preferred format | Funny, practical, social, low-friction |
+| Primary motivation | Learn by building with friends, keep code playful and turn school projects into shared wins |
 
 Source of record: `server/data/seed.ts` (`audiencePersonas`, `persona_maya`).
 
 # Personalization notes
 
-Maya engages with content that is easy to reshare and protects her voice
-rather than genericizing it. Anything that reads as a template should be
-softened into something she could post as her own. See existing adaptations
-in `personalizedExperiences` for this persona (e.g. "Adaptive Campaign",
-"Camera-Ready Without the Ten-Step Routine").
+Maya engages with content that feels useful inside the rhythms of 42 Paris:
+peer review, late-night debugging, campus jokes, hoodie weather and casual
+post-project beers with friends. Anything that reads as corporate or overly
+polished should be softened into something she could send in a group chat,
+pin in a project channel or turn into a quick programming meme.
 
 # Related
 

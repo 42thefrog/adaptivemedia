@@ -18,8 +18,9 @@ function initSnake() {
   let dir: { x: number; y: number };
   let food: { x: number; y: number };
   let alive = true;
+  let started = false;
   let score = 0;
-  let timer: ReturnType<typeof setInterval>;
+  let timer: ReturnType<typeof setInterval> | undefined;
 
   const rand = () => Math.floor(Math.random() * cellsN);
   const placeFood = () => {
@@ -43,7 +44,7 @@ function initSnake() {
     );
   };
   const tick = () => {
-    if (!alive) return;
+    if (!alive || !started) return;
     const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
     if (
       head.x < 0 ||
@@ -53,7 +54,7 @@ function initSnake() {
       snake.some((s) => s.x === head.x && s.y === head.y)
     ) {
       alive = false;
-      clearInterval(timer);
+      if (timer) clearInterval(timer);
       setStatus("crash · score: " + score);
       return;
     }
@@ -75,26 +76,38 @@ function initSnake() {
     ];
     dir = { x: 1, y: 0 };
     alive = true;
+    started = false;
     score = 0;
     placeFood();
-    setStatus("score: 0");
-    clearInterval(timer);
-    timer = setInterval(tick, 400);
+    setStatus("tap a direction to start");
+    if (timer) clearInterval(timer);
+    timer = undefined;
     draw();
+  };
+  const start = () => {
+    if (!alive || started) return;
+    started = true;
+    setStatus("score: " + score);
+    timer = setInterval(tick, 400);
   };
 
   byId("tg-snake-up")?.addEventListener("click", () => {
     if (dir.y === 0) dir = { x: 0, y: -1 };
+    start();
   });
   byId("tg-snake-down")?.addEventListener("click", () => {
     if (dir.y === 0) dir = { x: 0, y: 1 };
+    start();
   });
   byId("tg-snake-left")?.addEventListener("click", () => {
     if (dir.x === 0) dir = { x: -1, y: 0 };
+    start();
   });
   byId("tg-snake-right")?.addEventListener("click", () => {
     if (dir.x === 0) dir = { x: 1, y: 0 };
+    start();
   });
+  byId("tg-snake-restart")?.addEventListener("click", init);
 
   (window as any).__tgSnakeInit = init;
   init();

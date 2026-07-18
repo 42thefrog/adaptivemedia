@@ -2502,6 +2502,14 @@ footer {
   background: #ffe86f !important;
   color: #27203b !important;
 }
+.design-playful.news-feed button.moodboard-tile {
+  background-color: #f5efe6 !important;
+  background-image: var(--moodboard-image) !important;
+  background-size: cover !important;
+  background-position: var(--moodboard-position, center) !important;
+  border-radius: 14px !important;
+  color: #fff8d8 !important;
+}
 .design-playful.news-feed .nextbound-word {
   color: #ff398c !important;
   transform: rotate(-2deg);
@@ -3130,6 +3138,95 @@ footer {
     var(--nested-surface)
   ) !important;
   color: var(--nested-ink) !important;
+}
+
+/* Internet content cards participate in the selected design system. */
+.news-feed .reddit-field > header,
+.news-feed .reddit-field > article,
+.news-feed .profile-reddit,
+.news-feed .profile-reddit > article {
+  border-color: var(--nested-line) !important;
+  border-radius: var(--nested-radius) !important;
+  background: var(--nested-surface) !important;
+  background-image: none !important;
+  color: var(--nested-ink) !important;
+}
+.news-feed .reddit-field > article,
+.news-feed .profile-reddit > article {
+  box-shadow: var(--internet-shadow, none) !important;
+}
+.news-feed .reddit-field > header h2,
+.news-feed .reddit-field > article h3,
+.news-feed .reddit-field > article p,
+.news-feed .reddit-field > article small,
+.news-feed .profile-reddit > header h2,
+.news-feed .profile-reddit > header p,
+.news-feed .profile-reddit > article h3,
+.news-feed .profile-reddit > article p,
+.news-feed .profile-reddit > article small {
+  color: inherit !important;
+}
+.news-feed .reddit-field > article p,
+.news-feed .profile-reddit > article p,
+.news-feed .profile-reddit > header p {
+  color: var(--nested-muted) !important;
+}
+.news-feed .reddit-field > article a,
+.news-feed .profile-reddit > article a {
+  border-color: var(--nested-line) !important;
+  border-radius: var(--nested-radius) !important;
+  color: var(--nested-ink) !important;
+}
+.design-glass.news-feed .reddit-field > header,
+.design-glass.news-feed .reddit-field > article,
+.design-glass.news-feed .profile-reddit,
+.design-glass.news-feed .profile-reddit > article {
+  backdrop-filter: blur(22px) saturate(1.35);
+  box-shadow:
+    0 22px 70px #0007,
+    inset 0 1px #ffffff2e !important;
+}
+.design-playful.news-feed {
+  --internet-shadow: 8px 10px 0 #ff93c9;
+}
+.design-playful.news-feed .reddit-field > header,
+.design-playful.news-feed .reddit-field > article,
+.design-playful.news-feed .profile-reddit,
+.design-playful.news-feed .profile-reddit > article {
+  border-width: 3px !important;
+}
+.design-playful.news-feed .reddit-field > article:nth-of-type(4n),
+.design-playful.news-feed .profile-reddit > article:nth-of-type(4n) {
+  border-radius: 46px 14px 38px 18px !important;
+  transform: rotate(-0.7deg);
+}
+.design-playful.news-feed .reddit-field > article:nth-of-type(4n + 1),
+.design-playful.news-feed .profile-reddit > article:nth-of-type(4n + 1) {
+  border-radius: 18px 52px 16px 42px !important;
+  transform: rotate(0.55deg);
+}
+.design-playful.news-feed .reddit-field > article:nth-of-type(4n + 2),
+.design-playful.news-feed .profile-reddit > article:nth-of-type(4n + 2) {
+  border-radius: 50px !important;
+  box-shadow: 8px 10px 0 #73dcff !important;
+}
+.design-brutalist.news-feed .reddit-field > header,
+.design-brutalist.news-feed .reddit-field > article,
+.design-brutalist.news-feed .profile-reddit,
+.design-brutalist.news-feed .profile-reddit > article,
+.design-neobrutalist.news-feed .reddit-field > header,
+.design-neobrutalist.news-feed .reddit-field > article,
+.design-neobrutalist.news-feed .profile-reddit,
+.design-neobrutalist.news-feed .profile-reddit > article {
+  border-width: 4px !important;
+  box-shadow: 9px 9px 0 #080808 !important;
+}
+.design-minimal.news-feed .reddit-field > header,
+.design-minimal.news-feed .reddit-field > article,
+.design-minimal.news-feed .profile-reddit,
+.design-minimal.news-feed .profile-reddit > article {
+  border-width: 0 0 1px !important;
+  box-shadow: none !important;
 }
 
 /* Dense recipient atmospheres: the feed background is an active visual field. */
@@ -5844,55 +5941,83 @@ footer {
 .moodboard-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  grid-auto-flow: dense;
+  gap: 8px;
 }
 .moodboard-tile {
   position: relative;
   aspect-ratio: 3 / 4;
-  border: 1px solid #2c283a;
-  border-radius: 4px;
+  border: 2px solid color-mix(in srgb, #231e35 72%, var(--live-accent));
+  border-radius: 14px;
+  background-image: var(--moodboard-image);
   background-size: cover;
-  background-position: center;
-  background-color: #17141f;
+  background-position: var(--moodboard-position, center);
+  background-color: #f5efe6;
   cursor: pointer;
   overflow: hidden;
   padding: 0;
+  box-shadow: 0 8px 0 color-mix(in srgb, #ff79bd 72%, transparent);
   transition:
     border-color 0.2s ease,
+    box-shadow 0.2s ease,
     transform 0.2s ease;
+}
+.moodboard-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 48%, rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+.moodboard-tile:nth-child(1),
+.moodboard-tile:nth-child(2) {
+  grid-column: span 2;
+  aspect-ratio: 4 / 3;
 }
 .moodboard-tile:hover {
   transform: translateY(-2px);
 }
 .moodboard-tile.pinned {
-  border-color: #c9a8ff;
-  box-shadow: 0 0 0 1px #c9a8ff;
+  border-color: #ffe86a;
+  box-shadow:
+    0 8px 0 color-mix(in srgb, #ff79bd 72%, transparent),
+    0 0 0 3px #ffe86a inset;
 }
 .moodboard-tag {
   position: absolute;
-  left: 5px;
-  bottom: 5px;
-  padding: 2px 5px;
-  background: #000a;
-  color: #ddd;
-  font: 7px var(--mono);
+  left: 8px;
+  bottom: 8px;
+  z-index: 1;
+  max-width: calc(100% - 16px);
+  padding: 4px 7px;
+  background: rgba(9, 8, 15, 0.72);
+  color: #fff8d8;
+  font: 8px var(--mono);
   text-transform: uppercase;
-  border-radius: 3px;
+  border-radius: 999px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .moodboard-pin {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  padding: 2px 5px;
-  background: #c9a8ff;
-  color: #1a0f2e;
-  font: 7px var(--mono);
+  top: 7px;
+  right: 7px;
+  z-index: 1;
+  padding: 4px 7px;
+  background: #ffe86a;
+  color: #1f1930;
+  font: 8px var(--mono);
   font-weight: 700;
-  border-radius: 3px;
+  border-radius: 999px;
 }
 @media (max-width: 640px) {
   .moodboard-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .moodboard-tile:nth-child(1),
+  .moodboard-tile:nth-child(2) {
+    grid-column: span 2;
   }
 }
 

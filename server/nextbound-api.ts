@@ -72,3 +72,11 @@ export const proceduralSchemas = {
   get_session_trace: strict({ sessionId: id }),
   replay_session: strict({ seedId: id, recipientId: id, sessionId: id }),
 } as const;
+
+export const knowledgeSchemas = {
+  list_local_knowledge_profiles: strict({}),
+  open_local_knowledge_artifact: strict({
+    profileId: id.optional(),
+    seedId: id.optional(),
+  }),
+} as const;

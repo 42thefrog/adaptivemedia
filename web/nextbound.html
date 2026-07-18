@@ -20,7 +20,9 @@
       :style="loopMode?adaptiveBackdrop:''"
     >
       <header class="top">
-        <a class="wordmark" href="/"><i>N</i> NEXTBOUND</a>
+        <a class="wordmark" href="/nextbound.html?scenario=procedural-loop"
+          ><i>N</i> NEXTBOUND</a
+        >
         <span>NEXTBOUND EXPERIENCE ENGINE · LOCAL / MCP</span>
         <span class="loop-badge" x-show="loopMode">PROCEDURAL LOOP</span>
         <label class="persona-switcher" x-show="loopMode">
@@ -382,6 +384,12 @@
                   <div></div><button id="tg-snake-down" style="width:30px;height:30px;padding:0;">▼</button><div></div>
                 </div>
                 <p id="tg-snake-status" style="text-align:center;margin:0;">score: 0</p>
+                <button
+                  id="tg-snake-restart"
+                  style="display:block;margin:8px auto 0;height:30px;padding:0 10px;"
+                >
+                  Restart
+                </button>
               </div>
 
               <div id="tg-maze" x-show="profileId==='camille'">
@@ -686,7 +694,7 @@
               <button
                 class="moodboard-tile"
                 :class="moodboardPinned.includes(img.id)?'pinned':''"
-                :style="'background-image:url('+img.url+')'"
+                :style="moodboardTileStyle(img)"
                 @click="toggleMoodboardPin(img.id)"
                 :title="img.label"
               >
