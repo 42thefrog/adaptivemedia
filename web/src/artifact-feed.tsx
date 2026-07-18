@@ -235,14 +235,20 @@ function buildItemContext(item: FeedItem): string {
 // Send the selected item's context into the conversation. Preferred path:
 // window.openai.sendFollowUpMessage posts it as a message so the host chat can
 // discuss it. Falls back to calling the open_feed_item tool directly.
-function sendItemContext(item: FeedItem): void {
+// Returns true if the context was handed to an MCP host; false when running
+// with no host (plain browser preview) so the caller can show a local preview.
+function sendItemContext(item: FeedItem): boolean {
   const api = bridge();
   const prompt = buildItemContext(item);
   if (api?.sendFollowUpMessage) {
     void api.sendFollowUpMessage({ prompt });
-  } else if (api?.callTool) {
-    void api.callTool("open_feed_item", { itemId: item.id });
+    return true;
   }
+  if (api?.callTool) {
+    void api.callTool("open_feed_item", { itemId: item.id });
+    return true;
+  }
+  return false;
 }
 
 // --- UI --------------------------------------------------------------------
@@ -354,6 +360,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<FeedItem | null>(null);
 
   const sentinel = useRef<HTMLDivElement | null>(null);
   const loadingRef = useRef(false);
@@ -441,8 +448,11 @@ function App() {
   // context into the conversation (via sendFollowUpMessage) so the model can
   // discuss it. The widget itself does not open or store anything.
   const onSelect = useCallback((item: FeedItem) => {
-    sendItemContext(item);
+    const sent = sendItemContext(item);
     setSentIds((prev) => new Set(prev).add(item.id));
+    // No MCP host (plain browser preview): show the item inline so the feed
+    // stays testable locally instead of the click doing nothing.
+    if (!sent) setPreview(item);
   }, []);
 
   const filters: (FeedItemType | "all")[] = [
@@ -497,6 +507,74 @@ function App() {
         </p>
       )}
       <div ref={sentinel} className="feed-sentinel" aria-hidden />
+
+      {preview && (
+        <>
+          <div className="detail-divider">
+            <span>Preview · this context would be sent to chat</span>
+          </div>
+          <section className="artifact-detail">
+            <div
+              className="detail-banner"
+              style={{
+                background: `linear-gradient(135deg, ${preview.media.accentFrom}, ${preview.media.accentTo})`,
+              }}
+            >
+              <span className="detail-kind">
+                {typeLabel[preview.type]}
+                {preview.okf ? ` · ${preview.okf.kind}` : ""}
+              </span>
+              <h2>{preview.title}</h2>
+            </div>
+            <div className="detail-body">
+              <p>{preview.summary}</p>
+              {preview.okf?.body && <p>{preview.okf.body}</p>}
+              <ul className="detail-highlights">
+                {preview.author && (
+                  <li>
+                    {preview.author.role}: {preview.author.name}
+                  </li>
+                )}
+                <li>Tags: {preview.tags.join(", ")}</li>
+              </ul>
+              {preview.okf?.table && (
+                <div className="schema">
+                  <div className="schema-head">
+                    <div>
+                      <strong>
+                        {preview.okf.table.database}.{preview.okf.table.table}
+                      </strong>
+                      <span className="schema-engine">
+                        {preview.okf.table.engine}
+                      </span>
+                    </div>
+                  </div>
+                  <table className="schema-table">
+                    <thead>
+                      <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Semantic description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.okf.table.fields.map((f) => (
+                        <tr key={f.name}>
+                          <td className="f-name">{f.name}</td>
+                          <td className="f-type">
+                            <code>{f.type}</code>
+                          </td>
+                          <td className="f-desc">{f.description}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
+        </>
+      )}
     </main>
   );
 }
