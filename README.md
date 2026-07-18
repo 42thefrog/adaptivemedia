@@ -106,6 +106,29 @@ Golden prompts once connected in ChatGPT:
 3. `Open the "Source · creator_intents" item as an artifact.` (renders the
    ClickHouse schema table)
 
+## Skill & personality install tools
+
+Two MCP tools let an agent bootstrap itself against this server and load
+audience personalities from the file-based knowledge base:
+
+- `install_mcp_skill` — installs the functional **`adaptive-media-use`** agent
+  skill (a `SKILL.md`) that documents every MCP tool and explains how to feed
+  the knowledge base. It writes into the local skills directory (default
+  `.agents/skills/`, override with `ADAPTIVE_MEDIA_SKILLS_DIR`).
+- `install_personality` — installs one audience personality. Say **"get camille
+  personnalité"** and the agent calls
+  `install_personality { "personality": "camille" }`; the tool pulls
+  `knowledge/persona_camille/` and writes it to
+  `adaptive-media-use/personalities/camille.md` — the exact path the functional
+  skill loads from when personalizing (`generate_experience`). Loose phrasing
+  (`camille`, `persona_camille`, `get camille personnalité`) all resolve to the
+  same persona; installs are additive and idempotent.
+
+Both tools write real files (deduplicated, no path traversal) **and** return a
+`files` manifest of `{ relativePath, content }`, so an MCP client that cannot
+reach the server's filesystem can install the same files itself. Installed
+skills are runtime state (gitignored), like `tmp/`.
+
 ## Step 8 — temporary ChatGPT Developer Mode connection
 
 Build and start the local MCP server:
