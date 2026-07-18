@@ -30,9 +30,9 @@
             @change="switchRuntimeProfile($el.value)"
             :disabled="loading"
           >
-            <option value="maya">Maya · Developer student</option>
             <option value="camille">Camille · Artistic director</option>
             <option value="alex">Alex · CEO</option>
+            <option value="maya">Maya · Developer student</option>
           </select>
         </label>
         <label class="design-switcher" x-show="loopMode">
@@ -1009,6 +1009,21 @@
               <small
                 x-text="article.community+' · '+article.relevance+'% match'"
               ></small>
+              <a
+                class="article-preview reddit-preview"
+                :href="article.url"
+                target="_blank"
+                rel="noreferrer"
+                :style="articlePreviewStyle(article)"
+                :aria-label="'Preview '+article.title"
+              >
+                <span class="article-preview-mark">r/</span>
+                <span>
+                  <b x-text="sourceHost(article.url)"></b>
+                  <em x-text="article.community"></em>
+                </span>
+                <i x-text="article.relevance+'%'"></i>
+              </a>
               <h3 x-text="article.title"></h3>
               <p x-text="article.summary"></p>
               <footer>
@@ -1045,6 +1060,21 @@
               <small
                 x-text="article.source+' · '+article.date+' · '+article.relevance+'% match'"
               ></small>
+              <a
+                class="article-preview news-preview"
+                :href="article.url"
+                target="_blank"
+                rel="noreferrer"
+                :style="articlePreviewStyle(article)"
+                :aria-label="'Preview '+article.title"
+              >
+                <span class="article-preview-mark">↗</span>
+                <span>
+                  <b x-text="sourceHost(article.url)"></b>
+                  <em x-text="article.source+' · '+article.date"></em>
+                </span>
+                <i x-text="article.relevance+'%'"></i>
+              </a>
               <h3 x-text="article.title"></h3>
               <p x-text="article.summary"></p>
               <footer>
@@ -1114,9 +1144,27 @@
                     x-show="playingVideoId!==video.id"
                     class="video-cover"
                     @click="toggleCreatorVideo(video.id)"
-                    :style="videoCoverStyle(video)"
                   >
+                    <img
+                      x-show="video.kind!=='audio'"
+                      class="video-thumbnail"
+                      :src="youtubeThumbnail(video.id)"
+                      :alt="profileId+' video preview '+(index+1)"
+                      loading="lazy"
+                      @error="fallbackYoutubeThumbnail($event, video.id)"
+                    />
+                    <img
+                      x-show="video.kind==='audio'&&video.cover"
+                      class="video-thumbnail"
+                      :src="video.cover"
+                      :alt="(video.title||profileId+' audio')+' cover'"
+                      loading="lazy"
+                    />
                     <span class="video-play" x-text="video.kind==='audio'?'♫':'▶'"></span>
+                    <span
+                      class="media-preview-badge"
+                      x-text="video.kind==='audio'?'SoundCloud preview':'YouTube preview'"
+                    ></span>
                     <span class="video-cover-copy">
                       <small
                         x-text="'@'+profileId+' · '+String(index+1).padStart(2,'0')"

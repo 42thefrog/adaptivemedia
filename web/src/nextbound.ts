@@ -26,6 +26,38 @@ import { newsArticlesByProfile } from "./news-articles.js";
 import { initTeamGames } from "./team-games.js";
 import "./nextbound.css";
 
+type PersonaId = "maya" | "camille" | "alex";
+type DesignMode =
+  | "wireframe"
+  | "minimal"
+  | "glass"
+  | "brutalist"
+  | "playful"
+  | "swiss"
+  | "bauhaus"
+  | "editorial"
+  | "bento"
+  | "material"
+  | "neobrutalist"
+  | "clay"
+  | "neumorphic"
+  | "y2k"
+  | "cyberpunk"
+  | "retrofuturist";
+type UserVisualStyle = "primary" | "secondary" | "ambient";
+
+const personaDesignPresets: Record<
+  PersonaId,
+  { designMode: DesignMode; userVisualStyle: UserVisualStyle }
+> = {
+  maya: { designMode: "retrofuturist", userVisualStyle: "primary" },
+  camille: { designMode: "playful", userVisualStyle: "primary" },
+  alex: { designMode: "neumorphic", userVisualStyle: "secondary" },
+};
+
+const personaPreset = (id: string) =>
+  personaDesignPresets[id as PersonaId] ?? personaDesignPresets.maya;
+
 const commonsParticipantConfig = [
   {
     id: "maya",
@@ -290,9 +322,9 @@ Alpine.data("nextbound", () => ({
   error: "",
   share: null as any,
   profiles,
-  profileId: "maya",
-  designMode: "wireframe",
-  userVisualStyle: "primary",
+  profileId: "camille",
+  designMode: personaDesignPresets.camille.designMode,
+  userVisualStyle: personaDesignPresets.camille.userVisualStyle,
   inbox: [] as InboxMessage[],
   context: null as NormalizedContext | null,
   experience: null as CompiledExperience | null,
@@ -548,10 +580,10 @@ Alpine.data("nextbound", () => ({
       await this.transport.call("publish_intent", { intentId: "afterlight" });
       const delivered: any = await this.transport.call("deliver_to_inbox", {
         intentId: "afterlight",
-        profileIds: ["alex", "camille", "maya"],
+        profileIds: ["camille", "alex", "maya"],
       });
       this.inbox = delivered.deliveries;
-      await this.selectProfile("maya");
+      await this.selectProfile("camille");
     });
   },
   async initProceduralRuntime() {
@@ -717,6 +749,9 @@ Alpine.data("nextbound", () => ({
   },
   async switchRuntimeProfile(id: string) {
     this.profileId = id;
+    const preset = personaPreset(id);
+    this.designMode = preset.designMode;
+    this.userVisualStyle = preset.userVisualStyle;
     this.playingVideoId = "";
     this.videoFloatObserver?.disconnect();
     if (this.videoScrollHandler) {
@@ -725,7 +760,6 @@ Alpine.data("nextbound", () => ({
     }
     this.videoFloating = false;
     this.discussionVideoId = "";
-    this.userVisualStyle = "primary";
     this.feedArchive = [];
     this.runtimeMutations = [];
     this.widgetBranches = [];
@@ -745,17 +779,32 @@ Alpine.data("nextbound", () => ({
     if (video.orientation === "square") return video.score >= 85 ? 5 : 4;
     return video.score >= 85 ? 6 : video.score >= 65 ? 4 : 3;
   },
-  videoCoverStyle(video: { id: string; kind?: string; cover?: string }) {
-    if (video.kind === "audio")
-      return (
-        "background-image:linear-gradient(180deg,transparent 40%,rgba(10,6,20,.88))" +
-        (video.cover ? ",url(" + video.cover + ")" : "")
-      );
-    return (
-      "background-image:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.82)),url(https://i.ytimg.com/vi/" +
-      video.id +
-      "/hqdefault.jpg)"
-    );
+  youtubeThumbnail(videoId: string) {
+    return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+  },
+  fallbackYoutubeThumbnail(event: Event, videoId: string) {
+    const image = event.currentTarget as HTMLImageElement | null;
+    if (!image || image.dataset.fallback === "true") return;
+    image.dataset.fallback = "true";
+    image.src = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+  },
+  sourceHost(url: string) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, "");
+    } catch {
+      return "external source";
+    }
+  },
+  articlePreviewStyle(article: {
+    url: string;
+    source?: string;
+    community?: string;
+    relevance: number;
+  }) {
+    const hue =
+      Array.from(article.url).reduce((total, char) => total + char.charCodeAt(0), 0) %
+      360;
+    return `--preview-hue:${hue};--preview-score:${article.relevance}%`;
   },
   redditGridSpan(article: {
     title: string;
@@ -1282,14 +1331,68 @@ Alpine.data("nextbound", () => ({
       const board = document.querySelector<HTMLElement>(".runtime-demo");
       if (!board) return;
       const widgets = Array.from(
-        board.querySelectorAll<HTMLElement>("[data-widget]"),
+        board.querySelectorAll<HTMLElement>(
+          ".news-feed [data-widget], .news-feed .adaptive-piece, .news-feed .runtime-frame, .news-feed .nextbound-widget, .news-feed .nextbound-preview-widget, .news-feed .inline-mutation, .news-feed .video-library > header, .news-feed .reddit-field > header, [data-widget]",
+        ),
       );
       if (board.closest(".news-feed")) {
+        const placeMasonry = () => {
+          const visibleWidgets = widgets
+            .filter((widget) => {
+              const styles = getComputedStyle(widget);
+              return (
+                styles.display !== "none" &&
+                styles.display !== "contents" &&
+                styles.visibility !== "hidden"
+              );
+            })
+            .sort((left, right) => {
+              const leftOrder = Number.parseInt(getComputedStyle(left).order, 10);
+              const rightOrder = Number.parseInt(
+                getComputedStyle(right).order,
+                10,
+              );
+              return (
+                (Number.isFinite(leftOrder) ? leftOrder : 0) -
+                (Number.isFinite(rightOrder) ? rightOrder : 0)
+              );
+            });
+          const styles = getComputedStyle(board);
+          const gap = Number.parseFloat(styles.columnGap) || 12;
+          const width = board.clientWidth;
+          const columns = width >= 980 ? 3 : width >= 640 ? 2 : 1;
+          const columnWidth = (width - gap * (columns - 1)) / columns;
+          const columnHeights = Array.from({ length: columns }, () => 0);
+
+          for (const widget of visibleWidgets) {
+            const targetColumn = columnHeights.indexOf(
+              Math.min(...columnHeights),
+            );
+            widget.style.position = "absolute";
+            widget.style.width = `${columnWidth}px`;
+            widget.style.left = `${targetColumn * (columnWidth + gap)}px`;
+            widget.style.top = `${columnHeights[targetColumn]}px`;
+            widget.style.gridColumn = "auto";
+            widget.style.gridRowEnd = "auto";
+            const height = Math.max(
+              widget.scrollHeight,
+              widget.getBoundingClientRect().height,
+            );
+            columnHeights[targetColumn] += height + gap;
+          }
+          board.style.height = `${Math.max(...columnHeights) - gap}px`;
+        };
         this.widgetResizeObserver?.disconnect();
-        for (const widget of widgets) widget.style.gridRowEnd = "auto";
+        this.widgetResizeObserver = new ResizeObserver(() => placeMasonry());
+        for (const widget of widgets) this.widgetResizeObserver.observe(widget);
+        this.widgetResizeObserver.observe(board);
+        placeMasonry();
+        window.setTimeout(placeMasonry, 250);
+        window.setTimeout(placeMasonry, 900);
         return;
       }
       const place = (widget: HTMLElement) => {
+        if (getComputedStyle(widget).display === "contents") return;
         const styles = getComputedStyle(board);
         const rowHeight = Number.parseFloat(styles.gridAutoRows) || 10;
         const gap = Number.parseFloat(styles.rowGap) || 18;
