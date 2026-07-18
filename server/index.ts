@@ -24,6 +24,13 @@ import {
   openFeedItem,
   saveFeedItem,
 } from "./artifact-feed.js";
+import {
+  InstallMcpSkillInput,
+  InstallPersonalityInput,
+  SkillError,
+  installMcpSkill,
+  installPersonality,
+} from "./skills.js";
 
 const service = new AdaptiveMediaService();
 const WIDGET_URI = "ui://adaptive-media/widget.html";
@@ -393,25 +400,24 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
     "openai/toolInvocation/invoking": "Loading Adaptive Media feed…",
     "openai/toolInvocation/invoked": "Adaptive Media feed ready",
   };
-  const feedSafe =
-    (fn: (input: any) => object) => async (input: any) => {
-      try {
-        return result(fn(input) as Record<string, unknown>);
-      } catch (error) {
-        const known = error instanceof FeedError;
-        return {
-          ...result({
-            error: {
-              code: known ? error.code : "invalid_request",
-              message: known
-                ? error.message
-                : "The request could not be completed.",
-            },
-          }),
-          isError: true,
-        };
-      }
-    };
+  const feedSafe = (fn: (input: any) => object) => async (input: any) => {
+    try {
+      return result(fn(input) as Record<string, unknown>);
+    } catch (error) {
+      const known = error instanceof FeedError;
+      return {
+        ...result({
+          error: {
+            code: known ? error.code : "invalid_request",
+            message: known
+              ? error.message
+              : "The request could not be completed.",
+          },
+        }),
+        isError: true,
+      };
+    }
+  };
   server.registerTool(
     "browse_artifact_feed",
     {
@@ -464,10 +470,14 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
       },
       nbSafe(fn),
     );
-  kAdd("list_local_knowledge_profiles", "List local knowledge profiles", () => ({
-    view: "local_knowledge" as const,
-    profiles: listLocalKnowledgeProfiles(),
-  }));
+  kAdd(
+    "list_local_knowledge_profiles",
+    "List local knowledge profiles",
+    () => ({
+      view: "local_knowledge" as const,
+      profiles: listLocalKnowledgeProfiles(),
+    }),
+  );
   kAdd(
     "open_local_knowledge_artifact",
     "Open local knowledge artifact",
@@ -491,6 +501,47 @@ export function makeMcpServer(nextbound = nextboundDemoStore) {
         },
       };
     },
+  );
+
+  const skillSafe = (fn: (input: any) => object) => async (input: any) => {
+    try {
+      return result(fn(input) as Record<string, unknown>);
+    } catch (error) {
+      const known = error instanceof SkillError;
+      return {
+        ...result({
+          error: {
+            code: known ? error.code : "invalid_request",
+            message: known
+              ? error.message
+              : "The request could not be completed.",
+          },
+        }),
+        isError: true,
+      };
+    }
+  };
+  server.registerTool(
+    "install_mcp_skill",
+    {
+      title: "Install the Adaptive Media agent skill",
+      description:
+        "Install the functional 'adaptive-media-use' agent skill that teaches a terminal agent how to drive this MCP and how to feed the knowledge base. Writes the SKILL.md into the local skills directory and returns the file manifest (relativePath + content) so a client without server filesystem access can install it too.",
+      inputSchema: InstallMcpSkillInput,
+      annotations: write,
+    },
+    skillSafe((input) => installMcpSkill(input)),
+  );
+  server.registerTool(
+    "install_personality",
+    {
+      title: "Install an audience personality",
+      description:
+        "Install an audience personality (e.g. 'get camille personnalité') by pulling that persona's knowledge bundle from knowledge/persona_<id>/ and writing it into the adaptive-media-use skill's personalities/ folder, at the exact path the functional skill loads from. Accepts loose phrasing like 'camille' or 'get camille personnalité'. Returns the file manifest for clients without server filesystem access.",
+      inputSchema: InstallPersonalityInput,
+      annotations: write,
+    },
+    skillSafe((input) => installPersonality(input)),
   );
   return server;
 }
