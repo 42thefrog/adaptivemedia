@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: adaptive-media-mcp
+    runtime: node
+    plan: free
+    branch: deploy/procedural-loop
+    buildCommand: npm install && npm run build:web && npm run build:nextbound && npm run build:feed
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: HOST
+        value: 0.0.0.0
