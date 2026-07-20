@@ -24023,6 +24023,19 @@ function makeMcpServer() {
       }] })
     );
   });
+  server.registerResource(
+    "nextbound-legacy-afterlight",
+    LEGACY_WIDGET_URI,
+    { title: "Nextbound legacy artifact", mimeType: "text/html;profile=mcp-app" },
+    async () => ({
+      contents: [{
+        uri: LEGACY_WIDGET_URI,
+        mimeType: "text/html;profile=mcp-app",
+        text: widgetHtml("alex"),
+        _meta: { ui: { prefersBorder: false, domain: "https://nextbound-adaptive-media.netlify.app", csp: { connectDomains: [], resourceDomains: ["https://nextbound-adaptive-media.netlify.app"] } } }
+      }]
+    })
+  );
   server.registerTool(
     "search_public_intents",
     {
@@ -24074,7 +24087,7 @@ function makeMcpServer() {
   });
   return server;
 }
-var service, widgetTemplate, artifacts, widgetUri, widgetHtml, result, safe;
+var service, widgetTemplate, artifacts, widgetUri, LEGACY_WIDGET_URI, widgetHtml, result, safe;
 var init_index = __esm({
   "server/index.ts"() {
     "use strict";
@@ -24114,6 +24127,7 @@ var init_index = __esm({
       }
     };
     widgetUri = (persona) => `ui://nextbound/${persona}-artifact-v1.html`;
+    LEGACY_WIDGET_URI = "ui://nextbound/afterlight-v4.html";
     widgetHtml = (persona) => {
       const artifact = artifacts[persona];
       return widgetTemplate.replaceAll("{{NAME}}", artifact.name).replaceAll("{{ROLE}}", artifact.role).replaceAll("{{COLLECTION}}", artifact.collection).replaceAll("{{HEADLINE}}", artifact.headline).replaceAll("{{IMAGE}}", artifact.image).replaceAll("{{ACCENT}}", artifact.accent);

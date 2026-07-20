@@ -30,6 +30,7 @@ const artifacts = {
 
 type Persona = keyof typeof artifacts;
 const widgetUri = (persona: Persona) => `ui://nextbound/${persona}-artifact-v1.html`;
+const LEGACY_WIDGET_URI = "ui://nextbound/afterlight-v4.html";
 const widgetHtml = (persona: Persona) => {
   const artifact = artifacts[persona];
   return widgetTemplate
@@ -91,6 +92,23 @@ export function makeMcpServer() {
         }], }),
     );
   });
+
+  // Older Codex/ChatGPT conversations can retain a previously discovered
+  // template URI. Keep this read-only fallback alive so those conversations do
+  // not fail with Resource not found while clients refresh their tool list.
+  server.registerResource(
+    "nextbound-legacy-afterlight",
+    LEGACY_WIDGET_URI,
+    { title: "Nextbound legacy artifact", mimeType: "text/html;profile=mcp-app" },
+    async () => ({
+      contents: [{
+        uri: LEGACY_WIDGET_URI,
+        mimeType: "text/html;profile=mcp-app",
+        text: widgetHtml("alex"),
+        _meta: { ui: { prefersBorder: false, domain: "https://nextbound-adaptive-media.netlify.app", csp: { connectDomains: [], resourceDomains: ["https://nextbound-adaptive-media.netlify.app"] } } },
+      }],
+    }),
+  );
 
   server.registerTool(
     "search_public_intents",
