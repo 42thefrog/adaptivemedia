@@ -11,7 +11,7 @@ import * as api from "./tools/api.js";
 const service = new AdaptiveMediaService();
 // A versioned URI makes ChatGPT fetch this bundle rather than reusing a
 // previously cached widget after a deployment.
-const AFTERLIGHT_WIDGET_URI = "ui://nextbound/afterlight-v2.html";
+const AFTERLIGHT_WIDGET_URI = "ui://nextbound/afterlight-v3.html";
 
 const afterlightMeta = {
   ui: { resourceUri: AFTERLIGHT_WIDGET_URI },
@@ -68,7 +68,10 @@ export function makeMcpServer() {
             ui: {
               prefersBorder: false,
               domain: "https://nextbound-adaptive-media.netlify.app",
-              csp: { connectDomains: [], resourceDomains: [] },
+              csp: {
+                connectDomains: [],
+                resourceDomains: ["https://nextbound-adaptive-media.netlify.app"],
+              },
             },
             "openai/widgetDescription":
               "An interactive Nextbound personal artifact with Alex, Camille, and Maya views.",

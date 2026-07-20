@@ -24021,7 +24021,10 @@ function makeMcpServer() {
             ui: {
               prefersBorder: false,
               domain: "https://nextbound-adaptive-media.netlify.app",
-              csp: { connectDomains: [], resourceDomains: [] }
+              csp: {
+                connectDomains: [],
+                resourceDomains: ["https://nextbound-adaptive-media.netlify.app"]
+              }
             },
             "openai/widgetDescription": "An interactive Nextbound personal artifact with Alex, Camille, and Maya views."
           }
@@ -24085,7 +24088,7 @@ var init_index = __esm({
     init_service();
     init_api2();
     service = new AdaptiveMediaService();
-    AFTERLIGHT_WIDGET_URI = "ui://nextbound/afterlight-v2.html";
+    AFTERLIGHT_WIDGET_URI = "ui://nextbound/afterlight-v3.html";
     afterlightMeta = {
       ui: { resourceUri: AFTERLIGHT_WIDGET_URI },
       "openai/outputTemplate": AFTERLIGHT_WIDGET_URI,

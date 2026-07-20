@@ -2,10 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { installLocalPreview } from "./local-preview.js";
 import "./afterlight.css";
-import alexArtifact from "./assets/alex-executive-series.jpg";
-import camilleArtifact from "./assets/camille-atelier-edition.jpg";
-import mayaArtifact from "./assets/maya-studio-drop.jpg";
-import originalArtifact from "./assets/nihe-sneakers.jpg";
+
+// Keep the Apps SDK resource small enough to load reliably on mobile. The
+// sandbox receives these images from the public Nextbound origin, allowed by
+// the template CSP below.
+const artifactAsset = (fileName: string) =>
+  `https://nextbound-adaptive-media.netlify.app/${fileName}`;
+const alexArtifact = artifactAsset("alex-executive-series.jpg");
+const camilleArtifact = artifactAsset("camille-atelier-edition.jpg");
+const mayaArtifact = artifactAsset("maya-studio-drop.jpg");
+const originalArtifact = artifactAsset("nihe-sneakers.jpg");
 
 type PersonaId = "alex" | "camille" | "maya";
 

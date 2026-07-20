@@ -17,11 +17,12 @@ const publishAsLegacyNextboundPath = () => ({
 
 export default defineConfig({
   root: "web",
-  publicDir: false,
+  publicDir: "public",
   plugins: [react(), viteSingleFile(), publishAsLegacyNextboundPath()],
   build: {
-    // MCP returns a single HTML resource, so persona artwork must travel with it.
-    assetsInlineLimit: 10_000_000,
+    // The widget HTML is an MCP resource; keep it compact and ship artwork as
+    // static files from the verified Netlify origin.
+    assetsInlineLimit: 0,
     outDir: "afterlight-dist",
     emptyOutDir: true,
     rollupOptions: {
