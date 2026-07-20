@@ -24014,7 +24014,7 @@ function makeMcpServer() {
           uri: AFTERLIGHT_WIDGET_URI,
           mimeType: "text/html;profile=mcp-app",
           text: readFileSync(
-            resolve(process.cwd(), "web/afterlight-dist/nextbound.html"),
+            resolve(process.cwd(), "web/mcp-widget.html"),
             "utf8"
           ),
           _meta: {
@@ -24088,7 +24088,7 @@ var init_index = __esm({
     init_service();
     init_api2();
     service = new AdaptiveMediaService();
-    AFTERLIGHT_WIDGET_URI = "ui://nextbound/afterlight-v3.html";
+    AFTERLIGHT_WIDGET_URI = "ui://nextbound/afterlight-v4.html";
     afterlightMeta = {
       ui: { resourceUri: AFTERLIGHT_WIDGET_URI },
       "openai/outputTemplate": AFTERLIGHT_WIDGET_URI,
