@@ -63,4 +63,4 @@ deterministic persona experiences, and an MCP Apps UI resource.
 - **Repository:** [github.com/42thefrog/adaptivemedia](https://github.com/42thefrog/adaptivemedia)
 - **License:** [Apache-2.0](LICENSE)
 - **Demo video:** [Nextbound pitch](https://youtu.be/eCJZ_co_HIA?si=rxAJwr6t9dkHj5XH)
-- **Codex /feedback session ID:** add the session ID here before submission.
+- **Codex /feedback session ID:** `019f7e81-75a0-7f80-9035-64bd9c3e66ec`
