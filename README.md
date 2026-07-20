@@ -17,6 +17,13 @@ The demo starts with Luna’s sneaker artifact and adapts it for:
 - Camille — Artistic director
 - Maya — Developer
 
+Each profile has a separate MCP render tool, so asking for Alex returns only
+Alex’s artifact — never a combined gallery:
+
+- `show_alex_artifact`
+- `show_camille_artifact`
+- `show_maya_artifact`
+
 ## Why it matters
 
 Creators and brands usually choose between one generic asset or many expensive
@@ -41,7 +48,10 @@ The local MCP endpoint is `http://127.0.0.1:3000/mcp`.
 1. Open **Settings → Plugins → Developer mode → Create an app**.
 2. Enter `https://nextbound-adaptive-media.netlify.app/mcp`.
 3. Choose **No authentication**, connect, then start a new chat.
-4. Ask: `Show Luna’s artifact for Alex.`
+4. Ask one of these:
+   - `Show Luna’s artifact for Alex.`
+   - `Show Luna’s artifact for Camille.`
+   - `Show Luna’s artifact for Maya.`
 
 ### Codex
 
@@ -49,7 +59,11 @@ The local MCP endpoint is `http://127.0.0.1:3000/mcp`.
 codex mcp add nextbound --url https://nextbound-adaptive-media.netlify.app/mcp
 ```
 
-Start a new task and ask: `Open Nextbound and show Luna’s artifact for Alex.`
+Start a new task and ask, for example:
+
+```text
+Open Nextbound and show Luna’s artifact for Maya.
+```
 
 ## How Codex and GPT-5.6 were used
 
