@@ -23338,28 +23338,48 @@ var init_seed = __esm({
       {
         id: "persona_camille",
         name: "Camille",
-        label: "Aesthetic Executive",
-        age: 39,
+        label: "Curated Chaos Artistic Director",
+        age: 31,
         location: "Paris",
-        occupation: "Luxury and brand strategy executive",
+        occupation: "Artistic director and aesthetic social media creator",
         budget: "Premium",
         technicalLevel: "Non-technical but AI-aware",
-        interests: ["art", "architecture", "fashion", "wellness", "technology"],
-        preferredFormat: ["elegant", "concise", "visually refined"],
-        primaryMotivation: "Save time without compromising quality or aesthetics."
+        interests: [
+          "art direction",
+          "digital art",
+          "NFT collecting",
+          "digital galleries",
+          "wellness",
+          "cozy jazz clubs",
+          "aesthetic vlogging"
+        ],
+        preferredFormat: [
+          "visual",
+          "dopamine-rich",
+          "curated messy",
+          "intimate"
+        ],
+        primaryMotivation: "Turn daily life into a beautiful, health-conscious and digitally collectible aesthetic."
       },
       {
         id: "persona_maya",
         name: "Maya",
-        label: "Independent Creator",
-        age: 28,
-        location: "London",
-        occupation: "Independent visual and lifestyle creator",
+        label: "42 Paris Code Student",
+        age: 23,
+        location: "Paris",
+        occupation: "Programming student at 42 Paris",
         budget: "Medium",
-        technicalLevel: "Beginner but AI-curious",
-        interests: ["music", "visual culture", "beauty", "fashion", "social media"],
-        preferredFormat: ["inspirational", "visual", "shareable"],
-        primaryMotivation: "Create original work, grow an audience and preserve a distinct voice."
+        technicalLevel: "Intermediate, project-driven and meme-fluent",
+        interests: [
+          "programming memes",
+          "peer coding",
+          "hanging out with friends",
+          "hoodies",
+          "beer",
+          "Paris student life"
+        ],
+        preferredFormat: ["funny", "practical", "social", "low-friction"],
+        primaryMotivation: "Learn by building with friends, keep code playful and turn school projects into shared wins."
       }
     ];
     titles = {

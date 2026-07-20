@@ -4,6 +4,7 @@ dist/
 web/nextbound-dist/
 web/afterlight-dist/
 .DS_Store
+.agents/
 
 # Local Netlify folder
 .netlify
