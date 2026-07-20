@@ -24094,6 +24094,17 @@ function makeMcpServer() {
         )();
         return {
           ...base,
+          content: [
+            ...base.content,
+            {
+              type: "resource",
+              resource: {
+                uri: widgetUri(persona),
+                mimeType: "text/html;profile=mcp-app",
+                text: widgetHtml(persona)
+              }
+            }
+          ],
           _meta: {
             ui: { resourceUri: widgetUri(persona) },
             "openai/outputTemplate": widgetUri(persona)

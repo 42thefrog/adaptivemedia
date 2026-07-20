@@ -167,8 +167,22 @@ export function makeMcpServer() {
         )();
         // ChatGPT reads the template from the tool *result* meta as well as the
         // descriptor. Without this, the text arrives and the widget stays blank.
+        // Some clients fail to fetch the template with a separate
+        // resources/read call. Embedding the widget in the tool result makes
+        // the response self-sufficient.
         return {
           ...base,
+          content: [
+            ...base.content,
+            {
+              type: "resource" as const,
+              resource: {
+                uri: widgetUri(persona),
+                mimeType: "text/html;profile=mcp-app",
+                text: widgetHtml(persona),
+              },
+            },
+          ],
           _meta: {
             ui: { resourceUri: widgetUri(persona) },
             "openai/outputTemplate": widgetUri(persona),
