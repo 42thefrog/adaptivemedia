@@ -49,7 +49,7 @@ The local MCP endpoint is `http://127.0.0.1:3000/mcp`.
 codex mcp add nextbound --url https://nextbound-adaptive-media.netlify.app/mcp
 ```
 
-Start a new task and ask: `Open Nextbound and show Luna’s artifact for Maya.`
+Start a new task and ask: `Open Nextbound and show Luna’s artifact for Alex.`
 
 ## How Codex and GPT-5.6 were used
 
@@ -62,5 +62,5 @@ deterministic persona experiences, and an MCP Apps UI resource.
 
 - **Repository:** [github.com/42thefrog/adaptivemedia](https://github.com/42thefrog/adaptivemedia)
 - **License:** [Apache-2.0](LICENSE)
-- **Demo video:** add the public YouTube URL here before submission.
+- **Demo video:** [Nextbound pitch](https://youtu.be/eCJZ_co_HIA?si=rxAJwr6t9dkHj5XH)
 - **Codex /feedback session ID:** add the session ID here before submission.
