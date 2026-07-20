@@ -159,6 +159,22 @@ export function makeMcpServer() {
     );
   });
 
+  // Compatibility for cached ChatGPT/Codex tool manifests. Fresh clients use
+  // the three explicit show_* tools above; older clients can still complete a
+  // previously planned generate_experience call instead of failing.
+  server.registerTool(
+    "generate_experience",
+    {
+      title: "Generate experience (legacy compatibility)",
+      description: "Compatibility alias for an already-open Nextbound conversation.",
+      inputSchema: api.GenerateExperienceInput,
+      annotations: read,
+    },
+    safe(({ intentId, personaId }) =>
+      service.generateExperience(intentId, personaId),
+    ),
+  );
+
   return server;
 }
 

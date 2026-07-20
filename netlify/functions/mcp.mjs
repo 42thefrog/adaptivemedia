@@ -24085,6 +24085,18 @@ function makeMcpServer() {
       safe(() => service.generateExperience("intent_luna_main_character", persona))
     );
   });
+  server.registerTool(
+    "generate_experience",
+    {
+      title: "Generate experience (legacy compatibility)",
+      description: "Compatibility alias for an already-open Nextbound conversation.",
+      inputSchema: GenerateExperienceInput,
+      annotations: read
+    },
+    safe(
+      ({ intentId, personaId }) => service.generateExperience(intentId, personaId)
+    )
+  );
   return server;
 }
 var service, widgetTemplate, artifacts, widgetUri, LEGACY_WIDGET_URI, widgetHtml, result, safe;
