@@ -1,22 +1,49 @@
 # Nextbound
 
-Nextbound is a public MCP for ChatGPT and Codex. One creator artifact becomes a
-personal version for Alex, Camille, or Maya while preserving the creator’s
-attribution.
+**Category:** Apps for your life
 
-**Public MCP URL:** `https://nextbound-adaptive-media.netlify.app/mcp`
+**Live demo:** [Nextbound](https://nextbound-adaptive-media.netlify.app/nextbound.html?scenario=procedural-loop)
+**Public MCP:** `https://nextbound-adaptive-media.netlify.app/mcp`
 
-## Install in ChatGPT
+## What we built
 
-1. Open **Settings → Plugins → Developer mode**.
-2. Select **Create an app**.
-3. Paste the public MCP URL above.
-4. Select **No authentication** and connect.
-5. Start a new chat and ask: `Show Luna’s artifact for Alex.`
+Nextbound is a public MCP for ChatGPT and Codex. A creator publishes one
+artifact; Nextbound renders a relevant version for a person while keeping the
+creator and original work visible.
 
-## Install in Codex
+The demo starts with Luna’s sneaker artifact and adapts it for:
 
-Run:
+- Alex — CEO, tech company
+- Camille — Artistic director
+- Maya — Developer
+
+## Why it matters
+
+Creators and brands usually choose between one generic asset or many expensive
+campaign variants. Nextbound keeps one attributable source artifact and gives
+each recipient a contextual experience instead of a recommendation or ad.
+
+## Run locally
+
+```bash
+npm install
+npm run typecheck
+npm test
+npm start
+```
+
+The local MCP endpoint is `http://127.0.0.1:3000/mcp`.
+
+## Install the public MCP
+
+### ChatGPT
+
+1. Open **Settings → Plugins → Developer mode → Create an app**.
+2. Enter `https://nextbound-adaptive-media.netlify.app/mcp`.
+3. Choose **No authentication**, connect, then start a new chat.
+4. Ask: `Show Luna’s artifact for Alex.`
+
+### Codex
 
 ```bash
 codex mcp add nextbound --url https://nextbound-adaptive-media.netlify.app/mcp
@@ -24,7 +51,16 @@ codex mcp add nextbound --url https://nextbound-adaptive-media.netlify.app/mcp
 
 Start a new task and ask: `Open Nextbound and show Luna’s artifact for Maya.`
 
-## License
+## How Codex and GPT-5.6 were used
 
-The code is available under the [Apache-2.0 License](LICENSE). The MCP endpoint
-is public and requires no authentication for this demo.
+Codex with GPT-5.6 accelerated the product design, MCP server, personalized
+artifact UI, Netlify deployment, debugging, and verification. The project
+includes a working Streamable HTTP MCP server, public creator intents,
+deterministic persona experiences, and an MCP Apps UI resource.
+
+## Submission
+
+- **Repository:** [github.com/42thefrog/adaptivemedia](https://github.com/42thefrog/adaptivemedia)
+- **License:** [Apache-2.0](LICENSE)
+- **Demo video:** add the public YouTube URL here before submission.
+- **Codex /feedback session ID:** add the session ID here before submission.
