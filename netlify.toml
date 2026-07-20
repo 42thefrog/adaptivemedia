@@ -18,3 +18,9 @@
   to = "/.netlify/functions/mcp"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/"
+  to = "/nextbound.html"
+  status = 302
+  force = false

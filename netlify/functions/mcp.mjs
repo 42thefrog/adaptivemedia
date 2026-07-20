@@ -24012,12 +24012,18 @@ function makeMcpServer() {
         _meta: {
           ui: {
             prefersBorder: false,
-            domain: "https://nextbound-adaptive-media.netlify.app",
             csp: {
               connectDomains: [],
               resourceDomains: ["https://nextbound-adaptive-media.netlify.app"]
             }
           },
+          "openai/widgetCSP": {
+            connect_domains: [],
+            resource_domains: [
+              "https://nextbound-adaptive-media.netlify.app"
+            ]
+          },
+          "openai/widgetPrefersBorder": false,
           "openai/widgetDescription": `Only ${artifacts[persona].name}'s personal artifact.`
         }
       }] })
@@ -24032,7 +24038,7 @@ function makeMcpServer() {
         uri: LEGACY_WIDGET_URI,
         mimeType: "text/html;profile=mcp-app",
         text: widgetHtml("alex"),
-        _meta: { ui: { prefersBorder: false, domain: "https://nextbound-adaptive-media.netlify.app", csp: { connectDomains: [], resourceDomains: ["https://nextbound-adaptive-media.netlify.app"] } } }
+        _meta: { ui: { prefersBorder: false, csp: { connectDomains: [], resourceDomains: ["https://nextbound-adaptive-media.netlify.app"] } } }
       }]
     })
   );
@@ -24082,7 +24088,18 @@ function makeMcpServer() {
           "openai/toolInvocation/invoked": `${artifact.name}'s artifact is ready`
         }
       },
-      safe(() => service.generateExperience("intent_luna_main_character", persona))
+      async () => {
+        const base = await safe(
+          () => service.generateExperience("intent_luna_main_character", persona)
+        )();
+        return {
+          ...base,
+          _meta: {
+            ui: { resourceUri: widgetUri(persona) },
+            "openai/outputTemplate": widgetUri(persona)
+          }
+        };
+      }
     );
   });
   server.registerTool(
