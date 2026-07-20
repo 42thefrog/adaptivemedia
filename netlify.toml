@@ -5,7 +5,7 @@
 
 [functions]
   node_bundler = "none"
-  included_files = ["web/afterlight-dist/**", "server/data/**", "knowledge/**"]
+  included_files = ["web/afterlight-dist/**", "web/mcp-widget.html", "server/data/**", "knowledge/**"]
 
 [[redirects]]
   from = "/mcp"
