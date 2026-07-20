@@ -7,9 +7,8 @@
 
 ## What we built
 
-Nextbound is a public MCP for ChatGPT and Codex. A creator publishes one
-artifact; Nextbound renders a relevant version for a person while keeping the
-creator and original work visible.
+Stop searching. Nextbound is an MCP for ChatGPT and Codex. It turns one piece
+of content into a version made for you.
 
 The demo starts with Luna’s sneaker artifact and adapts it for:
 
