@@ -4,11 +4,14 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { z } from "zod";
 import { AdaptiveMediaService, DemoError } from "./service.js";
 import * as api from "./tools/api.js";
 
 const service = new AdaptiveMediaService();
-const AFTERLIGHT_WIDGET_URI = "ui://nextbound/afterlight.html";
+// A versioned URI makes ChatGPT fetch this bundle rather than reusing a
+// previously cached widget after a deployment.
+const AFTERLIGHT_WIDGET_URI = "ui://nextbound/afterlight-v2.html";
 
 const afterlightMeta = {
   ui: { resourceUri: AFTERLIGHT_WIDGET_URI },
@@ -61,7 +64,15 @@ export function makeMcpServer() {
             resolve(process.cwd(), "web/afterlight-dist/nextbound.html"),
             "utf8",
           ),
-          _meta: { ui: { prefersBorder: false } },
+          _meta: {
+            ui: {
+              prefersBorder: false,
+              domain: "https://nextbound-adaptive-media.netlify.app",
+              csp: { connectDomains: [], resourceDomains: [] },
+            },
+            "openai/widgetDescription":
+              "An interactive Nextbound personal artifact with Alex, Camille, and Maya views.",
+          },
         },
       ],
     }),
@@ -102,8 +113,9 @@ export function makeMcpServer() {
     {
       title: "Render a personal Nextbound experience",
       description:
-        "Render one creator artifact for Alex, Camille, or Maya while preserving creator attribution.",
+        "Show the interactive AFTERLIGHT visual artifact for Alex, Camille, or Maya. Use this tool whenever the user asks to generate, open, or view a personal Nextbound experience.",
       inputSchema: api.GenerateExperienceInput,
+      outputSchema: { experience: z.unknown() },
       annotations: read,
       _meta: afterlightMeta,
     },

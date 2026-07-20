@@ -90,6 +90,41 @@ function App() {
   const persona = personas[personaId];
 
   useEffect(() => {
+    const applyToolResult = (toolResult: any) => {
+      const next = toolResult?.structuredContent ?? toolResult;
+      const nextExperience = next?.experience;
+      if (!nextExperience) return;
+      const nextPersona = nextExperience.personaId as PersonaId;
+      if (nextPersona in personas) setPersonaId(nextPersona);
+      setExperience(nextExperience);
+      setArtifactReady(true);
+      setPhase("final");
+    };
+
+    const onBridgeMessage = (event: MessageEvent) => {
+      if (event.source !== window.parent) return;
+      const message = event.data;
+      if (
+        message?.jsonrpc === "2.0" &&
+        message.method === "ui/notifications/tool-result"
+      ) {
+        applyToolResult(message.params);
+      }
+    };
+    const onOpenAiGlobals = (event: Event) =>
+      applyToolResult((event as CustomEvent).detail?.globals?.toolOutput);
+
+    window.addEventListener("message", onBridgeMessage, { passive: true });
+    window.addEventListener("openai:set_globals", onOpenAiGlobals, {
+      passive: true,
+    });
+    return () => {
+      window.removeEventListener("message", onBridgeMessage);
+      window.removeEventListener("openai:set_globals", onOpenAiGlobals);
+    };
+  }, []);
+
+  useEffect(() => {
     window.openai?.setWidgetState?.({
       personaId,
       phase,

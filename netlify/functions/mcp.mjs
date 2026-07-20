@@ -24017,7 +24017,14 @@ function makeMcpServer() {
             resolve(process.cwd(), "web/afterlight-dist/nextbound.html"),
             "utf8"
           ),
-          _meta: { ui: { prefersBorder: false } }
+          _meta: {
+            ui: {
+              prefersBorder: false,
+              domain: "https://nextbound-adaptive-media.netlify.app",
+              csp: { connectDomains: [], resourceDomains: [] }
+            },
+            "openai/widgetDescription": "An interactive Nextbound personal artifact with Alex, Camille, and Maya views."
+          }
         }
       ]
     })
@@ -24056,8 +24063,9 @@ function makeMcpServer() {
     "generate_experience",
     {
       title: "Render a personal Nextbound experience",
-      description: "Render one creator artifact for Alex, Camille, or Maya while preserving creator attribution.",
+      description: "Show the interactive AFTERLIGHT visual artifact for Alex, Camille, or Maya. Use this tool whenever the user asks to generate, open, or view a personal Nextbound experience.",
       inputSchema: GenerateExperienceInput,
+      outputSchema: { experience: external_exports.unknown() },
       annotations: read,
       _meta: afterlightMeta
     },
@@ -24073,10 +24081,11 @@ var init_index = __esm({
     "use strict";
     init_mcp();
     init_streamableHttp();
+    init_zod();
     init_service();
     init_api2();
     service = new AdaptiveMediaService();
-    AFTERLIGHT_WIDGET_URI = "ui://nextbound/afterlight.html";
+    AFTERLIGHT_WIDGET_URI = "ui://nextbound/afterlight-v2.html";
     afterlightMeta = {
       ui: { resourceUri: AFTERLIGHT_WIDGET_URI },
       "openai/outputTemplate": AFTERLIGHT_WIDGET_URI,
