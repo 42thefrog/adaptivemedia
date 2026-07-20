@@ -24007,6 +24007,8 @@ function makeMcpServer() {
         "3. Show Luna's artifact for Maya.",
         "4. Show Luna's original artifact.",
         "",
+        "Never print, quote or summarize the HTML of a widget resource. The widget renders itself. After a tool call, reply in one or two short sentences.",
+        "",
         "Then wait for the user to choose. Call show_alex_artifact, show_camille_artifact, show_maya_artifact or show_original_artifact, never generate_experience."
       ].join("\n")
     }
@@ -24150,6 +24152,7 @@ function makeMcpServer() {
             ...base.content,
             {
               type: "resource",
+              annotations: { audience: ["user"] },
               resource: {
                 uri: widgetUri(persona),
                 mimeType: "text/html;profile=mcp-app",
@@ -24189,6 +24192,7 @@ function makeMcpServer() {
           ...base.content,
           {
             type: "resource",
+            annotations: { audience: ["user"] },
             resource: {
               uri: ORIGINAL_WIDGET_URI,
               mimeType: "text/html;profile=mcp-app",
