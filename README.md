@@ -1,173 +1,225 @@
-# Adaptive Media ChatGPT App — Step 7
+# Nextbound — content, made for you
 
-The deterministic Nextbound engine supports two explicit widget transports: `local-preview` (the default browser preview) and `mcp` (injected by the MCP UI resource). Both call the same domain service layer. The self-contained MCP Apps widget resource is `ui://nextbound/experience.html` and includes Alpine, CSS, and JavaScript without CDN dependencies.
+**Track:** Apps for your life
 
-The existing server now also registers 13 Nextbound tools: `publish_intent`, `deliver_to_inbox`, `resolve_okf_context`, `compile_experience`, `resolve_next_action`, `match_tool`, `connect_artifact`, `get_experience_session`, `pause_experience`, `resume_experience`, `stop_experience`, `restart_experience`, and `share_experience`.
+**Live demo:** [nextbound-adaptive-media.netlify.app](https://nextbound-adaptive-media.netlify.app/nextbound.html?scenario=procedural-loop)
+**MCP endpoint:** `https://nextbound-adaptive-media.netlify.app/mcp`
 
-## Nextbound local experience engine
+Nextbound is an MCP for ChatGPT and Codex. It turns one piece of content into a
+version made for you, rendered by GPT-5.6 from a knowledge base that stays on
+your device.
 
-The pre-MCP Nextbound prototype runs beside the existing React/MCP app and uses a local, future-tool-shaped adapter over deterministic TypeScript domain services:
+For this demo, Luna shares one original sneaker artifact. Rather than treating
+it as an ad recommendation, Nextbound preserves its attribution and identity
+while changing the *way it is experienced* for three people:
 
-```bash
-npm run dev:nextbound
+| Profile | Context | Resulting experience |
+| --- | --- | --- |
+| Alex | CEO, tech company | Executive Series — travel, focus, performance |
+| Camille | Artistic director | Atelier Édition — form, softness, feeling |
+| Maya | Developer | Studio Drop — daily build, flow, durability |
+
+The viewer can open the full personal artifact, switch profiles, and inspect
+the original creator artifact at any point. The artifact is therefore a shared
+object with many relevant presentations — not three disconnected campaigns.
+
+## Why this matters
+
+Creators and brands currently face a bad trade-off: publish one generic asset
+that feels irrelevant to most people, or produce many costly bespoke assets
+that fragment the creator’s voice. Nextbound proposes a third path:
+
+1. A creator publishes one attributable source artifact.
+2. An MCP tool resolves a deterministic, contextual experience for a recipient.
+3. The recipient sees a presentation tuned to their role and rhythm.
+4. The original remains explicitly available, so personalization never hides
+   where the work came from.
+
+This is useful for creator-led product launches, travel and lifestyle media,
+community drops, and any situation where one message needs to travel across
+distinct audiences without becoming generic.
+
+## What makes the project non-trivial
+
+Nextbound is not a static landing page. It includes:
+
+- A **Streamable HTTP MCP server** with a live `/mcp` endpoint.
+- A compact **MCP Apps UI resource** at `ui://nextbound/afterlight.html`,
+  attached to the `generate_experience` tool.
+- A deterministic personalization engine with public intents, creator profiles,
+  personas, experience sessions, and Nextbound actions.
+- An interactive React artifact UI: staged delivery, generated experience,
+  persona switching, a full-artifact lightbox, and creator-origin view.
+- Embedded artwork in the MCP HTML resource, so the visual experience works
+  inside an MCP host rather than depending on the public site’s asset paths.
+- Unit coverage for the service and procedural runtime.
+
+The demo is deliberately deterministic: the same Intent + persona produces the
+same experience. That makes it testable, inspectable, and suitable for a jury
+demo without hidden model variance.
+
+## Architecture
+
+```text
+Creator artifact (Luna)
+        │
+        ▼
+Adaptive Media / Nextbound MCP server
+  ├─ creator Intent + attribution
+  ├─ recipient persona context
+  └─ generate_experience(intentId, personaId)
+        │
+        ▼
+ui://nextbound/afterlight.html
+  ├─ Alex / Camille / Maya presentation
+  ├─ full personal artifact
+  └─ original creator artifact
 ```
 
-Open `http://127.0.0.1:4174/nextbound.html`. Switch between Alex, Camille, and Maya; Maya contains the complete visual memory → Elias soundtrack → cinematic artifact path. No request is sent to `/mcp`.
+![Nextbound architecture: one published artifact flows through the experience engine and MCP server, while the knowledge-base skill remains on the user's device.](assets/nextbound-architecture.jpg)
 
-This MVP connects three public creators, three public Intents, three audience personas, nine deterministic experiences, and the existing React widget through MCP Apps. The primary demo does not call a live model.
+## Run locally
 
-## Local preview (Step 6.5)
+### Prerequisites
 
-Install once, then launch the browser preview and local MCP server together:
+- Node.js 20+
+- npm
+
+### Install, verify, and launch
 
 ```bash
 npm install
-npm run dev:all
+npm run typecheck
+npm test
+npm run build:afterlight
+npm run verify:afterlight
+npm start
 ```
 
-Open `http://127.0.0.1:4173/`. The clearly marked Demo state selector covers all creators, all nine persona experiences, plus loading, empty, and error states. The normal discovery search and Like, Follow, Save, and Share demo actions remain interactive. Alex is the default persona.
+The local MCP server starts at `http://127.0.0.1:3000/mcp`.
 
-No environment variables are required. `PORT` optionally overrides the MCP server's default port `3000`; the frontend remains on `4173`.
-
-To run the processes separately:
+For the web UI, run this in a second terminal:
 
 ```bash
-npm start
 npm run dev
 ```
 
-## Build and inspect
+Then open `http://127.0.0.1:4175/nextbound.html`.
+
+To build the production MCP function as well:
 
 ```bash
-npm install
-npm run build:web
-npm run format:check
-npm run typecheck
-npm test
-npm start
+npm run build:netlify-fn
 ```
 
-The streamable HTTP endpoint is `http://127.0.0.1:3000/mcp`. In another terminal, launch MCP Inspector with:
+No API key, database, or sample-data download is needed: seeded creator,
+persona, and experience data ship with the repository.
 
-```bash
-npm run inspect
+## Test the MCP integration
+
+### Codex
+
+Add this to your local Codex MCP configuration:
+
+```toml
+[mcp_servers.nextbound]
+url = "http://127.0.0.1:3000/mcp"
 ```
 
-The eight tools are `search_public_intents`, `get_creator_profile`, `get_intent`, `generate_experience`, `like_intent`, `follow_creator`, `save_experience`, and `create_share_link`. All relevant results use the `ui://adaptive-media/widget.html` MCP UI resource.
+For the hosted demo, replace the URL with:
 
-## Artifact feed MCP App (`feature/chatgpt-artifact-feed`)
-
-A second MCP App widget renders a **unified, infinite masonry feed** that mixes
-four content families behind one paginated stream:
-
-- **artifact** — interactive artifacts
-- **editorial** — editorial / media content
-- **intent** — intentions / creations
-- **okf** — Open Knowledge Format knowledge-base entries (person, concept,
-  document, source, resource). An OKF `source` can be a **ClickHouse table**;
-  its schema is carried inline (each field has a name, a type, and a semantic
-  description) and rendered as a readable table when the item is opened.
-
-Two tools back it:
-
-- `browse_artifact_feed` — returns one cursor-paginated page
-  (`{ items, nextCursor, hasMore, total }`). Pass `nextCursor` back as `cursor`
-  to drive the infinite scroll; optional `type` filters by family; optional
-  `limit` (1–24, default 8).
-- `open_feed_item` — opens a single item by `itemId` and returns it as a
-  self-contained interactive artifact (`{ selectedItem }`), including the OKF
-  ClickHouse schema for sources.
-
-Both resolve to the `ui://adaptive-media/artifact-feed.html` MCP UI resource.
-In the widget, selecting a card asks ChatGPT to run `open_feed_item` via
-`window.openai.sendFollowUpMessage` (so the item appears as a **new artifact in
-the conversation, beneath the feed**); if that API is unavailable it falls back
-to a direct `window.openai.callTool("open_feed_item", …)` and renders the opened
-artifact inline.
-
-Build and run:
-
-```bash
-npm install
-npm run build:all      # build:web + build:nextbound + build:feed
-npm start              # streamable HTTP on 0.0.0.0:3000, health at /health
+```text
+https://nextbound-adaptive-media.netlify.app/mcp
 ```
 
-- Widget preview only: `npm run dev:feed` → `http://127.0.0.1:4176/artifact-feed.html`
-  (works standalone via a local sample when `window.openai` is absent).
-- Health check: `curl http://127.0.0.1:3000/health` →
-  `{"status":"ok","service":"adaptive-media",…}`.
-- The server binds `0.0.0.0` by default; override with `HOST` / `PORT`.
+Start a fresh task and ask:
 
-Golden prompts once connected in ChatGPT:
+> Generate Luna’s experience for Alex.
 
-1. `Browse the Adaptive Media artifact feed.`
-2. `Load more of the feed.` (infinite scroll / next cursor page)
-3. `Open the "Source · creator_intents" item as an artifact.` (renders the
-   ClickHouse schema table)
+The `generate_experience` tool returns the AFTERLIGHT UI resource. Switch to
+Camille and Maya to see how one source artifact becomes three presentations.
 
-## Skill & personality install tools
+### ChatGPT
 
-Two MCP tools let an agent bootstrap itself against this server and load
-audience personalities from the file-based knowledge base:
+In a workspace with Developer mode / custom MCP apps enabled, create an app
+with the hosted MCP URL above, select **No authentication** for this public
+demo, and scan the tools. Start a new chat, select the app, and use the same
+prompt: `Generate Luna’s experience for Alex.`
 
-- `install_mcp_skill` — installs the functional **`adaptive-media-use`** agent
-  skill (a `SKILL.md`) that documents every MCP tool and explains how to feed
-  the knowledge base. It writes into the local skills directory (default
-  `.agents/skills/`, override with `ADAPTIVE_MEDIA_SKILLS_DIR`).
-- `install_personality` — installs one audience personality. Say **"get camille
-  personnalité"** and the agent calls
-  `install_personality { "personality": "camille" }`; the tool pulls
-  `knowledge/persona_camille/` and writes it to
-  `adaptive-media-use/personalities/camille.md` — the exact path the functional
-  skill loads from when personalizing (`generate_experience`). Loose phrasing
-  (`camille`, `persona_camille`, `get camille personnalité`) all resolve to the
-  same persona; installs are additive and idempotent.
+ChatGPT custom MCP availability depends on plan and workspace permissions.
+OpenAI’s current developer-mode instructions are available in the
+[official Help Center](https://help.openai.com/fr-fr/articles/12584461).
 
-Both tools write real files (deduplicated, no path traversal) **and** return a
-`files` manifest of `{ relativePath, content }`, so an MCP client that cannot
-reach the server's filesystem can install the same files itself. Installed
-skills are runtime state (gitignored), like `tmp/`.
+## Judge demo path (under 3 minutes)
 
-## Step 8 — temporary ChatGPT Developer Mode connection
+1. Open the live web demo and show the incoming artifact from Luna.
+2. Press **nextbound me** to generate Alex’s experience.
+3. Open Alex’s artifact and then **View creator’s original artifact** to show
+   attribution is preserved.
+4. Switch to Camille and Maya: same source, clearly different contexts and
+   visual languages.
+5. Open the MCP endpoint in a ChatGPT/Codex setup and invoke
+   `generate_experience` to show that the visual is delivered as an MCP UI,
+   not merely linked from a website.
 
-Build and start the local MCP server:
+## How Codex and GPT-5.6 were used
 
-```bash
-npm run build:web
-npm run build:nextbound
-npm start
-```
+This project was built iteratively with Codex using GPT-5.6. Codex accelerated
+the work in the places that usually slow down a prototype:
 
-Its local endpoint is `http://127.0.0.1:3000/mcp`. In a second terminal, expose it with the already-installed Cloudflare quick tunnel:
+- **System design:** translated the product premise into a creator Intent,
+  recipient personas, deterministic experience contracts, and MCP tool schema.
+- **Implementation:** built and connected the React visual artifact, the
+  Streamable HTTP MCP transport, UI resource metadata, Netlify deployment, and
+  production build pipeline.
+- **Design iteration:** integrated distinct Alex, Camille, and Maya art
+  directions, then made the personal artifact and creator-original views
+  interactive and accessible.
+- **Debugging and QA:** investigated asset delivery across a static website and
+  an MCP-hosted HTML resource; embedded the artwork in the resource, ran
+  TypeScript checks, builds, test suites, and live endpoint smoke tests.
+- **Product decisions:** kept Luna’s original artifact visible by design,
+  rejecting recommendation-style copy so the experience demonstrates shared
+  creator content adapted for different people rather than algorithmic ads.
 
-```bash
-cloudflared tunnel --url http://127.0.0.1:3000 --no-autoupdate
-```
+The result is a working product surface and a deployable protocol integration,
+not a prompt-only mockup.
 
-Use the generated endpoint in the form `https://<temporary-domain>/mcp`. Never commit the generated domain.
+## Evaluation-criteria map
 
-ChatGPT app metadata:
+### Technological implementation
 
-- Name: `Nextbound`
-- Description: `Nextbound transforms one creator Intent into a personalized, evolving experience. Every user action can generate the next artifact, tool or creator contribution while preserving the original message and attribution.`
-- MCP URL: `https://<temporary-domain>/mcp`
-- Recommended discovery description: `Use Nextbound to receive and explore adaptive creator experiences, resolve personalized next actions and move through collaborative artifact graphs.`
+The repository contains the MCP server, HTTP transport, deterministic service
+layer, React UI, Netlify function, deployment configuration, build scripts,
+and tests. The public MCP endpoint has been smoke-tested with `initialize` and
+`tools/list`; `generate_experience` advertises the AFTERLIGHT output template.
 
-To connect manually, open ChatGPT, open **Settings**, select **Security and login**, and enable **Developer Mode**. Open **Plugins management**, create a developer-mode app, and enter the name, description, and generated MCP URL above. Confirm that the 13 Nextbound tools are discovered. Then open a new conversation and add Nextbound to it.
+### Design
 
-Golden prompts, in order:
+The experience has a complete flow: creator delivery → personalization → full
+artifact → original attribution → persona comparison. It is runnable locally,
+available on the web, and designed to render as an MCP App UI.
 
-1. `Open the AFTERLIGHT experience from Luna Vale.`
-2. `Deliver it to Alex, Camille and Maya.`
-3. `Open the experience for Maya.`
-4. `Create my visual memory.`
-5. `Add a soundtrack.`
-6. `Turn it into a short film.`
-7. `Share this experience.`
+### Potential impact
 
-Stop each foreground process with `Ctrl-C`: first in the tunnel terminal to revoke the temporary public route, then in the MCP server terminal. The quick tunnel has no uptime guarantee and is suitable only for temporary development. The demo has no authentication, persistence, public share URL, production deployment, or marketplace submission; state resets when the MCP server stops. ChatGPT account setup and final inline-widget QA remain manual.
+Nextbound gives creators and teams a concrete alternative to generic content
+and opaque targeting. It maintains source identity while making media relevant
+to a recipient’s actual context.
 
-## MVP limits
+### Quality of idea
 
-Like, follow, save, and share state is in memory and resets when the server restarts. Share returns a stable demo reference, not a publicly accessible URL. There is no authentication, database, external personalization service, production payment or deployment. Rebuild the single-file widget with `npm run build:web` after UI changes.
+The novelty is not “AI makes another ad.” It is a portable, attributable
+creator artifact that compiles into context-sensitive experiences through MCP,
+while keeping the original visible and inspectable.
+
+## Repository and license
+
+- Repository: [github.com/42thefrog/adaptivemedia](https://github.com/42thefrog/adaptivemedia)
+- License: [Apache-2.0](LICENSE)
+
+## Current demo boundaries
+
+This is a public deterministic demo. It has no user authentication, database,
+or persistent user profile. Like/follow/save state is in memory. A production
+version would add OAuth, consent, authorization, persistence, audit logs, and
+data deletion controls before processing personal data.

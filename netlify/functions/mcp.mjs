@@ -1963,10 +1963,10 @@ var init_schemas = __esm({
         const shape = def.shape;
         const propValues = {};
         for (const key in shape) {
-          const field2 = shape[key]._zod;
-          if (field2.values) {
+          const field = shape[key]._zod;
+          if (field.values) {
             propValues[key] ?? (propValues[key] = /* @__PURE__ */ new Set());
-            for (const v of field2.values)
+            for (const v of field.values)
               propValues[key].add(v);
           }
         }
@@ -1988,38 +1988,38 @@ var init_schemas = __esm({
         doc.write(`const newResult = {}`);
         for (const key of normalized.keys) {
           if (normalized.optionalKeys.has(key)) {
-            const id2 = ids[key];
-            doc.write(`const ${id2} = ${parseStr(key)};`);
+            const id = ids[key];
+            doc.write(`const ${id} = ${parseStr(key)};`);
             const k = esc(key);
             doc.write(`
-        if (${id2}.issues.length) {
+        if (${id}.issues.length) {
           if (input[${k}] === undefined) {
             if (${k} in input) {
               newResult[${k}] = undefined;
             }
           } else {
             payload.issues = payload.issues.concat(
-              ${id2}.issues.map((iss) => ({
+              ${id}.issues.map((iss) => ({
                 ...iss,
                 path: iss.path ? [${k}, ...iss.path] : [${k}],
               }))
             );
           }
-        } else if (${id2}.value === undefined) {
+        } else if (${id}.value === undefined) {
           if (${k} in input) newResult[${k}] = undefined;
         } else {
-          newResult[${k}] = ${id2}.value;
+          newResult[${k}] = ${id}.value;
         }
         `);
           } else {
-            const id2 = ids[key];
-            doc.write(`const ${id2} = ${parseStr(key)};`);
+            const id = ids[key];
+            doc.write(`const ${id} = ${parseStr(key)};`);
             doc.write(`
-          if (${id2}.issues.length) payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+          if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${esc(key)}, ...iss.path] : [${esc(key)}]
           })));`);
-            doc.write(`newResult[${esc(key)}] = ${id2}.value`);
+            doc.write(`newResult[${esc(key)}] = ${id}.value`);
           }
         }
         doc.write(`payload.value = newResult;`);
@@ -3176,7 +3176,7 @@ function toJSONSchema(input, _params) {
       const [_, schema] = entry;
       gen2.process(schema);
     }
-    const schemas2 = {};
+    const schemas = {};
     const external = {
       registry: input,
       uri: _params?.uri,
@@ -3184,18 +3184,18 @@ function toJSONSchema(input, _params) {
     };
     for (const entry of input._idmap.entries()) {
       const [key, schema] = entry;
-      schemas2[key] = gen2.emit(schema, {
+      schemas[key] = gen2.emit(schema, {
         ..._params,
         external
       });
     }
     if (Object.keys(defs).length > 0) {
       const defsSegment = gen2.target === "draft-2020-12" ? "$defs" : "definitions";
-      schemas2.__shared = {
+      schemas.__shared = {
         [defsSegment]: defs
       };
     }
-    return { schemas: schemas2 };
+    return { schemas };
   }
   const gen = new JSONSchemaGenerator(_params);
   gen.process(input);
@@ -3799,13 +3799,13 @@ var init_to_json_schema = __esm({
           const defsSegment = this.target === "draft-2020-12" ? "$defs" : "definitions";
           if (params.external) {
             const externalId = params.external.registry.get(entry[0])?.id;
-            const uriGenerator = params.external.uri ?? ((id3) => id3);
+            const uriGenerator = params.external.uri ?? ((id2) => id2);
             if (externalId) {
               return { ref: uriGenerator(externalId) };
             }
-            const id2 = entry[1].defId ?? entry[1].schema.id ?? `schema${this.counter++}`;
-            entry[1].defId = id2;
-            return { defId: id2, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id2}` };
+            const id = entry[1].defId ?? entry[1].schema.id ?? `schema${this.counter++}`;
+            entry[1].defId = id;
+            return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id}` };
           }
           if (entry[1] === root) {
             return { ref: "#" };
@@ -3853,8 +3853,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
               continue;
             }
           }
-          const id2 = this.metadataRegistry.get(entry[0])?.id;
-          if (id2) {
+          const id = this.metadataRegistry.get(entry[0])?.id;
+          if (id) {
             extractToDef(entry);
             continue;
           }
@@ -3908,10 +3908,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           console.warn(`Invalid target: ${this.target}`);
         }
         if (params.external?.uri) {
-          const id2 = params.external.registry.get(schema)?.id;
-          if (!id2)
+          const id = params.external.registry.get(schema)?.id;
+          if (!id)
             throw new Error("Schema is missing an `id` property");
-          result2.$id = params.external.uri(id2);
+          result2.$id = params.external.uri(id);
         }
         Object.assign(result2, root.def);
         const defs = params.external?.defs ?? {};
@@ -6656,9 +6656,9 @@ data:
           const initRequest = messages.find((m) => isInitializeRequest(m));
           const clientProtocolVersion = initRequest ? initRequest.params.protocolVersion : req.headers.get("mcp-protocol-version") ?? DEFAULT_NEGOTIATED_PROTOCOL_VERSION;
           if (this._enableJsonResponse) {
-            return new Promise((resolve) => {
+            return new Promise((resolve2) => {
               this._streamMapping.set(streamId, {
-                resolveJson: resolve,
+                resolveJson: resolve2,
                 cleanup: () => {
                   this._streamMapping.delete(streamId);
                 }
@@ -6855,8 +6855,8 @@ data:
         }
         if (isJSONRPCResultResponse(message) || isJSONRPCErrorResponse(message)) {
           this._requestResponseMap.set(requestId, message);
-          const relatedIds = Array.from(this._requestToStreamMapping.entries()).filter(([_, sid]) => sid === streamId).map(([id2]) => id2);
-          const allResponsesReady = relatedIds.every((id2) => this._requestResponseMap.has(id2));
+          const relatedIds = Array.from(this._requestToStreamMapping.entries()).filter(([_, sid]) => sid === streamId).map(([id]) => id);
+          const allResponsesReady = relatedIds.every((id) => this._requestResponseMap.has(id));
           if (allResponsesReady) {
             if (!stream) {
               throw new Error(`No connection established for request ID: ${String(requestId)}`);
@@ -6868,7 +6868,7 @@ data:
               if (this.sessionId !== void 0) {
                 headers["mcp-session-id"] = this.sessionId;
               }
-              const responses = relatedIds.map((id2) => this._requestResponseMap.get(id2));
+              const responses = relatedIds.map((id) => this._requestResponseMap.get(id));
               if (responses.length === 1) {
                 stream.resolveJson(new Response(JSON.stringify(responses[0]), { status: 200, headers }));
               } else {
@@ -6877,9 +6877,9 @@ data:
             } else {
               stream.cleanup();
             }
-            for (const id2 of relatedIds) {
-              this._requestResponseMap.delete(id2);
-              this._requestToStreamMapping.delete(id2);
+            for (const id of relatedIds) {
+              this._requestResponseMap.delete(id);
+              this._requestToStreamMapping.delete(id);
             }
           }
         }
@@ -9907,12 +9907,12 @@ var init_types2 = __esm({
         });
       }
     };
-    ZodTuple.create = (schemas2, params) => {
-      if (!Array.isArray(schemas2)) {
+    ZodTuple.create = (schemas, params) => {
+      if (!Array.isArray(schemas)) {
         throw new Error("You must pass an array of schemas to z.tuple([ ... ])");
       }
       return new ZodTuple({
-        items: schemas2,
+        items: schemas,
         typeName: ZodFirstPartyTypeKind.ZodTuple,
         rest: null,
         ...processCreateParams(params)
@@ -13407,7 +13407,7 @@ var init_protocol = __esm({
               return;
             }
             const pollInterval = task2.pollInterval ?? this._options?.defaultTaskPollInterval ?? 1e3;
-            await new Promise((resolve) => setTimeout(resolve, pollInterval));
+            await new Promise((resolve2) => setTimeout(resolve2, pollInterval));
             options?.signal?.throwIfAborted();
           }
         } catch (error2) {
@@ -13424,7 +13424,7 @@ var init_protocol = __esm({
        */
       request(request, resultSchema, options) {
         const { relatedRequestId, resumptionToken, onresumptiontoken, task, relatedTask } = options ?? {};
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           const earlyReject = (error2) => {
             reject(error2);
           };
@@ -13502,7 +13502,7 @@ var init_protocol = __esm({
               if (!parseResult.success) {
                 reject(parseResult.error);
               } else {
-                resolve(parseResult.data);
+                resolve2(parseResult.data);
               }
             } catch (error2) {
               reject(error2);
@@ -13763,12 +13763,12 @@ var init_protocol = __esm({
           }
         } catch {
         }
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject) => {
           if (signal.aborted) {
             reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
             return;
           }
-          const timeoutId = setTimeout(resolve, interval);
+          const timeoutId = setTimeout(resolve2, interval);
           signal.addEventListener("abort", () => {
             clearTimeout(timeoutId);
             reject(new McpError(ErrorCode.InvalidRequest, "Request cancelled"));
@@ -14872,10 +14872,10 @@ var require_util = __commonJS({
     var codegen_1 = require_codegen();
     var code_1 = require_code();
     function toHash(arr) {
-      const hash2 = {};
+      const hash = {};
       for (const item of arr)
-        hash2[item] = true;
-      return hash2;
+        hash[item] = true;
+      return hash;
     }
     exports.toHash = toHash;
     function alwaysValidSchema(it, schema) {
@@ -16046,10 +16046,10 @@ var require_resolve = __commonJS({
       }
       return count;
     }
-    function getFullPath(resolver, id2 = "", normalize) {
+    function getFullPath(resolver, id = "", normalize) {
       if (normalize !== false)
-        id2 = normalizeId(id2);
-      const p = resolver.parse(id2);
+        id = normalizeId(id);
+      const p = resolver.parse(id);
       return _getFullPath(resolver, p);
     }
     exports.getFullPath = getFullPath;
@@ -16059,13 +16059,13 @@ var require_resolve = __commonJS({
     }
     exports._getFullPath = _getFullPath;
     var TRAILING_SLASH_HASH = /#\/?$/;
-    function normalizeId(id2) {
-      return id2 ? id2.replace(TRAILING_SLASH_HASH, "") : "";
+    function normalizeId(id) {
+      return id ? id.replace(TRAILING_SLASH_HASH, "") : "";
     }
     exports.normalizeId = normalizeId;
-    function resolveUrl(resolver, baseId, id2) {
-      id2 = normalizeId(id2);
-      return resolver.resolve(baseId, id2);
+    function resolveUrl(resolver, baseId, id) {
+      id = normalizeId(id);
+      return resolver.resolve(baseId, id);
     }
     exports.resolveUrl = resolveUrl;
     var ANCHOR = /^[a-z_][-a-z0-9._]*$/i;
@@ -16795,7 +16795,7 @@ var require_compile = __commonJS({
       const schOrFunc = root.refs[ref];
       if (schOrFunc)
         return schOrFunc;
-      let _sch = resolve.call(this, root, ref);
+      let _sch = resolve2.call(this, root, ref);
       if (_sch === void 0) {
         const schema = (_a = root.localRefs) === null || _a === void 0 ? void 0 : _a[ref];
         const { schemaId } = this.opts;
@@ -16822,7 +16822,7 @@ var require_compile = __commonJS({
     function sameSchemaEnv(s1, s2) {
       return s1.schema === s2.schema && s1.root === s2.root && s1.baseId === s2.baseId;
     }
-    function resolve(root, ref) {
+    function resolve2(root, ref) {
       let sch;
       while (typeof (sch = this.refs[ref]) == "string")
         ref = sch;
@@ -16835,8 +16835,8 @@ var require_compile = __commonJS({
       if (Object.keys(root.schema).length > 0 && refPath === baseId) {
         return getJsonPointer.call(this, p, root);
       }
-      const id2 = (0, resolve_1.normalizeId)(refPath);
-      const schOrRef = this.refs[id2] || this.schemas[id2];
+      const id = (0, resolve_1.normalizeId)(refPath);
+      const schOrRef = this.refs[id] || this.schemas[id];
       if (typeof schOrRef == "string") {
         const sch = resolveSchema.call(this, root, schOrRef);
         if (typeof (sch === null || sch === void 0 ? void 0 : sch.schema) !== "object")
@@ -16847,7 +16847,7 @@ var require_compile = __commonJS({
         return;
       if (!schOrRef.validate)
         compileSchema.call(this, schOrRef);
-      if (id2 === (0, resolve_1.normalizeId)(ref)) {
+      if (id === (0, resolve_1.normalizeId)(ref)) {
         const { schema } = schOrRef;
         const { schemaId } = this.opts;
         const schId = schema[schemaId];
@@ -17016,11 +17016,11 @@ var require_utils = __commonJS({
       output.address = address.join("");
       return output;
     }
-    function normalizeIPv6(host2) {
-      if (findToken(host2, ":") < 2) {
-        return { host: host2, isIPV6: false };
+    function normalizeIPv6(host) {
+      if (findToken(host, ":") < 2) {
+        return { host, isIPV6: false };
       }
-      const ipv62 = getIPV6(host2);
+      const ipv62 = getIPV6(host);
       if (!ipv62.error) {
         let newHost = ipv62.address;
         let escapedHost = ipv62.address;
@@ -17030,7 +17030,7 @@ var require_utils = __commonJS({
         }
         return { host: newHost, isIPV6: true, escapedHost };
       } else {
-        return { host: host2, isIPV6: false };
+        return { host, isIPV6: false };
       }
     }
     function findToken(str, token) {
@@ -17118,10 +17118,10 @@ var require_utils = __commonJS({
     var HOST_DELIMS = { "@": "%40", "/": "%2F", "?": "%3F", "#": "%23", ":": "%3A" };
     var HOST_DELIM_RE = /[@/?#:]/g;
     var HOST_DELIM_NO_COLON_RE = /[@/?#]/g;
-    function reescapeHostDelimiters(host2, isIP) {
+    function reescapeHostDelimiters(host, isIP) {
       const re = isIP ? HOST_DELIM_NO_COLON_RE : HOST_DELIM_RE;
       re.lastIndex = 0;
-      return host2.replace(re, (ch) => HOST_DELIMS[ch]);
+      return host.replace(re, (ch) => HOST_DELIMS[ch]);
     }
     function normalizePercentEncoding(input, decodeUnreserved = false) {
       if (input.indexOf("%") === -1) {
@@ -17194,16 +17194,16 @@ var require_utils = __commonJS({
         uriTokens.push("@");
       }
       if (component.host !== void 0) {
-        let host2 = unescape(component.host);
-        if (!isIPv4(host2)) {
-          const ipV6res = normalizeIPv6(host2);
+        let host = unescape(component.host);
+        if (!isIPv4(host)) {
+          const ipV6res = normalizeIPv6(host);
           if (ipV6res.isIPV6 === true) {
-            host2 = `[${ipV6res.escapedHost}]`;
+            host = `[${ipV6res.escapedHost}]`;
           } else {
-            host2 = reescapeHostDelimiters(host2, false);
+            host = reescapeHostDelimiters(host, false);
           }
         }
-        uriTokens.push(host2);
+        uriTokens.push(host);
       }
       if (typeof component.port === "number" || typeof component.port === "string") {
         uriTokens.push(":");
@@ -17453,7 +17453,7 @@ var require_fast_uri = __commonJS({
       }
       return uri;
     }
-    function resolve(baseURI, relativeURI, options) {
+    function resolve2(baseURI, relativeURI, options) {
       const schemelessOptions = options ? Object.assign({ scheme: "null" }, options) : { scheme: "null" };
       const resolved = resolveComponent(parse3(baseURI, schemelessOptions), parse3(relativeURI, schemelessOptions), schemelessOptions, true);
       schemelessOptions.skipEscape = true;
@@ -17711,7 +17711,7 @@ var require_fast_uri = __commonJS({
     var fastUri = {
       SCHEMES,
       normalize,
-      resolve,
+      resolve: resolve2,
       resolveComponent,
       equal,
       serialize,
@@ -17964,15 +17964,15 @@ var require_core = __commonJS({
             this.addSchema(sch, void 0, _meta, _validateSchema);
           return this;
         }
-        let id2;
+        let id;
         if (typeof schema === "object") {
           const { schemaId } = this.opts;
-          id2 = schema[schemaId];
-          if (id2 !== void 0 && typeof id2 != "string") {
+          id = schema[schemaId];
+          if (id !== void 0 && typeof id != "string") {
             throw new Error(`schema ${schemaId} must be string`);
           }
         }
-        key = (0, resolve_1.normalizeId)(key || id2);
+        key = (0, resolve_1.normalizeId)(key || id);
         this._checkUnique(key);
         this.schemas[key] = this._addSchema(schema, _meta, key, _validateSchema, true);
         return this;
@@ -18051,11 +18051,11 @@ var require_core = __commonJS({
           case "object": {
             const cacheKey2 = schemaKeyRef;
             this._cache.delete(cacheKey2);
-            let id2 = schemaKeyRef[this.opts.schemaId];
-            if (id2) {
-              id2 = (0, resolve_1.normalizeId)(id2);
-              delete this.schemas[id2];
-              delete this.refs[id2];
+            let id = schemaKeyRef[this.opts.schemaId];
+            if (id) {
+              id = (0, resolve_1.normalizeId)(id);
+              delete this.schemas[id];
+              delete this.refs[id];
             }
             return this;
           }
@@ -18148,24 +18148,24 @@ var require_core = __commonJS({
         }
         return metaSchema;
       }
-      _removeAllSchemas(schemas2, regex) {
-        for (const keyRef in schemas2) {
-          const sch = schemas2[keyRef];
+      _removeAllSchemas(schemas, regex) {
+        for (const keyRef in schemas) {
+          const sch = schemas[keyRef];
           if (!regex || regex.test(keyRef)) {
             if (typeof sch == "string") {
-              delete schemas2[keyRef];
+              delete schemas[keyRef];
             } else if (sch && !sch.meta) {
               this._cache.delete(sch.schema);
-              delete schemas2[keyRef];
+              delete schemas[keyRef];
             }
           }
         }
       }
       _addSchema(schema, meta, baseId, validateSchema = this.opts.validateSchema, addSchema = this.opts.addUsedSchema) {
-        let id2;
+        let id;
         const { schemaId } = this.opts;
         if (typeof schema == "object") {
-          id2 = schema[schemaId];
+          id = schema[schemaId];
         } else {
           if (this.opts.jtd)
             throw new Error("schema must be object");
@@ -18175,7 +18175,7 @@ var require_core = __commonJS({
         let sch = this._cache.get(schema);
         if (sch !== void 0)
           return sch;
-        baseId = (0, resolve_1.normalizeId)(id2 || baseId);
+        baseId = (0, resolve_1.normalizeId)(id || baseId);
         const localRefs = resolve_1.getSchemaRefs.call(this, schema, baseId);
         sch = new compile_1.SchemaEnv({ schema, schemaId, meta, baseId, localRefs });
         this._cache.set(sch.schema, sch);
@@ -18188,9 +18188,9 @@ var require_core = __commonJS({
           this.validateSchema(schema, true);
         return sch;
       }
-      _checkUnique(id2) {
-        if (this.schemas[id2] || this.refs[id2]) {
-          throw new Error(`schema with key or id "${id2}" already exists`);
+      _checkUnique(id) {
+        if (this.schemas[id] || this.refs[id]) {
+          throw new Error(`schema with key or id "${id}" already exists`);
         }
       }
       _compileSchemaEnv(sch) {
@@ -20865,7 +20865,7 @@ var init_server = __esm({
           if (hasPreviousToolUse) {
             const toolUseIds = new Set(previousContent.filter((c) => c.type === "tool_use").map((c) => c.id));
             const toolResultIds = new Set(lastContent.filter((c) => c.type === "tool_result").map((c) => c.toolUseId));
-            if (toolUseIds.size !== toolResultIds.size || ![...toolUseIds].every((id2) => toolResultIds.has(id2))) {
+            if (toolUseIds.size !== toolResultIds.size || ![...toolUseIds].every((id) => toolResultIds.has(id))) {
               throw new Error("ids of tool_result blocks and tool_use blocks from previous message do not match");
             }
           }
@@ -21314,7 +21314,7 @@ var init_server2 = __esm({
           if (hasPreviousToolUse) {
             const toolUseIds = new Set(previousContent.filter((c) => c.type === "tool_use").map((c) => c.id));
             const toolResultIds = new Set(lastContent.filter((c) => c.type === "tool_result").map((c) => c.toolUseId));
-            if (toolUseIds.size !== toolResultIds.size || ![...toolUseIds].every((id2) => toolResultIds.has(id2))) {
+            if (toolUseIds.size !== toolResultIds.size || ![...toolUseIds].every((id) => toolResultIds.has(id))) {
               throw new Error("ids of tool_result blocks and tool_use blocks from previous message do not match");
             }
           }
@@ -21572,9 +21572,9 @@ function promptArgumentsFromSchema(schema) {
   const shape = getObjectShape(schema);
   if (!shape)
     return [];
-  return Object.entries(shape).map(([name, field2]) => {
-    const description = getSchemaDescription(field2);
-    const isOptional = isSchemaOptional(field2);
+  return Object.entries(shape).map(([name, field]) => {
+    const description = getSchemaDescription(field);
+    const isOptional = isSchemaOptional(field);
     return {
       name,
       description,
@@ -21838,7 +21838,7 @@ var init_mcp = __esm({
         let task = createTaskResult.task;
         const pollInterval = task.pollInterval ?? 5e3;
         while (task.status !== "completed" && task.status !== "failed" && task.status !== "cancelled") {
-          await new Promise((resolve) => setTimeout(resolve, pollInterval));
+          await new Promise((resolve2) => setTimeout(resolve2, pollInterval));
           const updatedTask = await extra.taskStore.getTask(taskId);
           if (!updatedTask) {
             throw new McpError(ErrorCode.InternalError, `Task ${taskId} not found during polling`);
@@ -21881,11 +21881,11 @@ var init_mcp = __esm({
           return EMPTY_COMPLETION_RESULT;
         }
         const promptShape = getObjectShape(prompt.argsSchema);
-        const field2 = promptShape?.[request.params.argument.name];
-        if (!isCompletable(field2)) {
+        const field = promptShape?.[request.params.argument.name];
+        if (!isCompletable(field)) {
           return EMPTY_COMPLETION_RESULT;
         }
-        const completer = getCompleter(field2);
+        const completer = getCompleter(field);
         if (!completer) {
           return EMPTY_COMPLETION_RESULT;
         }
@@ -22158,8 +22158,8 @@ var init_mcp = __esm({
         };
         this._registeredPrompts[name] = registeredPrompt;
         if (argsSchema) {
-          const hasCompletable = Object.values(argsSchema).some((field2) => {
-            const inner = field2 instanceof ZodOptional2 ? field2._def?.innerType : field2;
+          const hasCompletable = Object.values(argsSchema).some((field) => {
+            const inner = field instanceof ZodOptional2 ? field._def?.innerType : field;
             return isCompletable(inner);
           });
           if (hasCompletable) {
@@ -22569,8 +22569,8 @@ var init_dist = __esm({
         }
         return req;
       }
-      const host2 = (incoming instanceof Http2ServerRequest ? incoming.authority : incoming.headers.host) || defaultHostname;
-      if (!host2) {
+      const host = (incoming instanceof Http2ServerRequest ? incoming.authority : incoming.headers.host) || defaultHostname;
+      if (!host) {
         throw new RequestError("Missing host header");
       }
       let scheme;
@@ -22582,8 +22582,8 @@ var init_dist = __esm({
       } else {
         scheme = incoming.socket && incoming.socket.encrypted ? "https" : "http";
       }
-      const url = new URL(`${scheme}://${host2}${incomingUrl}`);
-      if (url.hostname.length !== host2.length && url.hostname !== host2.replace(/:\d+$/, "")) {
+      const url = new URL(`${scheme}://${host}${incomingUrl}`);
+      if (url.hostname.length !== host.length && url.hostname !== host.replace(/:\d+$/, "")) {
         throw new RequestError("Invalid host header");
       }
       req[urlKey] = url.href;
@@ -22839,7 +22839,7 @@ var init_dist = __esm({
             });
             if (!chunk) {
               if (i === 1) {
-                await new Promise((resolve) => setTimeout(resolve));
+                await new Promise((resolve2) => setTimeout(resolve2));
                 maxReadCount = 3;
                 continue;
               }
@@ -23099,8 +23099,8 @@ function assertPersonalizationPolicy(intent, experience) {
   const adaptableKeys = Object.keys(experience.adaptableContent).filter(
     (key) => key !== "personalizationReasons"
   );
-  const allowed2 = new Set(intent.adaptationRules.allowedVariables);
-  const deniedKey = adaptableKeys.find((key) => !allowed2.has(key));
+  const allowed = new Set(intent.adaptationRules.allowedVariables);
+  const deniedKey = adaptableKeys.find((key) => !allowed.has(key));
   if (deniedKey)
     throw new Error(`Adaptation variable is not allowed: ${deniedKey}`);
   for (const recommendation of experience.commercialRecommendations) {
@@ -23338,48 +23338,28 @@ var init_seed = __esm({
       {
         id: "persona_camille",
         name: "Camille",
-        label: "Curated Chaos Artistic Director",
-        age: 31,
+        label: "Aesthetic Executive",
+        age: 39,
         location: "Paris",
-        occupation: "Artistic director and aesthetic social media creator",
+        occupation: "Luxury and brand strategy executive",
         budget: "Premium",
         technicalLevel: "Non-technical but AI-aware",
-        interests: [
-          "art direction",
-          "digital art",
-          "NFT collecting",
-          "digital galleries",
-          "wellness",
-          "cozy jazz clubs",
-          "aesthetic vlogging"
-        ],
-        preferredFormat: [
-          "visual",
-          "dopamine-rich",
-          "curated messy",
-          "intimate"
-        ],
-        primaryMotivation: "Turn daily life into a beautiful, health-conscious and digitally collectible aesthetic."
+        interests: ["art", "architecture", "fashion", "wellness", "technology"],
+        preferredFormat: ["elegant", "concise", "visually refined"],
+        primaryMotivation: "Save time without compromising quality or aesthetics."
       },
       {
         id: "persona_maya",
         name: "Maya",
-        label: "42 Paris Code Student",
-        age: 23,
-        location: "Paris",
-        occupation: "Programming student at 42 Paris",
+        label: "Independent Creator",
+        age: 28,
+        location: "London",
+        occupation: "Independent visual and lifestyle creator",
         budget: "Medium",
-        technicalLevel: "Intermediate, project-driven and meme-fluent",
-        interests: [
-          "programming memes",
-          "peer coding",
-          "hanging out with friends",
-          "hoodies",
-          "beer",
-          "Paris student life"
-        ],
-        preferredFormat: ["funny", "practical", "social", "low-friction"],
-        primaryMotivation: "Learn by building with friends, keep code playful and turn school projects into shared wins."
+        technicalLevel: "Beginner but AI-curious",
+        interests: ["music", "visual culture", "beauty", "fashion", "social media"],
+        preferredFormat: ["inspirational", "visual", "shareable"],
+        primaryMotivation: "Create original work, grow an audience and preserve a distinct voice."
       }
     ];
     titles = {
@@ -23491,9 +23471,9 @@ var init_service = __esm({
     init_invariants();
     init_seed();
     clone2 = (value) => structuredClone(value);
-    personaSeedId = (id2) => `persona_${id2}`;
-    personaSummary = () => audiencePersonas.map(({ id: id2, name, label }) => ({
-      id: id2.replace("persona_", ""),
+    personaSeedId = (id) => `persona_${id}`;
+    personaSummary = () => audiencePersonas.map(({ id, name, label }) => ({
+      id: id.replace("persona_", ""),
       name,
       label
     }));
@@ -23723,22 +23703,22 @@ var init_service = __esm({
           mode: "demo"
         };
       }
-      baseFollowers(id2) {
-        return id2 === "creator_noah" ? 12800 : id2 === "creator_amelie" ? 24100 : 73e5;
+      baseFollowers(id) {
+        return id === "creator_noah" ? 12800 : id === "creator_amelie" ? 24100 : 73e5;
       }
-      mustCreator(id2) {
-        const value = this.creators.find((x) => x.id === id2);
+      mustCreator(id) {
+        const value = this.creators.find((x) => x.id === id);
         if (!value)
-          throw new DemoError("unknown_creator", `Unknown creator: ${id2}`);
+          throw new DemoError("unknown_creator", `Unknown creator: ${id}`);
         return value;
       }
-      mustIntent(id2) {
-        const value = this.intents.find((x) => x.id === id2);
-        if (!value) throw new DemoError("unknown_intent", `Unknown Intent: ${id2}`);
+      mustIntent(id) {
+        const value = this.intents.find((x) => x.id === id);
+        if (!value) throw new DemoError("unknown_intent", `Unknown Intent: ${id}`);
         return value;
       }
-      mustPublicIntent(id2) {
-        const value = this.mustIntent(id2);
+      mustPublicIntent(id) {
+        const value = this.mustIntent(id);
         if (value.visibility === "private")
           throw new DemoError("private_intent", "This Intent is private.");
         if (value.status !== "published" || value.publicationStatus !== "published")
@@ -23750,10 +23730,10 @@ var init_service = __esm({
           );
         return value;
       }
-      mustExperience(id2) {
-        const value = this.experiences.find((x) => x.id === id2);
+      mustExperience(id) {
+        const value = this.experiences.find((x) => x.id === id);
         if (!value)
-          throw new DemoError("unknown_experience", `Unknown experience: ${id2}`);
+          throw new DemoError("unknown_experience", `Unknown experience: ${id}`);
         return value;
       }
     };
@@ -23985,3209 +23965,50 @@ var init_api2 = __esm({
   }
 });
 
-// nextbound/fixtures.ts
-var intentDsl, luna, profiles, tools, eliasSoundscape, demoTimeline;
-var init_fixtures = __esm({
-  "nextbound/fixtures.ts"() {
-    "use strict";
-    intentDsl = `<nextbound-intent id="afterlight"><sender ref="luna-vale"/><immutable-message>What we remember is not what happened.
-It is what the moment became inside us.</immutable-message><context-source type="personal-knowledge" format="OKF" permission="required"/><adapt based-on="history,interests,skills,visual-language"/><experience type="interactive-narrative"/><actions><action capability="explore"/><action capability="create"/><action capability="share"/></actions></nextbound-intent>`;
-    luna = {
-      id: "afterlight",
-      sender: {
-        id: "luna-vale",
-        name: "Luna Vale",
-        role: "Fictional global singer and cultural creator"
-      },
-      campaign: "AFTERLIGHT \u2014 What will remain of you?",
-      immutableMessage: {
-        text: "What we remember is not what happened.\nIt is what the moment became inside us.",
-        locked: true
-      },
-      adaptationRules: [
-        "format",
-        "narrative",
-        "visual_language",
-        "tools",
-        "next_actions",
-        "interactive_components"
-      ].map((field2) => ({ field: field2, allowed: true })),
-      locked: [
-        "original meaning",
-        "Luna attribution",
-        "creative boundaries",
-        "campaign identity",
-        "immutable message"
-      ],
-      capabilities: ["explore", "create", "share"]
-    };
-    profiles = [
-      {
-        id: "camille",
-        name: "Camille",
-        role: "Artistic Director",
-        knowledge: [
-          "graphic design",
-          "motion design",
-          "branding",
-          "Figma",
-          "visual systems",
-          "creative direction"
-        ],
-        preferences: ["visual", "editorial", "refined", "trend-aware"]
-      },
-      {
-        id: "alex",
-        name: "Alex",
-        role: "CEO",
-        knowledge: [
-          "startups",
-          "SaaS",
-          "customer acquisition",
-          "company building",
-          "product strategy",
-          "leadership"
-        ],
-        preferences: ["strategic", "concise", "practical", "growth-focused"]
-      },
-      {
-        id: "maya",
-        name: "Maya",
-        role: "Developer Student",
-        knowledge: [
-          "Python",
-          "local LLMs",
-          "open source AI",
-          "engineering reasoning",
-          "developer projects",
-          "AI tools"
-        ],
-        preferences: ["technical", "structured", "practical", "exploratory"]
-      }
-    ];
-    tools = [
-      {
-        id: "visual-builder",
-        name: "Visual Artifact Builder",
-        capabilities: ["visual_creation"],
-        role: "tool_provider"
-      },
-      {
-        id: "cinematic-composer",
-        name: "Cinematic Artifact Composer",
-        capabilities: ["short_film"],
-        role: "tool_provider"
-      }
-    ];
-    eliasSoundscape = {
-      id: "memory-soundscape",
-      title: "Memory Soundscape",
-      type: "adaptive_soundtrack",
-      creatorId: "elias-north",
-      creatorName: "Elias North",
-      preview: "A low pulse, glass harmonics, and a voice dissolving into distance."
-    };
-    demoTimeline = [
-      "Mass media saturation",
-      "Luna publishes one Intent",
-      "One Intent enters three inboxes",
-      "Three profiles, three experiences",
-      "Maya creates a visual memory",
-      "The widget enriches itself",
-      "Elias\u2019s artifact connects",
-      "The cinematic tool composes",
-      "The contribution graph appears",
-      "Nextbound vision"
-    ].map((title, i) => ({
-      id: `scene-${i + 1}`,
-      duration: i === 0 ? 4 : 5,
-      title,
-      narration: "Narration placeholder",
-      expectedState: [
-        "saturation",
-        "published",
-        "inboxes",
-        "comparison",
-        "maya-node-2",
-        "enriched",
-        "maya-node-3",
-        "maya-node-4",
-        "graph",
-        "vision"
-      ][i],
-      transitionType: i === 5 ? "expand" : i === 7 ? "morph" : "fade"
-    }));
-  }
-});
-
-// nextbound/procedural.ts
-function executeArtifactContract(contract, session, context) {
-  const visitNumber = session.executions.filter((x) => x.contractId === contract.contractId).length + 1;
-  const path = session.eventLog.filter((event) => event.type !== "session_started").map((event) => event.actionId ?? event.contractId ?? event.executionId).join(">");
-  const pathFingerprint2 = fingerprint(
-    `${session.rootIntentId}|${session.profileId}|${path}|${contract.contractId}|${visitNumber}`
-  );
-  const scratchpadObservations = observations(session, visitNumber);
-  const evolved = contract.contractId === "visual-lab" && visitNumber > 1;
-  const includesSound = session.actionHistory.includes("add-soundtrack");
-  const presentation = evolved ? {
-    key: "maya-return",
-    accent: "#8f7cff",
-    surface: "#100c28",
-    mood: "cinematic \xB7 pulse-led \xB7 recursively visual"
-  } : {
-    key: "maya",
-    accent: "#e54472",
-    surface: "#190716",
-    mood: "expressive \xB7 cinematic \xB7 shareable"
-  };
-  let content;
-  let nextbounds;
-  let nextboundExplanation;
-  if (contract.contractId === "visual-lab") {
-    content = evolved ? [
-      {
-        id: "visual-return",
-        type: "visual",
-        title: "Maya\u2019s Visual Memory / Resonant Cut",
-        body: includesSound ? "Violet frames now pulse with Elias\u2019s glass harmonics; cinematic cuts reveal words that were previously latent." : "Violet frames return as silent cinematic cuts; latent words surface through motion and contrast."
-      },
-      {
-        id: "semantic-anchors",
-        type: "path",
-        title: "New semantic anchors",
-        body: "pulse \xB7 afterimage \xB7 resonant cut \xB7 returning light"
-      }
-    ] : [
-      {
-        id: "visual-result",
-        type: "visual",
-        title: "Maya\u2019s Visual Memory",
-        body: "A red-violet memory field assembling into a moving world."
-      }
-    ];
-    nextbounds = evolved ? [
-      action(
-        includesSound ? "edit-resonance" : "deepen-visual-cut",
-        includesSound ? "Edit the resonant cut" : "Deepen the visual cut",
-        "visual_creation",
-        "visual-lab"
-      ),
-      action(
-        includesSound ? "remix-sound" : "add-return-sound",
-        includesSound ? "Remix image and sound" : "Add sound to the return",
-        "soundtrack",
-        "visual-lab"
-      ),
-      action(
-        "share-return",
-        "Share the transformed loop",
-        "share",
-        "visual-lab"
-      )
-    ] : [
-      action(
-        "add-soundtrack",
-        "Add a soundtrack",
-        "soundtrack",
-        "maya-visual-memory"
-      ),
-      action(
-        "short-film",
-        "Turn it into a short film",
-        "short_film",
-        "maya-visual-memory"
-      ),
-      action(
-        "share-world",
-        "Share my world",
-        "share",
-        "maya-visual-memory"
-      ),
-      action("stop", "Stop here", "stop", "maya-visual-memory")
-    ];
-    nextboundExplanation = evolved ? [
-      includesSound ? "Session path contributes 60%: sound and cinema make resonance and remix the strongest continuations." : "Session path contributes 60%: the silent cinematic route prioritizes visual editing and a newly available sound layer.",
-      `OKF contributes 40%: ${context.preferences.slice(0, 2).join(" and ")} keep the return visual and expressive.`
-    ] : [
-      "OKF visual and expressive preferences open the initial creation path.",
-      "The empty session path keeps soundtrack, film and sharing equally available."
-    ];
-  } else if (contract.contractId === "memory-soundscape") {
-    content = [
-      {
-        id: "soundtrack",
-        type: "soundtrack",
-        title: "Memory Soundscape",
-        body: "A low pulse, glass harmonics, and a voice dissolving into distance."
-      }
-    ];
-    nextbounds = [
-      action(
-        "short-film",
-        "Turn it into a short film",
-        "short_film",
-        contract.contractId
-      )
-    ];
-    nextboundExplanation = [
-      "The visual artifact makes cinematic composition the ordered next contract."
-    ];
-  } else {
-    content = [
-      {
-        id: "film",
-        type: "film",
-        title: "AFTERLIGHT / Memory Film",
-        body: "00:24 demo preview \xB7 Luna\u2019s message, Maya\u2019s world, Elias\u2019s sound."
-      },
-      {
-        id: "path",
-        type: "path",
-        title: "Artifact path",
-        body: "Luna\u2019s Intent \u2192 Maya in Visual Lab \u2192 Elias North\u2019s Memory Soundscape \u2192 Cinematic Artifact Composer"
-      }
-    ];
-    nextbounds = [
-      action(
-        "return-visual-lab",
-        "Return to Visual Lab",
-        "loop",
-        contract.contractId
-      ),
-      action(
-        "share-final",
-        "Share the final artifact",
-        "share",
-        contract.contractId
-      ),
-      action("stop", "Stop here", "stop", contract.contractId)
-    ];
-    nextboundExplanation = [
-      "The completed film exposes a loop back to the stable Visual Lab contract."
-    ];
-  }
-  if (content.some((module) => !contract.allowedModuleTypes.includes(module.type)))
-    throw new Error(
-      `Contract ${contract.contractId} emitted a disallowed module.`
-    );
-  return {
-    contractId: contract.contractId,
-    contractVersion: contract.contractVersion,
-    executionId: `${contract.contractId}-execution-${visitNumber}-${pathFingerprint2.slice(-4)}`,
-    visitNumber,
-    pathFingerprint: pathFingerprint2,
-    okfContribution: 0.4,
-    sessionContribution: 0.6,
-    content,
-    presentation,
-    anchors: contract.contractId !== "visual-lab" ? [] : evolved ? [
-      {
-        id: "violet-grain",
-        label: "violet grain",
-        active: false,
-        state: "fading"
-      },
-      {
-        id: "red-light",
-        label: "red light",
-        active: false,
-        state: "fading"
-      },
-      { id: "pulse", label: "pulse", active: true, state: "emerging" },
-      {
-        id: "resonant-cut",
-        label: "resonant cut",
-        active: true,
-        state: "emerging"
-      }
-    ] : [
-      {
-        id: "violet-grain",
-        label: "violet grain",
-        active: true,
-        state: "retained"
-      },
-      {
-        id: "red-light",
-        label: "red light",
-        active: true,
-        state: "retained"
-      }
-    ],
-    nextbounds,
-    scratchpadObservations,
-    nextboundExplanation
-  };
-}
-function executionEvent(session, execution) {
-  return {
-    index: session.eventLog.length,
-    type: "contract_executed",
-    contractId: execution.contractId,
-    executionId: execution.executionId,
-    pathFingerprint: execution.pathFingerprint
-  };
-}
-var visualLabContract, soundscapeContract, cinematicContract, fingerprint, action, observations;
-var init_procedural = __esm({
-  "nextbound/procedural.ts"() {
-    "use strict";
-    visualLabContract = Object.freeze({
-      contractId: "visual-lab",
-      contractVersion: "1.0.0",
-      title: "Visual Lab",
-      invariantMessage: "Transform one memory into a visual world without altering Luna Vale\u2019s original message or attribution.",
-      allowedModuleTypes: ["message", "visual", "path"],
-      capabilities: ["visual_creation", "soundtrack", "short_film", "loop"]
-    });
-    soundscapeContract = Object.freeze({
-      contractId: "memory-soundscape",
-      contractVersion: "1.0.0",
-      title: "Memory Soundscape",
-      invariantMessage: "Extend the visual memory through attributed sound.",
-      allowedModuleTypes: ["soundtrack", "path"],
-      capabilities: ["soundtrack", "short_film"]
-    });
-    cinematicContract = Object.freeze({
-      contractId: "cinematic-composer",
-      contractVersion: "1.0.0",
-      title: "Cinematic Artifact Composer",
-      invariantMessage: "Compose the attributed artifact path without rendering media.",
-      allowedModuleTypes: ["film", "path"],
-      capabilities: ["short_film", "loop", "share"]
-    });
-    fingerprint = (value) => {
-      let hash2 = 2166136261;
-      for (const character of value) {
-        hash2 ^= character.charCodeAt(0);
-        hash2 = Math.imul(hash2, 16777619);
-      }
-      return `path-${(hash2 >>> 0).toString(16).padStart(8, "0")}`;
-    };
-    action = (id2, label, capability, source) => ({
-      id: id2,
-      label,
-      description: `Continue through ${capability.replaceAll("_", " ")}.`,
-      requiredCapability: capability,
-      destinationType: capability === "soundtrack" ? "creator_intent" : "artifact",
-      sourceArtifactId: source
-    });
-    observations = (session, visitNumber) => {
-      if (visitNumber === 1)
-        return [
-          {
-            id: "obs-initial-visual-language",
-            eventIndex: session.eventLog.length,
-            observation: "Maya selected visual creation as the first transformation.",
-            influence: "Start with violet grain, red light and an open sound path."
-          }
-        ];
-      return [
-        ...session.actionHistory.includes("add-soundtrack") ? [
-          {
-            id: "obs-sound-attached",
-            eventIndex: session.eventLog.length - 2,
-            observation: "Elias North\u2019s soundscape was connected after Visual Lab.",
-            influence: "Replace suspended silence with pulse-led visual rhythm."
-          }
-        ] : [],
-        {
-          id: "obs-cinematic-intent",
-          eventIndex: session.eventLog.length - 1,
-          observation: "The path was composed into a short cinematic artifact.",
-          influence: "Use cinematic typography and propose iterative editing paths."
-        }
-      ];
-    };
-  }
-});
-
-// nextbound/engine.ts
-function resolveOkfContext(profile) {
-  const copy = structuredClone(profile);
-  return {
-    profileId: copy.id,
-    role: copy.role,
-    signals: copy.knowledge.slice(0, 4),
-    preferences: copy.preferences,
-    explanation: [
-      `${copy.knowledge.slice(0, 2).join(" and ")} shaped the subject matter.`,
-      `${copy.preferences.slice(0, 2).join(" and ")} shaped the presentation.`
-    ]
-  };
-}
-function compileExperience(intent, profile) {
-  const c = configs[profile.id], ctx = resolveOkfContext(profile);
-  const actions = c.actions.map((x) => action2(x));
-  const modules = [
-    {
-      id: "immutable-message",
-      type: "message",
-      title: intent.campaign,
-      body: intent.immutableMessage.text
-    },
-    ...c.modules
-  ];
-  const firstNode = {
-    id: `${profile.id}-node-1`,
-    title: c.title,
-    kind: "personalized_intent",
-    summary: c.theme.mood,
-    modules,
-    actions
-  };
-  const session = {
-    id: `session-${profile.id}`,
-    rootIntentId: intent.id,
-    profileId: profile.id,
-    currentNodeId: firstNode.id,
-    nodeHistory: [firstNode.id],
-    actionHistory: [],
-    contributors: [lunaContribution],
-    status: "active",
-    nodes: [firstNode],
-    connections: [],
-    eventLog: [{ index: 0, type: "session_started" }],
-    semanticScratchpad: [],
-    executions: []
-  };
-  return {
-    originalIntent: structuredClone(intent),
-    immutableMessage: structuredClone(intent.immutableMessage),
-    creatorAttribution: lunaContribution,
-    personalizedTitle: c.title,
-    visualTheme: c.theme,
-    contentModules: modules,
-    initialActions: actions,
-    matchedCapabilities: actions.map((a) => a.requiredCapability),
-    selectedTools: profile.id === "maya" ? [tools[0]] : [],
-    personalizationExplanation: ctx.explanation,
-    firstNode,
-    contributors: [lunaContribution],
-    session
-  };
-}
-function matchTool(capability) {
-  if (capability === "soundtrack")
-    return {
-      capability,
-      artifact: eliasSoundscape,
-      score: 0.96,
-      reason: "Music and visual-storytelling signals match an adaptive soundtrack."
-    };
-  const tool = tools.find((t) => t.capabilities.includes(capability));
-  return {
-    capability,
-    tool,
-    score: tool?.id === "cinematic-composer" ? 0.99 : 0.94,
-    reason: tool ? `${tool.name} provides ${capability}.` : "No specialized local tool required."
-  };
-}
-function resolveNextAction(input, selected) {
-  const s = structuredClone(input);
-  if (s.status !== "active") throw new Error(`Session is ${s.status}`);
-  s.actionHistory.push(selected.id);
-  s.eventLog.push({
-    index: s.eventLog.length,
-    type: "action_selected",
-    actionId: selected.id
-  });
-  if (selected.id === "stop") {
-    s.status = "completed";
-    return s;
-  }
-  const match = matchTool(selected.requiredCapability);
-  let node;
-  if (selected.id === "create-visual" || selected.id === "variation" || selected.id === "return-visual-lab") {
-    const execution = executeArtifactContract(
-      visualLabContract,
-      s,
-      resolveOkfContext(
-        profiles.find((profile) => profile.id === s.profileId)
-      )
-    );
-    const artifact = {
-      id: "maya-visual-memory",
-      title: "Maya\u2019s Visual Memory",
-      type: "visual_artifact",
-      creatorId: "maya",
-      creatorName: "Maya",
-      preview: execution.content[0].body
-    };
-    node = {
-      id: `maya-visual-${execution.executionId}`,
-      title: execution.visitNumber === 1 ? "Your visual memory is taking form" : "Visual Lab returns transformed",
-      kind: "visual_artifact",
-      summary: execution.visitNumber === 1 ? `Created with ${match.tool?.name}` : "Same contract \xB7 New execution",
-      modules: execution.content,
-      actions: execution.nextbounds,
-      artifact,
-      execution
-    };
-    s.executions.push(execution);
-    s.semanticScratchpad.push(...execution.scratchpadObservations);
-    s.eventLog.push(executionEvent(s, execution));
-    add(s, {
-      contributorId: "maya",
-      contributorName: "Maya",
-      artifactId: artifact.id,
-      role: "next_action_creator",
-      attributionWeight: 0.8
-    });
-  } else if (selected.id === "add-soundtrack" || selected.id === "explore-soundtrack") {
-    const execution = executeArtifactContract(
-      soundscapeContract,
-      s,
-      resolveOkfContext(
-        profiles.find((profile) => profile.id === s.profileId)
-      )
-    );
-    node = {
-      id: `maya-sound-${execution.executionId}`,
-      title: "Memory Soundscape connected",
-      kind: "connected_artifact",
-      summary: "Elias North\u2019s adaptive soundtrack now inhabits the visual world.",
-      modules: execution.content,
-      actions: execution.nextbounds,
-      artifact: eliasSoundscape,
-      execution
-    };
-    s.executions.push(execution);
-    s.semanticScratchpad.push(...execution.scratchpadObservations);
-    s.eventLog.push(executionEvent(s, execution));
-    add(s, {
-      contributorId: "elias-north",
-      contributorName: "Elias North",
-      artifactId: eliasSoundscape.id,
-      role: "next_action_creator",
-      attributionWeight: 0.7
-    });
-    s.connections.push({
-      id: "connection-sound",
-      sourceArtifactId: selected.sourceArtifactId,
-      targetArtifactId: eliasSoundscape.id,
-      triggerActionId: selected.id,
-      compatibilityScore: match.score,
-      attributionRules: [
-        {
-          contributorId: "elias-north",
-          display: "always",
-          label: "Adaptive soundtrack by Elias North"
-        }
-      ]
-    });
-  } else if (selected.id === "short-film") {
-    const execution = executeArtifactContract(
-      cinematicContract,
-      s,
-      resolveOkfContext(
-        profiles.find((profile) => profile.id === s.profileId)
-      )
-    );
-    const artifact = {
-      id: "afterlight-short-film",
-      title: "AFTERLIGHT / Memory Film",
-      type: "short_film",
-      creatorId: "cinematic-composer",
-      creatorName: "Cinematic Artifact Composer",
-      preview: "00:24 demo preview \xB7 Luna\u2019s message, Maya\u2019s world, Elias\u2019s sound."
-    };
-    node = {
-      id: `maya-film-${execution.executionId}`,
-      title: "The memory becomes cinema",
-      kind: "final_artifact",
-      summary: "A deterministic local composition \u2014 no media was rendered.",
-      modules: execution.content,
-      actions: execution.nextbounds,
-      artifact,
-      execution
-    };
-    s.executions.push(execution);
-    s.semanticScratchpad.push(...execution.scratchpadObservations);
-    s.eventLog.push(executionEvent(s, execution));
-    add(s, {
-      contributorId: "cinematic-composer",
-      contributorName: "Cinematic Artifact Composer",
-      artifactId: artifact.id,
-      role: "tool_provider",
-      attributionWeight: 0.5
-    });
-  } else {
-    node = {
-      id: `${s.profileId}-node-${s.nodes.length + 1}`,
-      title: selected.label,
-      kind: "capability",
-      summary: "A deterministic demo continuation.",
-      modules: [
-        {
-          id: `module-${selected.id}`,
-          type: "path",
-          title: "Nextbound path",
-          body: `Capability resolved: ${selected.requiredCapability.replaceAll("_", " ")}.`
-        }
-      ],
-      actions: [action2(["stop", "Stop here", "stop"])]
-    };
-  }
-  node.createdByActionId = selected.id;
-  s.nodes.push(node);
-  s.currentNodeId = node.id;
-  s.nodeHistory.push(node.id);
-  return s;
-}
-function add(s, c) {
-  if (!s.contributors.some((x) => x.contributorId === c.contributorId))
-    s.contributors.push(c);
-}
-var configs, action2, lunaContribution, pauseExperience;
-var init_engine = __esm({
-  "nextbound/engine.ts"() {
-    "use strict";
-    init_fixtures();
-    init_procedural();
-    configs = {
-      alex: {
-        title: "AFTERLIGHT: Build the Memory Machine",
-        theme: {
-          key: "alex",
-          accent: "#38a8ff",
-          surface: "#061323",
-          mood: "technical \xB7 generative \xB7 exploratory"
-        },
-        modules: [
-          {
-            id: "alex-code",
-            type: "code",
-            title: "Memory map / system seed",
-            body: "memory.attach(moment) \u2192 transform(signal) \u2192 artifact"
-          }
-        ],
-        actions: [
-          ["open-system", "Open the system", "explore"],
-          ["build-version", "Build your version", "visual_creation"]
-        ]
-      },
-      camille: {
-        title: "AFTERLIGHT: A Private Memory Salon in Paris",
-        theme: {
-          key: "camille",
-          accent: "#d8c6a3",
-          surface: "#eee8dc",
-          mood: "editorial \xB7 architectural \xB7 private"
-        },
-        modules: [
-          {
-            id: "salon",
-            type: "invitation",
-            title: "A private invitation",
-            body: "Paris \xB7 an intimate architectural encounter \xB7 reservation is a demo only"
-          }
-        ],
-        actions: [
-          ["enter-salon", "Enter the salon", "explore"],
-          ["locations", "Explore the locations", "explore"],
-          ["reserve", "Reserve the experience", "demo_reservation"]
-        ]
-      },
-      maya: {
-        title: "AFTERLIGHT: Turn One Memory Into a Visual World",
-        theme: {
-          key: "maya",
-          accent: "#e54472",
-          surface: "#190716",
-          mood: "expressive \xB7 cinematic \xB7 shareable"
-        },
-        modules: [
-          {
-            id: "moodboard",
-            type: "visual",
-            title: "A memory, becoming visual",
-            body: "Violet grain \xB7 red light \xB7 fashion fragments \xB7 a suspended soundtrack"
-          }
-        ],
-        actions: [
-          ["create-visual", "Create my visual memory", "visual_creation"],
-          ["explore-soundtrack", "Explore a soundtrack", "soundtrack"],
-          ["share-world-initial", "Share my world", "share"]
-        ]
-      }
-    };
-    action2 = (tuple, source = "afterlight") => ({
-      id: tuple[0],
-      label: tuple[1],
-      description: `Continue through ${tuple[2].replaceAll("_", " ")}.`,
-      requiredCapability: tuple[2],
-      destinationType: tuple[2] === "soundtrack" ? "creator_intent" : tuple[2] === "share" ? "partner_experience" : "artifact",
-      sourceArtifactId: source
-    });
-    lunaContribution = {
-      contributorId: "luna-vale",
-      contributorName: "Luna Vale",
-      artifactId: "afterlight",
-      role: "original_creator",
-      attributionWeight: 1
-    };
-    pauseExperience = (s) => ({
-      ...structuredClone(s),
-      status: "paused"
-    });
-  }
-});
-
-// nextbound/dsl.ts
-function parseIntentDsl(source, template) {
-  if (/<\s*(script|iframe|object|embed|style)\b/i.test(source) || /\son\w+\s*=|javascript:/i.test(source))
-    throw new Error("Unsafe markup is not permitted in an Intent");
-  const tags = [...source.matchAll(/<\/?\s*([a-z-]+)/gi)].map(
-    (m) => m[1].toLowerCase()
-  );
-  if (!tags.length || tags.some((tag) => !allowed.has(tag)))
-    throw new Error("Intent contains an unsupported element");
-  const id2 = source.match(/<nextbound-intent\s+id="([a-z0-9-]+)"/i)?.[1];
-  const message = source.match(/<immutable-message>([\s\S]*?)<\/immutable-message>/i)?.[1].trim();
-  const sender = source.match(/<sender\s+ref="([a-z0-9-]+)"\s*\/?\s*>/i)?.[1];
-  if (!id2 || !message || sender !== template.sender.id)
-    throw new Error("Intent DSL is incomplete");
-  return structuredClone({
-    ...template,
-    id: id2,
-    immutableMessage: { text: message, locked: true }
-  });
-}
-var allowed;
-var init_dsl = __esm({
-  "nextbound/dsl.ts"() {
-    "use strict";
-    allowed = /* @__PURE__ */ new Set([
-      "nextbound-intent",
-      "sender",
-      "immutable-message",
-      "context-source",
-      "adapt",
-      "experience",
-      "actions",
-      "action"
-    ]);
-  }
-});
-
-// nextbound/runtime.ts
-function pathFingerprint(interactionLog, history) {
-  const ordered = interactionLog.map(
-    (event) => `${event.sequenceNumber}:${event.actionType}:${event.targetId ?? ""}:${event.nextboundId ?? ""}`
-  ).join("|");
-  const visits = history.map((reference) => `${reference.contractId}:${reference.visitNumber}`).join("|");
-  return `path-${hash(`${visits}::${ordered}`)}`;
-}
-function appendInteractionEvent(session, input, current) {
-  const sequenceNumber = session.sequenceCounter + 1;
-  const event = {
-    ...structuredClone(input),
-    id: `event-${session.id}-${sequenceNumber}`,
-    sessionId: session.id,
-    sequenceNumber,
-    timestamp: deterministicTime(sequenceNumber),
-    contractId: current.contractId,
-    executionId: current.id
-  };
-  session.sequenceCounter = sequenceNumber;
-  session.interactionLog.push(event);
-  return event;
-}
-function deriveSemanticObservation(event) {
-  const topic = String(
-    event.metadata.topic ?? event.targetId ?? event.nextboundId ?? event.actionType
-  );
-  const intent = event.actionType === "opportunity_claimed" ? "participate" : event.actionType === "navigation_returned" ? "integrate" : event.actionType.includes("viewed") ? "observe" : "explore";
-  const strength = Math.abs(actionStrength[event.actionType]);
-  return {
-    id: `observation-${event.id}`,
-    sourceEventIds: [event.id],
-    interpretation: event.actionType === "opportunity_claimed" ? "The user currently prefers participatory technical experiences." : `The ordered action ${event.actionType} increased the relevance of ${topic}.`,
-    topics: [topic],
-    inferredIntent: intent,
-    polarity: actionStrength[event.actionType] < 0 ? -1 : 1,
-    confidence: Number((0.55 + strength * 0.4).toFixed(2)),
-    strength,
-    createdAt: event.timestamp
-  };
-}
-function updateSemanticScratchpad(session, event) {
-  const observation = deriveSemanticObservation(event);
-  session.semanticScratchpad.push(observation);
-  return observation;
-}
-function composeRecipientContext(input) {
-  const { contextWeights } = input;
-  if (Math.abs(contextWeights.knowledgeBase + contextWeights.liveSession - 1) > 1e-4)
-    throw new Error("Context weights must sum to 1.");
-  const allowedSignals = Object.values(input.okfContext.scopes).flat();
-  const liveScores = /* @__PURE__ */ new Map();
-  input.semanticScratchpad.forEach((observation, index) => {
-    const recency = 1 / (1 + (input.semanticScratchpad.length - 1 - index) * 0.18);
-    const repeated = 1 + observation.topics.filter((topic) => liveScores.has(topic)).length * 0.12;
-    for (const topic of observation.topics) {
-      const score = observation.strength * observation.confidence * observation.polarity * recency * repeated;
-      liveScores.set(topic, (liveScores.get(topic) ?? 0) + score);
-    }
-  });
-  const liveSignals = [...liveScores].map(([topic, score]) => ({ topic, score: Number(score.toFixed(3)) })).sort((a, b) => b.score - a.score);
-  return {
-    recipientId: input.okfContext.recipientId,
-    knowledgeSignals: allowedSignals,
-    liveSignals,
-    dominantIntent: input.semanticScratchpad.at(-1)?.inferredIntent ?? "explore",
-    weights: structuredClone(contextWeights),
-    supportingObservationIds: input.semanticScratchpad.slice(-5).map((item) => item.id)
-  };
-}
-function resolveNextbounds(input) {
-  let drafts = nextboundDrafts[input.contract.id] ?? [];
-  if (input.contract.id === "visual-lab") {
-    const collective = input.composedContext.liveSignals.some(
-      (signal) => ["multiplayer", "collaborative", "collective"].some(
-        (topic) => signal.topic.includes(topic)
-      ) && signal.score > 0.5
-    );
-    const editorial = input.composedContext.knowledgeSignals.some(
-      (signal) => ["aesthetic", "editorial"].some((topic) => signal.includes(topic))
-    );
-    drafts = [drafts[collective ? 1 : editorial ? 2 : 0]];
-  }
-  return drafts.filter(Boolean).slice(0, input.contract.nextboundPolicy.maximumVisibleNextbounds).map((draft, index) => {
-    const unavailable = draft.id === "claim-multiplayer-slot" && input.opportunityState.status !== "available" && input.opportunityState.claimedBy !== input.sessionState.id;
-    return {
-      id: draft.id,
-      sourceContractId: input.contract.id,
-      sourceExecutionId: input.executionDraft.id,
-      trigger: {
-        type: draft.type ?? "phrase",
-        anchor: draft.anchor
-      },
-      semanticReason: draft.reason,
-      relevanceScore: Number((0.94 - index * 0.07).toFixed(2)),
-      destination: { type: "artifact_contract", targetId: draft.targetId },
-      presentation: {
-        label: draft.label,
-        highlightStyle: index === 0 ? "pulse" : "underline"
-      },
-      availability: {
-        status: unavailable ? "unavailable" : "available",
-        expiresAt: draft.type === "opportunity" ? input.opportunityState.expiresAt : void 0
-      },
-      explainability: {
-        okfContribution: input.composedContext.weights.knowledgeBase,
-        liveSessionContribution: input.composedContext.weights.liveSession,
-        supportingObservationIds: input.composedContext.supportingObservationIds,
-        reason: draft.reason
-      }
-    };
-  });
-}
-function validateArtifactExecution(contract, execution) {
-  const violations = [];
-  if (execution.contractId !== contract.id || execution.contractVersion !== contract.version)
-    violations.push("contract_identity_changed");
-  if (contract.personalizationMode === "shared_content") {
-    for (const lockedId of contract.sharedContent.lockedBlockIds) {
-      const source = contract.sharedContent.blocks.find(
-        (block) => block.id === lockedId
-      );
-      const generated = execution.generatedContent.find(
-        (block) => block.id === lockedId
-      );
-      if (!source || !generated || source.text !== generated.text)
-        violations.push(`locked_content_changed:${lockedId}`);
-    }
-  } else {
-    const schemaSlots = contract.sharedForm.frameSchema.map(
-      (frame) => frame.slot
-    );
-    if (!schemaSlots.every(
-      (slot) => execution.generatedContent.some((block) => block.slotId === slot)
-    ))
-      violations.push("shared_form_schema_mismatch");
-  }
-  if (execution.resolvedNextbounds.some(
-    (nextbound) => !contract.nextboundPolicy.allowedDestinationTypes.includes(
-      nextbound.destination.type
-    )
-  ))
-    violations.push("destination_type_not_allowed");
-  if (execution.generatedContent.some((block) => /https?:\/\//i.test(block.text)))
-    violations.push("static_href_in_content");
-  for (const idea of contract.invariants.requiredIdeas) {
-    if (!execution.complianceTrace.preservedInvariantIds.includes(
-      `required:${idea}`
-    ))
-      violations.push(`required_idea_unverified:${idea}`);
-  }
-  if (!execution.complianceTrace.appliedRuleIds.includes(
-    `schema:${contract.generationPolicy.outputSchema}`
-  ))
-    violations.push("output_schema_unverified");
-  for (const nextbound of execution.resolvedNextbounds) {
-    if (nextbound.destination.type === "tool" && !contract.toolPolicy.allowedTools.includes(nextbound.destination.targetId))
-      violations.push(`tool_not_permitted:${nextbound.destination.targetId}`);
-  }
-  execution.complianceTrace.violations = violations;
-  if (violations.length)
-    throw new Error(`Invalid ArtifactExecution: ${violations.join(", ")}`);
-  return execution;
-}
-function executeArtifactContract2(input) {
-  const allowedScopes = new Set(input.contract.contextPolicy.allowedOkfScopes);
-  const prohibited = Object.keys(input.okfContext.scopes).filter(
-    (scope) => !allowedScopes.has(scope)
-  );
-  if (prohibited.length)
-    throw new Error(`Prohibited OKF scopes: ${prohibited.join(", ")}`);
-  const composedContext = composeRecipientContext({
-    okfContext: input.okfContext,
-    semanticScratchpad: input.sessionState.semanticScratchpad,
-    interactionLog: input.sessionState.interactionLog,
-    contextWeights: input.sessionState.contextWeights
-  });
-  const previousForContract = input.sessionState.executionHistory.filter(
-    (reference) => reference.contractId === input.contract.id
-  );
-  const currentReference = input.sessionState.executionHistory.at(-1);
-  const visitNumber = currentReference?.contractId === input.contract.id ? currentReference.visitNumber : (previousForContract.at(-1)?.visitNumber ?? 0) + 1;
-  const executionIndex = input.sessionState.executionHistory.length + 1;
-  const id2 = `execution-${input.contract.id}-${executionIndex}-${input.pathFingerprint.slice(-6)}`;
-  const generatedContent = contentFor(
-    input.contract,
-    composedContext,
-    visitNumber
-  );
-  const draft = { id: id2, visitNumber };
-  const resolvedNextbounds = resolveNextbounds({
-    contract: input.contract,
-    executionDraft: draft,
-    composedContext,
-    sessionState: input.sessionState,
-    opportunityState: input.opportunityState
-  });
-  const execution = {
-    id: id2,
-    contractId: input.contract.id,
-    contractVersion: input.contract.version,
-    sessionId: input.sessionState.id,
-    visitId: `visit-${input.contract.id}-${visitNumber}`,
-    visitNumber,
-    pathFingerprint: input.pathFingerprint,
-    generatedContent,
-    resolvedPresentation: presentationFor(
-      input.contract,
-      composedContext,
-      visitNumber
-    ),
-    activatedAnchors: resolvedNextbounds.map((nextbound) => ({
-      id: `anchor-${nextbound.id}`,
-      blockId: generatedContent[0]?.id ?? "generated",
-      phrase: nextbound.trigger.anchor ?? nextbound.presentation.label ?? nextbound.id,
-      nextboundId: nextbound.id,
-      style: nextbound.presentation.highlightStyle ?? "underline"
-    })),
-    resolvedNextbounds,
-    availableInteractions: resolvedNextbounds.map((nextbound) => ({
-      id: `interaction-${nextbound.id}`,
-      type: nextbound.trigger.type === "opportunity" ? "opportunity_claimed" : nextbound.id.includes("return") ? "navigation_returned" : "nextbound_opened",
-      label: nextbound.presentation.label ?? nextbound.id,
-      targetId: nextbound.destination.targetId
-    })),
-    opportunityStates: input.contract.id === "multiplayer-snake" ? [structuredClone(input.opportunityState)] : [],
-    frames: generatedContent.map((block, index) => ({
-      id: `frame-${id2}-${index + 1}`,
-      schemaId: input.contract.sharedForm?.frameSchema[index]?.id ?? block.slotId,
-      placement: index === 0 ? "focus" : "insert_after",
-      insertAfterFrameId: index > 0 ? `frame-${id2}-${index}` : void 0,
-      blocks: [structuredClone(block)],
-      highlighted: index > 0
-    })),
-    contextTrace: {
-      okfContribution: composedContext.weights.knowledgeBase,
-      sessionContribution: composedContext.weights.liveSession,
-      supportingObservationIds: composedContext.supportingObservationIds
-    },
-    complianceTrace: {
-      preservedInvariantIds: [
-        "creatorIntent",
-        ...input.contract.invariants.requiredIdeas.map(
-          (idea) => `required:${idea}`
-        )
-      ],
-      appliedRuleIds: [
-        `mode:${input.contract.personalizationMode}`,
-        `schema:${input.contract.generationPolicy.outputSchema}`,
-        "context:weighted-40-60",
-        "nextbounds:semantic-first"
-      ],
-      violations: []
-    },
-    createdAt: deterministicTime(executionIndex)
-  };
-  return validateArtifactExecution(input.contract, execution);
-}
-var basePolicy, lockedAfterlight, afterlightCommonsPolicy, continuousContracts, loopCampaign, loopSeeds, runtimeOkf, hash, deterministicTime, actionStrength, presentationFor, contentFor, nextboundDrafts, ContinuousProceduralRuntime;
-var init_runtime = __esm({
-  "nextbound/runtime.ts"() {
-    "use strict";
-    basePolicy = {
-      contextPolicy: {
-        allowedOkfScopes: ["knowledge", "preferences"],
-        sessionContextAllowed: true,
-        recentActivityAllowed: true,
-        interactionLogAllowed: true
-      },
-      generationPolicy: {
-        mutableFields: ["content", "presentation", "anchors", "nextbounds"],
-        outputSchema: "nextbound.artifact-execution.v1"
-      },
-      nextboundPolicy: {
-        allowedDestinationTypes: [
-          "artifact_contract",
-          "frame",
-          "tool",
-          "experience"
-        ],
-        maximumVisibleNextbounds: 4,
-        opportunityRules: [
-          { id: "multiplayer-slot", topic: "multiplayer", minimumScore: 0.55 }
-        ]
-      },
-      toolPolicy: { allowedTools: ["visual-builder", "prototype-lab"] }
-    };
-    lockedAfterlight = [
-      {
-        id: "creator-intent",
-        slotId: "hero",
-        text: "What we remember is not what happened. It is what the moment became inside us.",
-        locked: true
-      }
-    ];
-    afterlightCommonsPolicy = {
-      collaborationProtocolId: "nextbound-collaboration-v1",
-      compatibilityKey: "afterlight-commons-v1",
-      sharedStateSchema: {
-        allowedObjectTypes: ["trace", "canvas-region", "constraint"],
-        allowedEventTypes: [
-          "participant_arrived",
-          "object_authored",
-          "object_transformed",
-          "constraint_released",
-          "participant_left"
-        ],
-        semanticContributionKinds: ["gesture", "composition", "constraint"]
-      },
-      visualContributionPolicy: {
-        allowedTokenFields: [
-          "sessionColor",
-          "typographyRole",
-          "shapeLanguage",
-          "textureLanguage",
-          "motionSignature",
-          "activeObjectIds",
-          "contributionStrength"
-        ],
-        localDominance: 0.6,
-        preserveAuthoredObjectsOnLeave: true
-      }
-    };
-    continuousContracts = {
-      "visual-lab": {
-        id: "visual-lab",
-        creatorId: "luna-vale",
-        version: "2.0.0",
-        title: "AFTERLIGHT / Visual Lab",
-        personalizationMode: "shared_content",
-        invariants: {
-          creatorIntent: "Turn one memory into a world that can keep evolving.",
-          requiredIdeas: ["memory", "transformation", "attribution"],
-          prohibitedTransformations: [
-            "remove_creator_attribution",
-            "rewrite_locked_content"
-          ]
-        },
-        sharedContent: {
-          blocks: lockedAfterlight,
-          lockedBlockIds: ["creator-intent"]
-        },
-        ...structuredClone(basePolicy)
-      },
-      "technical-prototype": {
-        id: "technical-prototype",
-        creatorId: "luna-vale",
-        version: "1.0.0",
-        title: "Technical Prototype",
-        personalizationMode: "shared_form",
-        invariants: {
-          creatorIntent: "Let the audience build a working interpretation of the memory.",
-          requiredIdeas: ["prototype", "system", "memory"],
-          prohibitedTransformations: ["finished_product_claim"]
-        },
-        sharedForm: {
-          frameSchema: [
-            { id: "prototype-hero", slot: "hero", type: "hero" },
-            { id: "prototype-workbench", slot: "workbench", type: "prototype" }
-          ],
-          componentSlots: [
-            { id: "hero", accepts: ["text"] },
-            { id: "workbench", accepts: ["text", "code"] }
-          ],
-          interactionSlots: [
-            { id: "prototype-actions", actions: ["action_clicked"] }
-          ],
-          narrativeRhythm: ["observe", "build", "invite"]
-        },
-        ...structuredClone(basePolicy)
-      },
-      "multiplayer-snake": {
-        id: "multiplayer-snake",
-        creatorId: "nextbound-labs",
-        version: "1.0.0",
-        title: "Multiplayer Snake Lobby",
-        personalizationMode: "shared_form",
-        invariants: {
-          creatorIntent: "Test collective participation through a simulated lobby.",
-          requiredIdeas: ["multiplayer", "participation", "prototype"],
-          prohibitedTransformations: ["real_game_claim"]
-        },
-        sharedForm: {
-          frameSchema: [
-            { id: "lobby", slot: "lobby", type: "opportunity" },
-            { id: "community", slot: "community", type: "content" }
-          ],
-          componentSlots: [
-            { id: "lobby", accepts: ["opportunity"] },
-            { id: "community", accepts: ["text"] }
-          ],
-          interactionSlots: [{ id: "claim", actions: ["opportunity_claimed"] }],
-          narrativeRhythm: ["invite", "claim", "collaborate"]
-        },
-        ...structuredClone(basePolicy),
-        collaboration: structuredClone(afterlightCommonsPolicy)
-      },
-      "collaborative-artifact": {
-        id: "collaborative-artifact",
-        creatorId: "nextbound-community",
-        version: "1.0.0",
-        title: "Collaborative Artifact",
-        personalizationMode: "shared_form",
-        invariants: {
-          creatorIntent: "Turn individual choices into a collective visual trace.",
-          requiredIdeas: ["collective", "visual", "memory"],
-          prohibitedTransformations: ["erase_contributors"]
-        },
-        sharedForm: {
-          frameSchema: [
-            { id: "collective-hero", slot: "hero", type: "hero" },
-            { id: "collective-path", slot: "path", type: "path" }
-          ],
-          componentSlots: [
-            { id: "hero", accepts: ["text"] },
-            { id: "path", accepts: ["text"] }
-          ],
-          interactionSlots: [{ id: "return", actions: ["navigation_returned"] }],
-          narrativeRhythm: ["collect", "reflect", "return"]
-        },
-        ...structuredClone(basePolicy)
-      },
-      "living-canvas": {
-        id: "living-canvas",
-        creatorId: "noa-studio",
-        version: "1.0.0",
-        title: "Living Canvas",
-        personalizationMode: "shared_form",
-        invariants: {
-          creatorIntent: "Let shared traces become an evolving visual composition.",
-          requiredIdeas: ["shared trace", "transformation", "attribution"],
-          prohibitedTransformations: ["erase_contributors"]
-        },
-        sharedForm: {
-          frameSchema: [{ id: "canvas", slot: "canvas", type: "content" }],
-          componentSlots: [{ id: "canvas", accepts: ["shared-object"] }],
-          interactionSlots: [{ id: "transform", actions: ["action_clicked"] }],
-          narrativeRhythm: ["receive", "shape", "return"]
-        },
-        ...structuredClone(basePolicy),
-        collaboration: structuredClone(afterlightCommonsPolicy)
-      },
-      "constraint-room": {
-        id: "constraint-room",
-        creatorId: "elias-north",
-        version: "1.0.0",
-        title: "Constraint Room",
-        personalizationMode: "shared_form",
-        invariants: {
-          creatorIntent: "Change composition by releasing explicit constraints.",
-          requiredIdeas: ["constraint", "movement", "shared object"],
-          prohibitedTransformations: ["erase_contributors"]
-        },
-        sharedForm: {
-          frameSchema: [{ id: "room", slot: "room", type: "content" }],
-          componentSlots: [
-            { id: "room", accepts: ["constraint", "shared-object"] }
-          ],
-          interactionSlots: [{ id: "release", actions: ["action_clicked"] }],
-          narrativeRhythm: ["bound", "release", "recompose"]
-        },
-        ...structuredClone(basePolicy),
-        collaboration: structuredClone(afterlightCommonsPolicy)
-      }
-    };
-    loopCampaign = {
-      id: "campaign-afterlight-runtime",
-      creatorId: "luna-vale",
-      initialContractId: "visual-lab",
-      recipientIds: ["maya", "camille", "alex"],
-      createdAt: "2026-07-17T10:00:00.000Z"
-    };
-    loopSeeds = loopCampaign.recipientIds.map(
-      (recipientId, index) => ({
-        id: `seed-afterlight-${recipientId}`,
-        campaignId: loopCampaign.id,
-        contractId: loopCampaign.initialContractId,
-        recipientId,
-        deliveredAt: `2026-07-17T10:0${index}:00.000Z`
-      })
-    );
-    runtimeOkf = {
-      maya: {
-        recipientId: "maya",
-        scopes: {
-          knowledge: [
-            "technical experimentation",
-            "prototyping",
-            "AI tools",
-            "building"
-          ],
-          preferences: ["interactive", "technical", "visual"]
-        }
-      },
-      camille: {
-        recipientId: "camille",
-        scopes: {
-          knowledge: ["aesthetic direction", "architecture", "editorial systems"],
-          preferences: ["editorial", "minimal", "visual"]
-        }
-      },
-      alex: {
-        recipientId: "alex",
-        scopes: {
-          knowledge: ["creator communities", "collaboration", "participation"],
-          preferences: ["social", "expressive", "shared"]
-        }
-      }
-    };
-    hash = (value) => {
-      let state = 2166136261;
-      for (const character of value) {
-        state ^= character.charCodeAt(0);
-        state = Math.imul(state, 16777619);
-      }
-      return (state >>> 0).toString(16).padStart(8, "0");
-    };
-    deterministicTime = (sequence) => new Date(Date.UTC(2026, 6, 17, 12, 0, sequence)).toISOString();
-    actionStrength = {
-      artifact_viewed: 0.15,
-      frame_viewed: 0.2,
-      word_activated: 0.7,
-      nextbound_opened: 0.9,
-      action_clicked: 0.82,
-      opportunity_claimed: 1,
-      opportunity_ignored: -0.65,
-      frame_dismissed: -0.45,
-      navigation_returned: 0.95
-    };
-    presentationFor = (contract, context, visitNumber) => {
-      const collaborative = context.liveSignals.some(
-        (signal) => ["multiplayer", "collaborative", "collective"].some(
-          (topic) => signal.topic.includes(topic)
-        ) && signal.score > 0.5
-      );
-      if (collaborative && contract.id === "visual-lab" && visitNumber > 1)
-        return {
-          accent: "#72f0c2",
-          background: "#071b19",
-          typography: "humanist",
-          density: "immersive",
-          layout: "collage"
-        };
-      if (context.knowledgeSignals.some((signal) => signal.includes("aesthetic")))
-        return {
-          accent: "#d8c6a3",
-          background: "#e9e2d6",
-          typography: "editorial",
-          density: "balanced",
-          layout: "stack"
-        };
-      return {
-        accent: "#38a8ff",
-        background: "#061323",
-        typography: "mono",
-        density: "compact",
-        layout: "grid"
-      };
-    };
-    contentFor = (contract, context, visitNumber) => {
-      if (contract.personalizationMode === "shared_content")
-        return structuredClone(contract.sharedContent.blocks);
-      const collaborative = context.liveSignals.some(
-        (signal) => ["multiplayer", "collaborative", "collective"].some(
-          (topic) => signal.topic.includes(topic)
-        ) && signal.score > 0.5
-      );
-      const subject = collaborative ? "Collective participation reshapes the memory system." : context.knowledgeSignals.slice(0, 2).join(" and ");
-      return contract.sharedForm.frameSchema.map((frame, index) => ({
-        id: `${contract.id}-generated-${frame.id}`,
-        slotId: frame.slot,
-        text: index === 0 ? `${contract.title}: ${subject}` : `Visit ${visitNumber} \xB7 ${frame.type} \xB7 ${context.dominantIntent}`
-      }));
-    };
-    nextboundDrafts = {
-      "visual-lab": [
-        {
-          id: "open-technical-prototype",
-          label: "Build the technical prototype",
-          anchor: "prototype",
-          targetId: "technical-prototype",
-          reason: "Technical OKF signals make building the strongest first continuation."
-        },
-        {
-          id: "open-collaborative-visual",
-          label: "Continue the collective visual",
-          anchor: "together",
-          targetId: "collaborative-artifact",
-          reason: "Recent multiplayer participation now outweighs the historical technical prediction."
-        },
-        {
-          id: "open-editorial-composition",
-          label: "Compose the editorial memory",
-          anchor: "memory",
-          targetId: "technical-prototype",
-          reason: "Aesthetic and editorial OKF signals activate composition inside the locked text."
-        }
-      ],
-      "technical-prototype": [
-        {
-          id: "open-multiplayer-snake",
-          label: "Open the Multiplayer Snake opportunity",
-          anchor: "multiplayer",
-          targetId: "multiplayer-snake",
-          reason: "Prototype and participation signals make the simulated multiplayer lobby relevant.",
-          type: "opportunity"
-        }
-      ],
-      "multiplayer-snake": [
-        {
-          id: "claim-multiplayer-slot",
-          label: "Claim the final collaborative slot",
-          anchor: "join",
-          targetId: "collaborative-artifact",
-          reason: "An ephemeral slot is available for this active session.",
-          type: "opportunity"
-        }
-      ],
-      "collaborative-artifact": [
-        {
-          id: "return-visual-lab-runtime",
-          label: "Return to Visual Lab",
-          anchor: "return",
-          targetId: "visual-lab",
-          reason: "The collective artifact completes the loop back to the stable creator contract."
-        }
-      ]
-    };
-    ContinuousProceduralRuntime = class _ContinuousProceduralRuntime {
-      sessions = /* @__PURE__ */ new Map();
-      executions = /* @__PURE__ */ new Map();
-      seeds = new Map(
-        loopSeeds.map((seed) => [seed.id, structuredClone(seed)])
-      );
-      opportunity = {
-        id: "multiplayer-final-slot",
-        availableSlots: 1,
-        expiresAt: "2026-07-17T18:00:00.000Z",
-        status: "available"
-      };
-      hasSession(sessionId) {
-        return this.sessions.has(sessionId);
-      }
-      getCampaign() {
-        return structuredClone(loopCampaign);
-      }
-      getSeed(seedId) {
-        const seed = this.seeds.get(seedId);
-        if (!seed) throw new Error("Seed not found.");
-        return structuredClone(seed);
-      }
-      openSeed(seedId, recipientId) {
-        const seed = this.seeds.get(seedId);
-        if (!seed || seed.recipientId !== recipientId)
-          throw new Error("Seed is not available.");
-        seed.openedAt = deterministicTime(0);
-        const session = {
-          id: `runtime-session-${recipientId}`,
-          seedId,
-          recipientId,
-          status: "active",
-          currentExecutionId: "",
-          executionHistory: [],
-          interactionLog: [],
-          semanticScratchpad: [],
-          liveContext: {
-            dominantTopics: [],
-            inferredIntent: "explore",
-            engagementScore: 0
-          },
-          contextWeights: { knowledgeBase: 0.4, liveSession: 0.6 },
-          sequenceCounter: 0
-        };
-        this.sessions.set(session.id, session);
-        const execution = this.execute(seed.contractId, session);
-        const viewed = appendInteractionEvent(
-          session,
-          { actionType: "artifact_viewed", metadata: { topic: "afterlight" } },
-          execution
-        );
-        updateSemanticScratchpad(session, viewed);
-        return {
-          seed: structuredClone(seed),
-          session: structuredClone(session),
-          execution
-        };
-      }
-      executeArtifactContract(sessionId, contractId) {
-        const session = this.need(sessionId);
-        return this.execute(
-          contractId ?? this.current(session).contractId,
-          session
-        );
-      }
-      processInteraction(sessionId, input) {
-        const session = this.need(sessionId);
-        if (session.status !== "active")
-          throw new Error(`Session is ${session.status}.`);
-        const previous = this.current(session);
-        const event = appendInteractionEvent(session, input, previous);
-        const observation = updateSemanticScratchpad(session, event);
-        session.liveContext = {
-          dominantTopics: session.semanticScratchpad.slice(-4).flatMap((item) => item.topics),
-          inferredIntent: observation.inferredIntent,
-          engagementScore: Number(
-            Math.min(
-              1,
-              session.semanticScratchpad.reduce(
-                (sum, item) => sum + item.strength,
-                0
-              ) / 4
-            ).toFixed(2)
-          ),
-          lastMeaningfulAction: event.actionType
-        };
-        const selected = previous.resolvedNextbounds.find(
-          (nextbound) => nextbound.id === input.nextboundId || nextbound.destination.targetId === input.targetId
-        );
-        if (input.actionType === "opportunity_claimed") {
-          if (this.opportunity.status !== "available" && this.opportunity.claimedBy !== session.id)
-            throw new Error("Opportunity is no longer available.");
-          this.opportunity = {
-            ...this.opportunity,
-            availableSlots: 0,
-            status: "claimed",
-            claimedBy: session.id
-          };
-        }
-        const targetContractId = selected?.destination.targetId ?? previous.contractId;
-        const navigates = targetContractId !== previous.contractId;
-        const execution = this.execute(targetContractId, session);
-        const mutations = this.diff(previous, execution, navigates);
-        return {
-          event: structuredClone(event),
-          observation: structuredClone(observation),
-          previousExecution: structuredClone(previous),
-          execution,
-          mutations,
-          session: structuredClone(session)
-        };
-      }
-      resolveNextbounds(sessionId) {
-        return structuredClone(
-          this.current(this.need(sessionId)).resolvedNextbounds
-        );
-      }
-      getArtifactExecution(executionId) {
-        const execution = this.executions.get(executionId);
-        if (!execution) throw new Error("ArtifactExecution not found.");
-        return structuredClone(execution);
-      }
-      getSessionTrace(sessionId) {
-        const session = this.need(sessionId);
-        return {
-          session: structuredClone(session),
-          currentExecution: structuredClone(this.current(session)),
-          contract: structuredClone(
-            continuousContracts[this.current(session).contractId]
-          ),
-          opportunity: structuredClone(this.opportunity)
-        };
-      }
-      replaySession(seedId, recipientId, events) {
-        const replay = new _ContinuousProceduralRuntime();
-        const opened = replay.openSeed(seedId, recipientId);
-        for (const event of events.filter(
-          (item) => item.actionType !== "artifact_viewed"
-        ))
-          replay.processInteraction(opened.session.id, {
-            actionType: event.actionType,
-            targetId: event.targetId,
-            nextboundId: event.nextboundId,
-            frameId: event.frameId,
-            dwellTimeMs: event.dwellTimeMs,
-            metadata: structuredClone(event.metadata)
-          });
-        return replay.getSessionTrace(opened.session.id);
-      }
-      pause(sessionId) {
-        const session = this.need(sessionId);
-        session.status = "paused";
-        return structuredClone(session);
-      }
-      resume(sessionId) {
-        const session = this.need(sessionId);
-        if (session.status !== "paused")
-          throw new Error("Only paused sessions can resume.");
-        session.status = "active";
-        return structuredClone(session);
-      }
-      stop(sessionId) {
-        const session = this.need(sessionId);
-        session.status = "stopped";
-        return structuredClone(session);
-      }
-      restart(sessionId) {
-        const previous = this.need(sessionId);
-        this.sessions.delete(sessionId);
-        return this.openSeed(previous.seedId, previous.recipientId);
-      }
-      execute(contractId, session) {
-        const contract = continuousContracts[contractId];
-        if (!contract) throw new Error("ArtifactContract not found.");
-        const fingerprint2 = pathFingerprint(
-          session.interactionLog,
-          session.executionHistory
-        );
-        const execution = executeArtifactContract2({
-          contract,
-          okfContext: runtimeOkf[session.recipientId],
-          sessionState: session,
-          pathFingerprint: fingerprint2,
-          opportunityState: this.opportunity
-        });
-        session.currentExecutionId = execution.id;
-        session.executionHistory.push({
-          executionId: execution.id,
-          contractId: execution.contractId,
-          visitId: execution.visitId,
-          visitNumber: execution.visitNumber,
-          pathFingerprint: execution.pathFingerprint
-        });
-        this.executions.set(execution.id, structuredClone(execution));
-        return structuredClone(execution);
-      }
-      current(session) {
-        const execution = this.executions.get(session.currentExecutionId);
-        if (!execution) throw new Error("Current execution not found.");
-        return execution;
-      }
-      need(sessionId) {
-        const session = this.sessions.get(sessionId);
-        if (!session) throw new Error("Runtime session not found.");
-        return session;
-      }
-      diff(previous, current, navigates) {
-        const mutations = [];
-        if (navigates)
-          mutations.push({
-            type: "navigate_to_contract",
-            targetId: current.contractId,
-            reason: "A resolved semantic Nextbound selected another ArtifactContract."
-          });
-        if (JSON.stringify(previous.generatedContent) !== JSON.stringify(current.generatedContent))
-          mutations.push({
-            type: "update_content",
-            targetId: current.id,
-            reason: "Composed context changed."
-          });
-        if (JSON.stringify(previous.resolvedPresentation) !== JSON.stringify(current.resolvedPresentation))
-          mutations.push({
-            type: "update_presentation",
-            targetId: current.id,
-            reason: "Live session context changed presentation resolution."
-          });
-        for (const anchor of previous.activatedAnchors.filter(
-          (old) => !current.activatedAnchors.some((next) => next.phrase === old.phrase)
-        ))
-          mutations.push({
-            type: "deactivate_anchor",
-            targetId: anchor.id,
-            reason: "Anchor lost relevance."
-          });
-        for (const anchor of current.activatedAnchors.filter(
-          (next) => !previous.activatedAnchors.some((old) => old.phrase === next.phrase)
-        ))
-          mutations.push({
-            type: "activate_anchor",
-            targetId: anchor.id,
-            reason: "Anchor gained relevance."
-          });
-        for (const nextbound of previous.resolvedNextbounds.filter(
-          (old) => !current.resolvedNextbounds.some((next) => next.id === old.id)
-        ))
-          mutations.push({
-            type: "remove_nextbound",
-            targetId: nextbound.id,
-            reason: "Nextbound was recalculated."
-          });
-        for (const nextbound of current.resolvedNextbounds.filter(
-          (next) => !previous.resolvedNextbounds.some((old) => old.id === next.id)
-        ))
-          mutations.push({
-            type: "add_nextbound",
-            targetId: nextbound.id,
-            reason: nextbound.semanticReason
-          });
-        if (current.frames.some((frame) => frame.highlighted))
-          mutations.push({
-            type: "insert_frame",
-            targetId: current.frames.at(-1).id,
-            reason: "Relevant frame inserted near focus."
-          });
-        return mutations;
-      }
-    };
-  }
-});
-
-// nextbound/service.ts
-var NextboundError, actionAliases, NextboundService;
-var init_service2 = __esm({
-  "nextbound/service.ts"() {
-    "use strict";
-    init_engine();
-    init_dsl();
-    init_fixtures();
-    init_runtime();
-    NextboundError = class extends Error {
-      constructor(code, message) {
-        super(message);
-        this.code = code;
-      }
-      code;
-    };
-    actionAliases = {
-      create_visual_memory: "create-visual",
-      add_soundtrack: "add-soundtrack",
-      turn_into_short_film: "short-film"
-    };
-    NextboundService = class {
-      sessions = /* @__PURE__ */ new Map();
-      published = /* @__PURE__ */ new Set();
-      procedural = new ContinuousProceduralRuntime();
-      openSeed(seedId, recipientId) {
-        return {
-          view: "procedural_runtime",
-          ...this.procedural.openSeed(seedId, recipientId)
-        };
-      }
-      executeArtifactContract(sessionId, contractId) {
-        return {
-          view: "procedural_runtime",
-          execution: this.procedural.executeArtifactContract(sessionId, contractId)
-        };
-      }
-      processInteraction(input) {
-        const { sessionId, ...event } = input;
-        return {
-          view: "procedural_runtime",
-          ...this.procedural.processInteraction(sessionId, {
-            ...event,
-            metadata: event.metadata ?? {}
-          })
-        };
-      }
-      resolveProceduralNextbounds(sessionId) {
-        return {
-          view: "procedural_runtime",
-          nextbounds: this.procedural.resolveNextbounds(sessionId)
-        };
-      }
-      getArtifactExecution(executionId) {
-        return {
-          view: "procedural_runtime",
-          execution: this.procedural.getArtifactExecution(executionId)
-        };
-      }
-      getSessionTrace(sessionId) {
-        return {
-          view: "procedural_runtime",
-          ...this.procedural.getSessionTrace(sessionId)
-        };
-      }
-      replayProceduralSession(seedId, recipientId, sessionId) {
-        const trace = this.procedural.getSessionTrace(sessionId);
-        return {
-          view: "procedural_runtime",
-          ...this.procedural.replaySession(
-            seedId,
-            recipientId,
-            trace.session.interactionLog
-          )
-        };
-      }
-      publishIntent(intentId) {
-        this.intent(intentId);
-        this.published.add(intentId);
-        return {
-          view: "publisher",
-          intent: parseIntentDsl(intentDsl, luna),
-          sender: structuredClone(luna.sender),
-          publicationStatus: "published",
-          availableChannels: ["nextbound_inbox"]
-        };
-      }
-      deliverToInbox(intentId, profileIds) {
-        this.intent(intentId);
-        const deliveries = profileIds.map((id2, index) => {
-          this.profile(id2);
-          return {
-            id: `inbox-${intentId}-${id2}`,
-            intentId,
-            profileId: id2,
-            deliveredAt: `2026-07-17T10:0${index}:00Z`,
-            unread: true
-          };
-        });
-        return { view: "inbox", deliveries };
-      }
-      resolveOkfContext(intentId, profileId) {
-        this.intent(intentId);
-        const context = resolveOkfContext(this.profile(profileId));
-        return {
-          view: "context_resolution",
-          profileId,
-          normalizedContext: {
-            role: context.role,
-            signals: context.signals,
-            preferences: context.preferences
-          },
-          signalsUsed: [...context.signals],
-          contextExplanation: context.explanation.join(" ")
-        };
-      }
-      compileExperience(intentId, profileId) {
-        this.intent(intentId);
-        const experience = compileExperience(luna, this.profile(profileId));
-        const existing = this.sessions.get(experience.session.id);
-        const session = existing ?? experience.session;
-        this.sessions.set(session.id, session);
-        return this.experienceView(experience, session);
-      }
-      resolveNextAction(sessionId, actionId) {
-        const session = this.need(sessionId);
-        const previousNode = this.current(session);
-        const normalized = actionAliases[actionId] ?? actionId;
-        const selected = previousNode.actions.find((a) => a.id === normalized);
-        if (!selected)
-          throw new NextboundError(
-            "unknown_action",
-            "That action is not available in the current experience."
-          );
-        const updated = resolveNextAction(session, selected);
-        this.sessions.set(updated.id, updated);
-        const currentNode = this.current(updated);
-        const execution = currentNode.execution;
-        const previousExecution = execution ? updated.executions.filter((item) => item.contractId === execution.contractId).at(-2) : void 0;
-        return {
-          view: "experience",
-          session: structuredClone(updated),
-          previousNode: structuredClone(previousNode),
-          currentNode: structuredClone(currentNode),
-          addedModules: structuredClone(currentNode.modules),
-          nextActions: structuredClone(currentNode.actions),
-          contributors: structuredClone(updated.contributors),
-          artifactPath: this.artifactPath(updated),
-          executionTransition: execution && previousExecution ? {
-            from: structuredClone(previousExecution),
-            to: structuredClone(execution),
-            indicator: "Same contract \xB7 New execution",
-            navigationRequired: false
-          } : null
-        };
-      }
-      matchTool(requiredCapability) {
-        const match = matchTool(requiredCapability);
-        if (!match.tool)
-          throw new NextboundError(
-            "no_compatible_tool",
-            "No registered executable tool supports that capability."
-          );
-        return {
-          selectedTool: match.tool,
-          compatibilityScore: match.score,
-          matchReason: match.reason,
-          alternativeTools: tools.filter(
-            (t) => t.id !== match.tool.id && t.capabilities.includes(requiredCapability)
-          )
-        };
-      }
-      connectArtifact(sessionId, sourceArtifactId, targetArtifactId, triggerActionId) {
-        const session = this.need(sessionId);
-        if (targetArtifactId !== eliasSoundscape.id)
-          throw new NextboundError(
-            "unknown_artifact",
-            "That artifact is not available."
-          );
-        const connection = session.connections.find(
-          (c) => c.sourceArtifactId === sourceArtifactId && c.targetArtifactId === targetArtifactId && c.triggerActionId === (actionAliases[triggerActionId] ?? triggerActionId)
-        );
-        if (!connection)
-          throw new NextboundError(
-            "incompatible_artifact",
-            "The artifact has not been connected by the selected action."
-          );
-        return {
-          view: "experience",
-          connection: structuredClone(connection),
-          session: structuredClone(session),
-          contributors: structuredClone(session.contributors),
-          currentNode: structuredClone(this.current(session))
-        };
-      }
-      getExperienceSession(sessionId) {
-        const session = this.need(sessionId);
-        return {
-          view: "experience",
-          session: structuredClone(session),
-          currentNode: structuredClone(this.current(session)),
-          history: structuredClone(session.nodes),
-          nextActions: structuredClone(this.current(session).actions),
-          contributors: structuredClone(session.contributors),
-          artifactPath: this.artifactPath(session)
-        };
-      }
-      pause(sessionId) {
-        if (this.procedural.hasSession(sessionId))
-          return {
-            view: "procedural_runtime",
-            session: this.procedural.pause(sessionId)
-          };
-        return this.control(pauseExperience(this.need(sessionId)));
-      }
-      resume(sessionId) {
-        if (this.procedural.hasSession(sessionId))
-          return {
-            view: "procedural_runtime",
-            session: this.procedural.resume(sessionId)
-          };
-        const session = structuredClone(this.need(sessionId));
-        if (session.status !== "paused")
-          throw new NextboundError(
-            "invalid_session_state",
-            "Only a paused experience can be resumed."
-          );
-        session.status = "active";
-        return this.control(session);
-      }
-      stop(sessionId) {
-        if (this.procedural.hasSession(sessionId))
-          return {
-            view: "procedural_runtime",
-            session: this.procedural.stop(sessionId)
-          };
-        const session = structuredClone(this.need(sessionId));
-        session.status = "completed";
-        return this.control(session);
-      }
-      restart(sessionId) {
-        if (this.procedural.hasSession(sessionId)) {
-          const restarted = this.procedural.restart(sessionId);
-          return { view: "procedural_runtime", ...restarted };
-        }
-        const old = this.need(sessionId), fresh = compileExperience(luna, this.profile(old.profileId)).session;
-        this.sessions.set(fresh.id, fresh);
-        return this.control(fresh);
-      }
-      share(sessionId) {
-        const session = this.need(sessionId), current = this.current(session);
-        const artifact = {
-          id: `share-${session.id}`,
-          sessionId: session.id,
-          title: current.artifact?.title ?? current.title,
-          contributorIds: session.contributors.map((c) => c.contributorId),
-          demoUrl: `nextbound://share/${session.id}`
-        };
-        return {
-          view: "share",
-          shareId: artifact.id,
-          mode: "local_demo",
-          rootIntent: {
-            id: luna.id,
-            title: luna.campaign,
-            creator: luna.sender.name
-          },
-          artifact,
-          contributors: structuredClone(session.contributors),
-          invitationAction: {
-            label: "Create what AFTERLIGHT becomes for you",
-            intentId: luna.id
-          }
-        };
-      }
-      experienceView(experience, session) {
-        return {
-          view: "experience",
-          session: structuredClone(session),
-          experience: { ...experience, session: structuredClone(session) },
-          currentNode: structuredClone(this.current(session)),
-          nextActions: structuredClone(this.current(session).actions),
-          contributors: structuredClone(session.contributors)
-        };
-      }
-      control(session) {
-        this.sessions.set(session.id, session);
-        return {
-          view: "experience",
-          session: structuredClone(session),
-          currentNode: structuredClone(this.current(session))
-        };
-      }
-      intent(id2) {
-        if (id2 !== luna.id)
-          throw new NextboundError(
-            "unknown_intent",
-            "That Intent is not available in this demo."
-          );
-        return luna;
-      }
-      profile(id2) {
-        const profile = profiles.find((p) => p.id === id2);
-        if (!profile)
-          throw new NextboundError(
-            "unknown_profile",
-            "That profile is not available in this demo."
-          );
-        return profile;
-      }
-      need(id2) {
-        const session = this.sessions.get(id2);
-        if (!session)
-          throw new NextboundError(
-            "unknown_session",
-            "That experience session does not exist."
-          );
-        return session;
-      }
-      current(session) {
-        return session.nodes.find((n) => n.id === session.currentNodeId);
-      }
-      artifactPath(session) {
-        return session.nodes.flatMap((n) => n.artifact ? [n.artifact.id] : []).concat(session.rootIntentId);
-      }
-    };
-  }
-});
-
-// server/nextbound-api.ts
-var id, strict, schemas, interactionAction, proceduralSchemas, knowledgeSchemas;
-var init_nextbound_api = __esm({
-  "server/nextbound-api.ts"() {
-    "use strict";
-    init_zod();
-    id = external_exports.string().trim().min(1).max(100).regex(/^[a-z0-9_-]+$/i);
-    strict = (shape) => external_exports.object(shape).strict();
-    schemas = {
-      publish_intent: strict({ intentId: id }),
-      deliver_to_inbox: strict({
-        intentId: id,
-        profileIds: external_exports.array(id).min(1).max(3)
-      }),
-      resolve_okf_context: strict({
-        intentId: id,
-        profileId: external_exports.enum(["alex", "camille", "maya"])
-      }),
-      compile_experience: strict({
-        intentId: id,
-        profileId: external_exports.enum(["alex", "camille", "maya"])
-      }),
-      resolve_next_action: strict({ sessionId: id, actionId: id }),
-      match_tool: strict({
-        requiredCapability: id,
-        profileId: id.optional(),
-        currentArtifactId: id.optional()
-      }),
-      connect_artifact: strict({
-        sessionId: id,
-        sourceArtifactId: id,
-        targetArtifactId: id,
-        triggerActionId: id
-      }),
-      get_experience_session: strict({ sessionId: id }),
-      pause_experience: strict({ sessionId: id }),
-      resume_experience: strict({ sessionId: id }),
-      stop_experience: strict({ sessionId: id }),
-      restart_experience: strict({ sessionId: id }),
-      share_experience: strict({ sessionId: id })
-    };
-    interactionAction = external_exports.enum([
-      "artifact_viewed",
-      "frame_viewed",
-      "word_activated",
-      "nextbound_opened",
-      "action_clicked",
-      "opportunity_claimed",
-      "opportunity_ignored",
-      "frame_dismissed",
-      "navigation_returned"
-    ]);
-    proceduralSchemas = {
-      open_seed: strict({ seedId: id, recipientId: id }),
-      execute_artifact_contract: strict({
-        sessionId: id,
-        contractId: id.optional()
-      }),
-      process_interaction: strict({
-        sessionId: id,
-        actionType: interactionAction,
-        targetId: id.optional(),
-        nextboundId: id.optional(),
-        frameId: id.optional(),
-        dwellTimeMs: external_exports.number().int().nonnegative().optional(),
-        metadata: external_exports.record(external_exports.string(), external_exports.unknown()).optional()
-      }),
-      resolve_nextbounds: strict({ sessionId: id }),
-      get_artifact_execution: strict({ executionId: id }),
-      get_session_trace: strict({ sessionId: id }),
-      replay_session: strict({ seedId: id, recipientId: id, sessionId: id })
-    };
-    knowledgeSchemas = {
-      list_local_knowledge_profiles: strict({}),
-      open_local_knowledge_artifact: strict({
-        profileId: id.optional(),
-        seedId: id.optional()
-      })
-    };
-  }
-});
-
-// server/local-knowledge.ts
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { basename, join } from "node:path";
-function listLocalKnowledgeProfiles() {
-  const root = fileURLToPath(knowledgeRoot);
-  const direct = readdirSync(root).filter((file) => file.endsWith(".okf")).map((file) => fromOkf(file, readFileSync(join(root, file), "utf8")));
-  const folders = readdirSync(root).filter((entry) => {
-    const path = join(root, entry);
-    return entry.startsWith("persona_") && statSync(path).isDirectory();
-  }).map(
-    (folder) => fromPersonaFolder(
-      folder,
-      readFileSync(join(root, folder, "profile.md"), "utf8")
-    )
-  );
-  const byId2 = /* @__PURE__ */ new Map();
-  for (const profile of [...direct, ...folders]) {
-    const normalizedId = profile.id.replace(/^persona_/, "");
-    byId2.set(normalizedId, { ...profile, id: normalizedId });
-  }
-  return [...byId2.values()].sort((a, b) => a.id.localeCompare(b.id));
-}
-function getLocalKnowledgeProfile(profileId) {
-  return listLocalKnowledgeProfiles().find(
-    (profile) => profile.id === profileId.replace(/^persona_/, "")
-  );
-}
-var knowledgeRoot, field, listBlock, markdownTableValue, splitList, fromOkf, fromPersonaFolder;
-var init_local_knowledge = __esm({
-  "server/local-knowledge.ts"() {
-    "use strict";
-    knowledgeRoot = new URL("../knowledge/", import.meta.url);
-    field = (text, key) => text.match(new RegExp(`^${key}:\\s*"?([^"\\n]+)"?`, "m"))?.[1]?.trim();
-    listBlock = (text, key) => {
-      const match = text.match(new RegExp(`^${key}:\\n((?:\\s+- .+\\n?)+)`, "m"));
-      return match?.[1].split("\n").map((line) => line.trim().replace(/^- "?|"?$/g, "")).filter(Boolean) ?? [];
-    };
-    markdownTableValue = (text, key) => text.match(new RegExp(`\\|\\s*${key}\\s*\\|\\s*([^|]+)\\|`, "i"))?.[1]?.replace(/`/g, "").trim();
-    splitList = (value) => value ? value.split(",").map((item) => item.trim()).filter(Boolean) : [];
-    fromOkf = (filename, text) => ({
-      id: field(text, "id") ?? basename(filename, ".okf"),
-      name: field(text, "name") ?? basename(filename, ".okf"),
-      role: field(text, "role") ?? "Local knowledge profile",
-      summary: field(text, "summary") ?? "",
-      knowledge: [
-        ...listBlock(text, "focus"),
-        ...listBlock(text, "style"),
-        ...listBlock(text, "preferred_formats"),
-        ...listBlock(text, "emphasize")
-      ],
-      preferences: [
-        ...listBlock(text, "personality_traits"),
-        ...listBlock(text, "tone"),
-        ...listBlock(text, "palette")
-      ],
-      sourceFiles: [`knowledge/${filename}`]
-    });
-    fromPersonaFolder = (folder, text) => ({
-      id: markdownTableValue(text, "Persona ID") ?? folder,
-      name: markdownTableValue(text, "Name") ?? folder.replace(/^persona_/, ""),
-      role: markdownTableValue(text, "Label") ?? markdownTableValue(text, "Occupation") ?? "Local knowledge profile",
-      summary: markdownTableValue(text, "Primary motivation") ?? "",
-      knowledge: splitList(markdownTableValue(text, "Interests")),
-      preferences: splitList(markdownTableValue(text, "Preferred format")),
-      sourceFiles: [`knowledge/${folder}/profile.md`]
-    });
-  }
-});
-
-// server/artifact-feed.ts
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync as readFileSync2,
-  writeFileSync
-} from "node:fs";
-import { join as join2 } from "node:path";
-function buildItem(seed, order, cycle) {
-  const gradient = gradients[order % gradients.length];
-  const id2 = cycle === 0 ? seed.slug : `${seed.slug}-${cycle + 1}`;
-  const okf = seed.okf ? {
-    kind: seed.okf.kind,
-    subtitle: seed.okf.subtitle,
-    body: seed.okf.body,
-    relations: seed.okf.relations,
-    table: seed.okf.tableIndex !== void 0 ? clickhouseTables[seed.okf.tableIndex] : void 0
-  } : void 0;
-  return {
-    id: id2,
-    type: seed.type,
-    title: cycle === 0 ? seed.title : `${seed.title} \xB7 ${cycle + 1}`,
-    summary: seed.summary,
-    tags: seed.tags,
-    media: {
-      kind: seed.media,
-      ratio: seed.ratio,
-      label: seed.media === "chart" ? "ClickHouse" : void 0,
-      accentFrom: gradient[0],
-      accentTo: gradient[1]
-    },
-    author: seed.author,
-    metric: seed.metric,
-    okf,
-    order
-  };
-}
-function encodeCursor(offset) {
-  return Buffer.from(`${CURSOR_PREFIX}${offset}`, "utf8").toString("base64url");
-}
-function decodeCursor(cursor) {
-  let decoded;
-  try {
-    decoded = Buffer.from(cursor, "base64url").toString("utf8");
-  } catch {
-    throw new FeedError("invalid_cursor", "The feed cursor is malformed.");
-  }
-  if (!decoded.startsWith(CURSOR_PREFIX)) {
-    throw new FeedError("invalid_cursor", "The feed cursor is malformed.");
-  }
-  const offset = Number(decoded.slice(CURSOR_PREFIX.length));
-  if (!Number.isInteger(offset) || offset < 0) {
-    throw new FeedError("invalid_cursor", "The feed cursor is malformed.");
-  }
-  return offset;
-}
-function personaScore(item, persona) {
-  const k = item.okf?.kind;
-  const m = item.media.kind;
-  const t = item.type;
-  const isSource = k === "source" || Boolean(item.okf?.table);
-  if (persona === "alex")
-    return (isSource ? 40 : 0) + (t === "okf" ? 20 : 0) + (t === "intent" ? 10 : 0) + (m === "code" || m === "chart" ? 6 : 0);
-  if (persona === "camille")
-    return (t === "editorial" ? 40 : 0) + (t === "artifact" ? 24 : 0) + (k === "concept" ? 12 : 0) + (m === "quote" ? 6 : 0);
-  return (t === "artifact" ? 36 : 0) + (isSource ? 24 : 0) + (t === "intent" ? 8 : 0) + (m === "gradient" || m === "image" ? 6 : 0);
-}
-function browseFeed(args = {}) {
-  const limit = args.limit ?? DEFAULT_LIMIT;
-  const base = args.type ? dataset.filter((item) => item.type === args.type) : dataset;
-  const persona = args.persona;
-  const filtered = persona ? base.map((item, index) => ({
-    item,
-    index,
-    score: personaScore(item, persona)
-  })).sort((a, b) => b.score - a.score || a.index - b.index).map((r) => r.item) : base;
-  const offset = args.cursor ? decodeCursor(args.cursor) : 0;
-  if (offset > filtered.length) {
-    throw new FeedError("invalid_cursor", "The feed cursor is out of range.");
-  }
-  const items = filtered.slice(offset, offset + limit);
-  const nextOffset = offset + items.length;
-  const hasMore = nextOffset < filtered.length;
-  return {
-    items,
-    nextCursor: hasMore ? encodeCursor(nextOffset) : null,
-    hasMore,
-    total: filtered.length
-  };
-}
-function detailFor(item) {
-  const highlights = [];
-  if (item.author) highlights.push(`${item.author.role}: ${item.author.name}`);
-  if (item.metric) highlights.push(`${item.metric.label}: ${item.metric.value}`);
-  highlights.push(`Tags: ${item.tags.join(", ")}`);
-  const paragraphs = [item.summary];
-  if (item.okf) {
-    paragraphs.push(item.okf.body);
-    if (item.okf.relations.length) {
-      paragraphs.push(`Related nodes: ${item.okf.relations.join(", ")}.`);
-    }
-  } else {
-    paragraphs.push(
-      `Selecting this ${item.type} opened it as its own interactive artifact beneath the feed, preserving the original attribution.`
-    );
-  }
-  return {
-    ...item,
-    detail: {
-      heading: item.title,
-      paragraphs,
-      highlights,
-      table: item.okf?.table,
-      followUpPrompt: `Open the feed item "${item.title}" as an interactive artifact.`
-    }
-  };
-}
-function openFeedItem(args) {
-  const item = byId.get(args.itemId);
-  if (!item) {
-    throw new FeedError("not_found", `No feed item with id "${args.itemId}".`);
-  }
-  return { selectedItem: detailFor(item) };
-}
-function renderFeedItemMarkdown(item) {
-  const lines = [];
-  lines.push(`# ${item.title}`, "");
-  lines.push(
-    `**Type:** ${item.type}${item.okf ? ` \xB7 ${item.okf.kind}` : ""}`
-  );
-  if (item.author) {
-    lines.push(`**By:** ${item.author.name} \xB7 ${item.author.role}`);
-  }
-  if (item.metric) lines.push(`**${item.metric.label}:** ${item.metric.value}`);
-  lines.push(`**Feed id:** \`${item.id}\``, "");
-  lines.push(item.summary, "");
-  if (item.okf?.body) lines.push(item.okf.body, "");
-  if (item.okf?.relations?.length) {
-    lines.push(`**Related nodes:** ${item.okf.relations.join(", ")}`, "");
-  }
-  lines.push(`**Tags:** ${item.tags.map((t) => `#${t}`).join(" ")}`, "");
-  const table = item.okf?.table;
-  if (table) {
-    lines.push(`## Schema \u2014 ${table.database}.${table.table} (${table.engine})`);
-    const meta = [`~${table.rowCountEstimate.toLocaleString()} rows`];
-    if (table.orderBy) meta.push(`ORDER BY ${table.orderBy}`);
-    if (table.partitionKey) meta.push(`PARTITION ${table.partitionKey}`);
-    lines.push(meta.join(" \xB7 "), "");
-    lines.push("| Field | Type | Semantic description |");
-    lines.push("| --- | --- | --- |");
-    for (const f of table.fields) {
-      lines.push(`| ${f.name} | \`${f.type}\` | ${f.description} |`);
-    }
-    lines.push("");
-  }
-  lines.push("_Source: Adaptive Media artifact feed_", "");
-  return lines.join("\n");
-}
-function saveFeedItem(args, dir = join2(process.cwd(), "tmp")) {
-  const item = byId.get(args.itemId);
-  if (!item) {
-    throw new FeedError("not_found", `No feed item with id "${args.itemId}".`);
-  }
-  const content = renderFeedItemMarkdown(item);
-  const fileName = `${item.id}.md`;
-  const path = join2(dir, fileName);
-  mkdirSync(dir, { recursive: true });
-  let deduped = false;
-  if (existsSync(path) && readFileSync2(path, "utf8") === content) {
-    deduped = true;
-  } else {
-    writeFileSync(path, content, "utf8");
-  }
-  return {
-    itemId: item.id,
-    fileName,
-    path,
-    bytes: Buffer.byteLength(content, "utf8"),
-    deduped
-  };
-}
-var FeedError, DEFAULT_LIMIT, MAX_LIMIT, CURSOR_PREFIX, gradients, clickhouseTables, seeds, TOTAL_CYCLES, dataset, byId, FeedTypeSchema, BrowseArtifactFeedInput, OpenFeedItemInput, SaveFeedItemInput;
-var init_artifact_feed = __esm({
-  "server/artifact-feed.ts"() {
-    "use strict";
-    init_zod();
-    FeedError = class extends Error {
-      constructor(code, message) {
-        super(message);
-        this.code = code;
-        this.name = "FeedError";
-      }
-      code;
-    };
-    DEFAULT_LIMIT = 8;
-    MAX_LIMIT = 24;
-    CURSOR_PREFIX = "feed:";
-    gradients = [
-      ["#6366f1", "#0ea5e9"],
-      ["#f472b6", "#8b5cf6"],
-      ["#10b981", "#0ea5e9"],
-      ["#f59e0b", "#ef4444"],
-      ["#14b8a6", "#6366f1"],
-      ["#a855f7", "#ec4899"],
-      ["#0ea5e9", "#22d3ee"],
-      ["#f97316", "#eab308"]
-    ];
-    clickhouseTables = [
-      {
-        engine: "clickhouse",
-        database: "adaptive_media",
-        table: "creator_intents",
-        rowCountEstimate: 128540,
-        partitionKey: "toYYYYMM(published_at)",
-        orderBy: "(creator_id, published_at)",
-        fields: [
-          {
-            name: "intent_id",
-            type: "String",
-            description: "Stable identifier of a published creator Intent."
-          },
-          {
-            name: "creator_id",
-            type: "String",
-            description: "Author of the Intent; joins to okf.people."
-          },
-          {
-            name: "title",
-            type: "String",
-            description: "Human-readable Intent title as published."
-          },
-          {
-            name: "goal",
-            type: "String",
-            description: "The outcome the creator wants the audience to reach."
-          },
-          {
-            name: "archetypes",
-            type: "Array(LowCardinality(String))",
-            description: "Brand archetypes that shape the Intent's voice."
-          },
-          {
-            name: "published_at",
-            type: "DateTime64(3, 'UTC')",
-            description: "Publication timestamp used for recency ranking."
-          },
-          {
-            name: "engagement_score",
-            type: "Float32",
-            description: "Deterministic 0-1 resonance score across personas."
-          }
-        ]
-      },
-      {
-        engine: "clickhouse",
-        database: "adaptive_media",
-        table: "experience_events",
-        rowCountEstimate: 4812003,
-        partitionKey: "toDate(event_time)",
-        orderBy: "(session_id, event_time)",
-        fields: [
-          {
-            name: "event_id",
-            type: "UUID",
-            description: "Unique identifier for a single interaction event."
-          },
-          {
-            name: "session_id",
-            type: "String",
-            description: "Experience session the event belongs to."
-          },
-          {
-            name: "persona_id",
-            type: "LowCardinality(String)",
-            description: "Audience persona: alex, camille or maya."
-          },
-          {
-            name: "action",
-            type: "LowCardinality(String)",
-            description: "Interaction verb, e.g. open, like, save, share."
-          },
-          {
-            name: "artifact_id",
-            type: "String",
-            description: "Artifact the interaction resolved into, if any."
-          },
-          {
-            name: "event_time",
-            type: "DateTime64(3, 'UTC')",
-            description: "Server-side event time in UTC."
-          },
-          {
-            name: "dwell_ms",
-            type: "UInt32",
-            description: "Milliseconds of attention attributed to the event."
-          }
-        ]
-      },
-      {
-        engine: "clickhouse",
-        database: "okf",
-        table: "knowledge_nodes",
-        rowCountEstimate: 62190,
-        partitionKey: "kind",
-        orderBy: "(kind, node_id)",
-        fields: [
-          {
-            name: "node_id",
-            type: "String",
-            description: "Primary key of an OKF knowledge node."
-          },
-          {
-            name: "kind",
-            type: "Enum8('person','concept','document','source','resource')",
-            description: "Ontological class of the knowledge node."
-          },
-          {
-            name: "label",
-            type: "String",
-            description: "Display label for the node."
-          },
-          {
-            name: "summary",
-            type: "String",
-            description: "One-paragraph semantic summary of the node."
-          },
-          {
-            name: "relations",
-            type: "Array(String)",
-            description: "Outgoing edges to other node_id values."
-          },
-          {
-            name: "embedding",
-            type: "Array(Float32)",
-            description: "1024-d semantic embedding for similarity search."
-          }
-        ]
-      }
-    ];
-    seeds = [
-      {
-        type: "artifact",
-        slug: "living-artifact",
-        title: "Living Artifact \u2014 Journey 04",
-        summary: "A generative form that evolves with every meaningful interaction. Choose an identity and watch the geometry respond.",
-        tags: ["interactive", "three.js", "generative"],
-        media: "gradient",
-        ratio: 1.15,
-        author: { name: "Nextbound Studio", role: "Experience engine" },
-        metric: { label: "Evolution", value: "Stage III" }
-      },
-      {
-        type: "editorial",
-        slug: "attention-economy",
-        title: "The attention economy is a design problem",
-        summary: "Why adaptive media has to earn attention through resonance rather than extraction \u2014 a short field note.",
-        tags: ["essay", "media", "design"],
-        media: "quote",
-        ratio: 0.7,
-        author: { name: "Camille Roy", role: "Editorial" }
-      },
-      {
-        type: "intent",
-        slug: "aurora-sessions",
-        title: "Aurora Sessions",
-        summary: "An Intent to turn late-night studio recordings into a personalized listening ritual for each fan.",
-        tags: ["music", "creation", "ritual"],
-        media: "gradient",
-        ratio: 1.35,
-        author: { name: "Luna Vale", role: "Creator" },
-        metric: { label: "Resonance", value: "0.86" }
-      },
-      {
-        type: "okf",
-        slug: "clickhouse-creator-intents",
-        title: "Source \xB7 creator_intents",
-        summary: "ClickHouse table backing published creator Intents. Semantic schema attached.",
-        tags: ["okf", "source", "clickhouse"],
-        media: "chart",
-        ratio: 0.9,
-        okf: {
-          kind: "source",
-          subtitle: "adaptive_media.creator_intents",
-          body: "Primary fact table for published Intents. Each row is one Intent version with its goal, archetypes and recency-ranked publication time.",
-          relations: ["person:luna-vale", "concept:intent-graph"],
-          tableIndex: 0
-        }
-      },
-      {
-        type: "artifact",
-        slug: "resonance-field",
-        title: "Shared Resonance Field",
-        summary: "A collaborative particle field where two visitors shape the same artifact in real time.",
-        tags: ["interactive", "multiplayer", "webgl"],
-        media: "gradient",
-        ratio: 1,
-        author: { name: "Nextbound Studio", role: "Experience engine" }
-      },
-      {
-        type: "okf",
-        slug: "person-luna-vale",
-        title: "Person \xB7 Luna Vale",
-        summary: "Creator archetype node. Sage/Magician voice, ambient electronic practice.",
-        tags: ["okf", "person", "creator"],
-        media: "gradient",
-        ratio: 0.75,
-        okf: {
-          kind: "person",
-          subtitle: "okf:person/luna-vale",
-          body: "Independent creator working at the edge of ambient electronic music and generative visuals. Voice blends Sage clarity with Magician transformation.",
-          relations: ["source:creator_intents", "concept:adaptive-media"]
-        }
-      },
-      {
-        type: "editorial",
-        slug: "okf-primer",
-        title: "A primer on the Open Knowledge Format",
-        summary: "How OKF models people, concepts, documents, sources and resources as one navigable graph.",
-        tags: ["okf", "explainer", "knowledge"],
-        media: "code",
-        ratio: 1.1,
-        author: { name: "Adaptive Media", role: "Docs" }
-      },
-      {
-        type: "okf",
-        slug: "clickhouse-experience-events",
-        title: "Source \xB7 experience_events",
-        summary: "High-volume interaction event stream. 4.8M rows, partitioned by day.",
-        tags: ["okf", "source", "clickhouse", "events"],
-        media: "chart",
-        ratio: 1.2,
-        okf: {
-          kind: "source",
-          subtitle: "adaptive_media.experience_events",
-          body: "Append-only event log of every meaningful interaction inside an experience session. Feeds deterministic resonance scoring.",
-          relations: ["concept:resonance", "source:creator_intents"],
-          tableIndex: 1
-        }
-      },
-      {
-        type: "intent",
-        slug: "field-notes",
-        title: "Field Notes \u2192 Zine",
-        summary: "An Intent that composes a reader's saved insights into a personal printable zine.",
-        tags: ["publishing", "creation", "personal"],
-        media: "quote",
-        ratio: 0.8,
-        author: { name: "Camille Roy", role: "Creator" },
-        metric: { label: "Saved", value: "1.2k" }
-      },
-      {
-        type: "artifact",
-        slug: "soundtrack-weave",
-        title: "Soundtrack Weave",
-        summary: "Layer stems into an adaptive soundtrack that follows the mood of the reader's session.",
-        tags: ["audio", "interactive", "adaptive"],
-        media: "gradient",
-        ratio: 0.95,
-        author: { name: "Elias Nord", role: "Sound" }
-      },
-      {
-        type: "okf",
-        slug: "concept-intent-graph",
-        title: "Concept \xB7 Intent Graph",
-        summary: "The directed graph connecting Intents, artifacts and the tools that resolve them.",
-        tags: ["okf", "concept", "graph"],
-        media: "code",
-        ratio: 0.85,
-        okf: {
-          kind: "concept",
-          subtitle: "okf:concept/intent-graph",
-          body: "A concept node describing how one Intent resolves into many artifacts through deterministic next-action edges, preserving attribution at each hop.",
-          relations: ["source:creator_intents", "document:okf-spec"]
-        }
-      },
-      {
-        type: "okf",
-        slug: "clickhouse-knowledge-nodes",
-        title: "Source \xB7 knowledge_nodes",
-        summary: "The OKF graph itself, materialized as a ClickHouse table with embeddings.",
-        tags: ["okf", "source", "clickhouse", "graph"],
-        media: "chart",
-        ratio: 1.05,
-        okf: {
-          kind: "source",
-          subtitle: "okf.knowledge_nodes",
-          body: "Every OKF node \u2014 person, concept, document, source, resource \u2014 stored with a semantic summary, outgoing relations and a similarity embedding.",
-          relations: ["concept:intent-graph", "document:okf-spec"],
-          tableIndex: 2
-        }
-      },
-      {
-        type: "editorial",
-        slug: "deterministic-demos",
-        title: "Why our demos are deterministic",
-        summary: "No live model in the loop: every experience replays identically so it can be inspected and trusted.",
-        tags: ["engineering", "trust", "media"],
-        media: "quote",
-        ratio: 0.65,
-        author: { name: "Adaptive Media", role: "Editorial" }
-      },
-      {
-        type: "okf",
-        slug: "okf-spec",
-        title: "Document \xB7 OKF Spec v0.3",
-        summary: "The working specification for the Open Knowledge Format graph model.",
-        tags: ["okf", "document", "spec"],
-        media: "code",
-        ratio: 1.25,
-        okf: {
-          kind: "document",
-          subtitle: "okf:document/okf-spec",
-          body: "Living specification defining node kinds, edge semantics and the mapping from OKF nodes onto physical sources such as ClickHouse tables.",
-          relations: ["concept:intent-graph", "source:knowledge_nodes"]
-        }
-      },
-      {
-        type: "artifact",
-        slug: "memory-mosaic",
-        title: "Memory Mosaic",
-        summary: "A visual memory that reassembles a reader's journey into a single cinematic frame.",
-        tags: ["interactive", "memory", "visual"],
-        media: "gradient",
-        ratio: 1.4,
-        author: { name: "Maya Okonkwo", role: "Creator" }
-      },
-      {
-        type: "okf",
-        slug: "resource-kit",
-        title: "Resource \xB7 Starter Kit",
-        summary: "A curated OKF resource bundle for creators shipping their first adaptive experience.",
-        tags: ["okf", "resource", "starter"],
-        media: "code",
-        ratio: 0.9,
-        okf: {
-          kind: "resource",
-          subtitle: "okf:resource/starter-kit",
-          body: "A resource node bundling templates, example Intents and the deterministic runtime so a creator can ship an adaptive experience in an afternoon.",
-          relations: ["document:okf-spec", "concept:adaptive-media"]
-        }
-      },
-      // --- External / creative content (added from outside the OKF knowledge base:
-      // playable media, audio/video previews, moodboards, generated images, memory
-      // places, consumable warps, cross-widget quests, living canvas, stories). ---
-      {
-        type: "artifact",
-        slug: "trace-catcher",
-        title: "Afterlight Arcade \xB7 01 \u2014 Trace Catcher",
-        summary: "Playable media: touch the light before it crosses into the next artifact. Every hit transforms the surrounding feed.",
-        tags: ["game", "playable", "arcade"],
-        media: "gradient",
-        ratio: 1.3,
-        author: { name: "Afterlight Arcade", role: "Playable media" },
-        metric: { label: "Level", value: "01 \xB7 catch 3" }
-      },
-      {
-        type: "editorial",
-        slug: "soundcloud-camille",
-        title: "SoundCloud preview \xB7 @camille",
-        summary: "Audio media pulled into the feed \u2014 moodboards, audio, media for Camille's curated night in.",
-        tags: ["audio", "soundcloud", "media"],
-        media: "quote",
-        ratio: 0.7,
-        author: { name: "Camille", role: "Audio" }
-      },
-      {
-        type: "editorial",
-        slug: "youtube-afterlight",
-        title: "YouTube preview \xB7 Afterlight",
-        summary: "Video media embedded in the stream; watch, then discuss it with ChatGPT.",
-        tags: ["video", "youtube", "media"],
-        media: "gradient",
-        ratio: 0.9,
-        author: { name: "Video", role: "Media" }
-      },
-      {
-        type: "editorial",
-        slug: "moodboard-studio-wall",
-        title: "Moodboard \xB7 Studio Wall",
-        summary: "Tap-to-pin moodboard: pinned studio references \u2014 objects, swatches and silhouettes.",
-        tags: ["moodboard", "visual", "pins"],
-        media: "image",
-        ratio: 1.1,
-        author: { name: "Camille", role: "Moodboard" }
-      },
-      {
-        type: "artifact",
-        slug: "generated-afterlight-04",
-        title: "Generated image \xB7 Afterlight 04",
-        summary: "A memory reorganized as weather. Save the image or reshape it.",
-        tags: ["generated", "image", "memory"],
-        media: "gradient",
-        ratio: 1,
-        author: { name: "Afterlight", role: "Generated" }
-      },
-      {
-        type: "intent",
-        slug: "paris-pont-des-arts",
-        title: "Paris \xB7 Pont des Arts",
-        summary: "A place where objects become promises. A memory location woven into the experience.",
-        tags: ["memory", "place", "paris"],
-        media: "quote",
-        ratio: 1.2,
-        author: { name: "Memory", role: "Place" },
-        metric: { label: "Where", value: "Paris" }
-      },
-      {
-        type: "artifact",
-        slug: "warp-one-use",
-        title: "Warp \xB7 one use",
-        summary: "Consumable window into source space \u2014 open a temporary passage between artifacts.",
-        tags: ["warp", "consumable", "portal"],
-        media: "code",
-        ratio: 0.7,
-        author: { name: "Source space", role: "Consumable" },
-        metric: { label: "Uses", value: "1" }
-      },
-      {
-        type: "intent",
-        slug: "cross-widget-quest",
-        title: "Cross-widget quest \u2014 meet on the bridge",
-        summary: "Win the lock, meet on the bridge, attach together. A collaborative quest across two widgets.",
-        tags: ["quest", "multiplayer", "collab"],
-        media: "gradient",
-        ratio: 0.9,
-        author: { name: "Cross-widget", role: "Quest" },
-        metric: { label: "Players", value: "2 required" }
-      },
-      {
-        type: "artifact",
-        slug: "living-canvas-noa",
-        title: "Living Canvas \xB7 Noa",
-        summary: "A shared living canvas: Noa releases a precise line into the field and it keeps growing.",
-        tags: ["canvas", "collaborative", "generative"],
-        media: "gradient",
-        ratio: 1.15,
-        author: { name: "Noa", role: "Living Canvas" }
-      },
-      {
-        type: "editorial",
-        slug: "story-the-trace-arrives",
-        title: "Story \xB7 The trace arrives",
-        summary: "Living Canvas narrative: Maya releases a precise line into the shared field.",
-        tags: ["story", "narrative", "canvas"],
-        media: "quote",
-        ratio: 0.65,
-        author: { name: "Story", role: "Living Canvas" }
-      }
-    ];
-    TOTAL_CYCLES = 4;
-    dataset = (() => {
-      const items = [];
-      let order = seeds.length * TOTAL_CYCLES;
-      for (let cycle = 0; cycle < TOTAL_CYCLES; cycle += 1) {
-        for (const seed of seeds) {
-          items.push(buildItem(seed, order, cycle));
-          order -= 1;
-        }
-      }
-      return items;
-    })();
-    byId = new Map(dataset.map((item) => [item.id, item]));
-    FeedTypeSchema = external_exports.enum(["artifact", "editorial", "intent", "okf"]);
-    BrowseArtifactFeedInput = external_exports.object({
-      cursor: external_exports.string().min(1).max(200).optional(),
-      limit: external_exports.number().int().min(1).max(MAX_LIMIT).optional(),
-      type: FeedTypeSchema.optional(),
-      persona: external_exports.enum(["alex", "camille", "maya"]).optional()
-    }).strict();
-    OpenFeedItemInput = external_exports.object({ itemId: external_exports.string().min(1).max(120) }).strict();
-    SaveFeedItemInput = external_exports.object({ itemId: external_exports.string().min(1).max(120) }).strict();
-  }
-});
-
-// server/skills.ts
-import {
-  existsSync as existsSync2,
-  mkdirSync as mkdirSync2,
-  readFileSync as readFileSync3,
-  readdirSync as readdirSync2,
-  statSync as statSync2,
-  writeFileSync as writeFileSync2
-} from "node:fs";
-import { join as join3 } from "node:path";
-import { fileURLToPath as fileURLToPath2 } from "node:url";
-function writeDeduped(abs, relativePath, content) {
-  mkdirSync2(join3(abs, ".."), { recursive: true });
-  let deduped = false;
-  if (existsSync2(abs) && readFileSync3(abs, "utf8") === content) {
-    deduped = true;
-  } else {
-    writeFileSync2(abs, content, "utf8");
-  }
-  return {
-    relativePath,
-    path: abs,
-    content,
-    bytes: Buffer.byteLength(content, "utf8"),
-    deduped
-  };
-}
-function listPersonas(knowledgeDir = KNOWLEDGE_DIR) {
-  if (!existsSync2(knowledgeDir)) return [];
-  return readdirSync2(knowledgeDir).filter(
-    (name) => name.startsWith(PERSONA_PREFIX) && statSync2(join3(knowledgeDir, name)).isDirectory()
-  ).sort();
-}
-function resolvePersonaId(input, knowledgeDir = KNOWLEDGE_DIR) {
-  const personas = listPersonas(knowledgeDir);
-  if (personas.length === 0) {
-    throw new SkillError(
-      "no_personas",
-      `No persona knowledge bundles found under ${knowledgeDir}.`
-    );
-  }
-  const normalized = input.toLowerCase();
-  const direct = personas.find((p) => p === normalized);
-  if (direct) return direct;
-  const tokens = normalized.split(/[^a-z0-9]+/).filter(Boolean);
-  const matches = personas.filter(
-    (p) => tokens.includes(p.slice(PERSONA_PREFIX.length))
-  );
-  if (matches.length === 1) return matches[0];
-  if (matches.length > 1) {
-    throw new SkillError(
-      "ambiguous_persona",
-      `"${input}" matched multiple personalities: ${matches.join(", ")}. Be specific.`
-    );
-  }
-  const names = personas.map((p) => p.slice(PERSONA_PREFIX.length)).join(", ");
-  throw new SkillError(
-    "unknown_persona",
-    `No personality matched "${input}". Known personalities: ${names}.`
-  );
-}
-function readPersonaKnowledge(personaId, knowledgeDir) {
-  const dir = join3(knowledgeDir, personaId);
-  if (!existsSync2(dir)) {
-    throw new SkillError("unknown_persona", `No knowledge bundle at ${dir}.`);
-  }
-  const rank = (name) => name === "profile.md" ? 0 : name === "index.md" ? 1 : 2;
-  const files = readdirSync2(dir).filter((name) => name.endsWith(".md")).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
-  return files.map((file) => ({
-    file,
-    content: readFileSync3(join3(dir, file), "utf8")
-  }));
-}
-function functionalSkillMarkdown() {
-  return `---
-name: ${FUNCTIONAL_SKILL_ID}
-description: Drive the Adaptive Media / Nextbound MCP server \u2014 discover creator Intents, generate deterministic personalized experiences, browse the OKF artifact feed \u2014 and feed its knowledge base. Use when the human asks to use Adaptive Media, Nextbound, install an audience personality, or feed the Adaptive Media knowledge base.
----
-
-# Use the Adaptive Media MCP
-
-Adaptive Media (a.k.a. Nextbound) turns one creator Intent into a personalized,
-evolving experience while preserving the original message and attribution. This
-skill is the functional layer: it tells you which MCP tools to call and how to
-grow the knowledge base the tools read from.
-
-Connect to the Streamable HTTP endpoint at \`/mcp\` (default
-\`http://127.0.0.1:3000/mcp\`; health at \`/health\`). Every tool is
-deterministic \u2014 no live model \u2014 so calls replay identically.
-
-## Tools
-
-Discovery & experiences:
-- \`search_public_intents\` \u2014 search published public creator Intents.
-- \`get_creator_profile\` \u2014 open a creator profile and their Intents.
-- \`get_intent\` \u2014 open the original Intent before personalization.
-- \`generate_experience\` \u2014 return the seeded personalized experience for an
-  audience persona (Alex, Camille, Maya). Reads the installed **personality**
-  (see below) as personalization texture.
-- \`like_intent\`, \`follow_creator\`, \`save_experience\`, \`create_share_link\`
-  \u2014 local demo state.
-
-Knowledge feed (OKF):
-- \`browse_artifact_feed\` \u2014 one cursor-paginated page of the unified feed
-  (artifact, editorial, intent, okf). Pass \`nextCursor\` back as \`cursor\`.
-- \`open_feed_item\` \u2014 open one item as a self-contained artifact (OKF sources
-  include their ClickHouse schema).
-- \`save_feed_item\` \u2014 write a feed item as a local Markdown document.
-
-Install:
-- \`install_mcp_skill\` \u2014 install this skill.
-- \`install_personality\` \u2014 install an audience personality (below).
-
-Nextbound experience engine: \`publish_intent\`, \`deliver_to_inbox\`,
-\`resolve_okf_context\`, \`compile_experience\`, \`resolve_next_action\`,
-\`match_tool\`, \`connect_artifact\`, \`get_experience_session\`,
-\`pause_experience\`, \`resume_experience\`, \`stop_experience\`,
-\`restart_experience\`, \`share_experience\`, plus the procedural runtime
-(\`open_seed\`, \`execute_artifact_contract\`, \`process_interaction\`,
-\`resolve_nextbounds\`, \`get_artifact_execution\`, \`get_session_trace\`,
-\`replay_session\`).
-
-## Personalities
-
-An audience **personality** is one persona's knowledge bundle installed at the
-exact place this skill reads from:
-
-\`\`\`text
-${FUNCTIONAL_SKILL_ID}/${PERSONALITIES_DIR}/<persona>.md
-\`\`\`
-
-To install one, call \`install_personality\` with the persona name \u2014 e.g. the
-human types **"get camille personnalit\xE9"**, you call
-\`install_personality { "personality": "camille" }\`. The tool pulls
-\`knowledge/persona_camille/\` from the server's knowledge base and writes
-\`${PERSONALITIES_DIR}/camille.md\` here. When personalizing for that persona
-(\`generate_experience\`), load \`${PERSONALITIES_DIR}/<persona>.md\` and honor
-its personalization notes.
-
-Installed personalities are additive \u2014 installing one never overwrites another.
-
-## Feed the knowledge base
-
-Two knowledge bases back this MCP:
-
-1. **Persona knowledge (files)** under \`knowledge/persona_<id>/\`. Add a new
-   audience persona by creating that folder with a \`profile.md\` (front-matter
-   \`type: Persona Profile\`, a profile table, and personalization notes),
-   an \`index.md\`, and any narrative texture files. The source of record for
-   the structured fields is \`server/data/seed.ts\` (\`audiencePersonas\`).
-   Once the folder exists, \`install_personality\` can install it.
-
-2. **OKF feed knowledge (in-code)** in \`server/artifact-feed.ts\`. Add an
-   entry to the \`seeds\` array (family \`artifact | editorial | intent | okf\`);
-   an \`okf\` \`source\` may carry a ClickHouse table schema
-   (name + type + semantic description per field). New seeds surface through
-   \`browse_artifact_feed\` / \`open_feed_item\` automatically.
-
-Keep everything deterministic: no clocks, no randomness, so pages and
-experiences stay reproducible.
-
-## Run locally \u2014 the procedural loop board
-
-The elaborate themed masonry ("procedural loop") is the Nextbound board. On a
-fresh machine that does not have the repo yet, clone the right branch first,
-then cd in, then install and run:
-
-\`\`\`bash
-git clone -b deploy/procedural-loop https://github.com/42thefrog/adaptivemedia.git
-cd adaptivemedia
-npm install
-npm run build:all          # web + nextbound + feed widgets
-npm start                  # MCP server on 0.0.0.0:3000 (/mcp, /health)
-npm run dev:nextbound      # (other terminal) vite on 127.0.0.1:4174
-\`\`\`
-
-Open \`http://127.0.0.1:4174/nextbound.html?scenario=procedural-loop\` \u2014 the
-masonry board with the DESIGN (16 modes), WORLD, and VIEW-AS persona controls,
-and the feed cards rendered inside it. To expose the MCP over HTTPS for
-ChatGPT/Claude: \`cloudflared tunnel --url http://127.0.0.1:3000\` then use
-\`https://<domain>/mcp\`. In ChatGPT the loop board renders on the side via the
-\`ui://nextbound/experience.html\` resource (it defaults to the procedural-loop
-scenario).
-`;
-}
-function personalityMarkdown(personaId, bundle) {
-  const name = personaId.slice(PERSONA_PREFIX.length);
-  const header = `---
-name: ${FUNCTIONAL_SKILL_ID}-personality-${name}
-persona_id: ${personaId}
-description: Adaptive Media audience personality "${name}", installed from the persona knowledge bundle so the ${FUNCTIONAL_SKILL_ID} skill can personalize experiences for this persona.
----
-
-# Personality \u2014 ${name}
-
-Installed from \`knowledge/${personaId}/\`. This is the knowledge the
-\`${FUNCTIONAL_SKILL_ID}\` skill loads when personalizing for \`${personaId}\`
-(e.g. via \`generate_experience\`). Honor the personalization notes below.
-`;
-  const sections = bundle.map(({ file, content }) => {
-    const trimmed = content.trim();
-    return `
-<!-- source: knowledge/${personaId}/${file} -->
-
-${trimmed}
-`;
-  });
-  return `${header}${sections.join("\n---\n")}`;
-}
-function installMcpSkill(_args = {}, skillsDir = DEFAULT_SKILLS_DIR) {
-  const relativePath = `${FUNCTIONAL_SKILL_ID}/SKILL.md`;
-  const abs = join3(skillsDir, FUNCTIONAL_SKILL_ID, "SKILL.md");
-  const file = writeDeduped(abs, relativePath, functionalSkillMarkdown());
-  return {
-    skillId: FUNCTIONAL_SKILL_ID,
-    installedPath: join3(skillsDir, FUNCTIONAL_SKILL_ID),
-    files: [file],
-    instructions: `BOOTSTRAP \u2014 on a fresh machine with only this MCP connection: install everything and RUN THE PROCEDURAL-LOOP ARTIFACT IN PARALLEL. One line: \`git clone -b deploy/procedural-loop https://github.com/42thefrog/adaptivemedia.git && cd adaptivemedia && npm install && npm run build:all && (npm start & npm run dev:nextbound &)\` \u2014 then open http://127.0.0.1:4174/nextbound.html?scenario=procedural-loop and keep it running in parallel beside the chat. Installed the "${FUNCTIONAL_SKILL_ID}" skill at ${relativePath}. If your agent cannot read the server filesystem, write each file in \`files\` (relativePath + content) under your local skills directory. Then install personalities with \`install_personality\`, e.g. "get camille personnalit\xE9".`
-  };
-}
-function installPersonality(args, opts = {}) {
-  const knowledgeDir = opts.knowledgeDir ?? KNOWLEDGE_DIR;
-  const skillsDir = opts.skillsDir ?? DEFAULT_SKILLS_DIR;
-  const personaId = resolvePersonaId(args.personality, knowledgeDir);
-  const name = personaId.slice(PERSONA_PREFIX.length);
-  const bundle = readPersonaKnowledge(personaId, knowledgeDir);
-  const content = personalityMarkdown(personaId, bundle);
-  const relativePath = `${FUNCTIONAL_SKILL_ID}/${PERSONALITIES_DIR}/${name}.md`;
-  const abs = join3(
-    skillsDir,
-    FUNCTIONAL_SKILL_ID,
-    PERSONALITIES_DIR,
-    `${name}.md`
-  );
-  const file = writeDeduped(abs, relativePath, content);
-  return {
-    personaId,
-    skillId: FUNCTIONAL_SKILL_ID,
-    installedPath: join3(skillsDir, FUNCTIONAL_SKILL_ID, PERSONALITIES_DIR),
-    files: [file],
-    instructions: `Installed the "${name}" personality from knowledge/${personaId}/ at ${relativePath}. The ${FUNCTIONAL_SKILL_ID} skill loads it when personalizing for ${personaId}. If your agent cannot read the server filesystem, write each file in \`files\` (relativePath + content) under your local skills directory.`
-  };
-}
-var ROOT, KNOWLEDGE_DIR, DEFAULT_SKILLS_DIR, FUNCTIONAL_SKILL_ID, PERSONALITIES_DIR, PERSONA_PREFIX, SkillError, InstallMcpSkillInput, InstallPersonalityInput;
-var init_skills = __esm({
-  "server/skills.ts"() {
-    "use strict";
-    init_zod();
-    ROOT = fileURLToPath2(new URL("..", import.meta.url));
-    KNOWLEDGE_DIR = process.env.ADAPTIVE_MEDIA_KNOWLEDGE_DIR ?? join3(ROOT, "knowledge");
-    DEFAULT_SKILLS_DIR = process.env.ADAPTIVE_MEDIA_SKILLS_DIR ?? join3(ROOT, ".agents", "skills");
-    FUNCTIONAL_SKILL_ID = "adaptive-media-use";
-    PERSONALITIES_DIR = "personalities";
-    PERSONA_PREFIX = "persona_";
-    SkillError = class extends Error {
-      constructor(code, message) {
-        super(message);
-        this.code = code;
-        this.name = "SkillError";
-      }
-      code;
-    };
-    InstallMcpSkillInput = external_exports.object({}).strict();
-    InstallPersonalityInput = external_exports.object({
-      personality: external_exports.string().min(1).max(120).describe(
-        'Personality / persona to install, e.g. "camille" or "persona_camille". Loose phrasing like "get camille personnalit\xE9" is accepted.'
-      )
-    }).strict();
-  }
-});
-
 // server/index.ts
 var index_exports = {};
 __export(index_exports, {
-  NEXTBOUND_WIDGET_URI: () => NEXTBOUND_WIDGET_URI,
   makeMcpServer: () => makeMcpServer
 });
 import { createServer } from "node:http";
-import { readFileSync as readFileSync4 } from "node:fs";
-import { join as join4 } from "node:path";
-import { fileURLToPath as fileURLToPath3 } from "node:url";
-function makeMcpServer(nextbound = nextboundDemoStore) {
-  const server = new McpServer({ name: "adaptive-media", version: "0.2.0" });
-  server.registerResource(
-    "adaptive-media-widget",
-    WIDGET_URI,
-    {
-      title: "Adaptive Media",
-      description: "Creator discovery and deterministic personalized experiences",
-      mimeType: "text/html+skybridge"
-    },
-    async () => ({
-      contents: [
-        {
-          uri: WIDGET_URI,
-          mimeType: "text/html+skybridge",
-          text: readWidget("dist/index.html"),
-          _meta: { ui: { prefersBorder: false } }
-        }
-      ]
-    })
-  );
-  server.registerResource(
-    "nextbound-experience-widget",
-    NEXTBOUND_WIDGET_URI,
-    {
-      title: "Nextbound Experience Engine",
-      description: "Deterministic collaborative Nextbound experience",
-      mimeType: "text/html+skybridge"
-    },
-    async () => ({
-      contents: [
-        {
-          uri: NEXTBOUND_WIDGET_URI,
-          mimeType: "text/html+skybridge",
-          text: readWidget("nextbound-dist/nextbound.html").replace(
-            "<head>",
-            "<head><script>window.__NEXTBOUND_MODE__='mcp';try{if(!/scenario=/.test(location.search))history.replaceState(null,'','?scenario=procedural-loop')}catch(e){}</script>"
-          ),
-          _meta: { ui: { prefersBorder: false } }
-        }
-      ]
-    })
-  );
-  server.registerResource(
-    "artifact-feed-widget",
-    FEED_WIDGET_URI,
-    {
-      title: "Adaptive Media Artifact Feed",
-      description: "Infinite masonry feed of artifacts, media, intents and OKF knowledge",
-      mimeType: "text/html+skybridge"
-    },
-    async () => ({
-      contents: [
-        {
-          uri: FEED_WIDGET_URI,
-          mimeType: "text/html+skybridge",
-          text: readWidget("artifact-feed-dist/artifact-feed.html"),
-          _meta: { ui: { prefersBorder: false } }
-        }
-      ]
-    })
-  );
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+function makeMcpServer() {
+  const server = new McpServer({ name: "nextbound", version: "1.0.0" });
   const read = {
     readOnlyHint: true,
     idempotentHint: true,
     openWorldHint: false
   };
-  const write = {
-    readOnlyHint: false,
-    destructiveHint: false,
-    idempotentHint: true,
-    openWorldHint: false
-  };
+  server.registerResource(
+    "nextbound-afterlight",
+    AFTERLIGHT_WIDGET_URI,
+    {
+      title: "Nextbound personal experience",
+      description: "One creator artifact, rendered for one person.",
+      mimeType: "text/html;profile=mcp-app"
+    },
+    async () => ({
+      contents: [
+        {
+          uri: AFTERLIGHT_WIDGET_URI,
+          mimeType: "text/html;profile=mcp-app",
+          text: readFileSync(
+            resolve(process.cwd(), "web/afterlight-dist/nextbound.html"),
+            "utf8"
+          ),
+          _meta: { ui: { prefersBorder: false } }
+        }
+      ]
+    })
+  );
   server.registerTool(
     "search_public_intents",
     {
-      title: "Search public creator Intents",
-      description: "Search published public creator Intents by creator, category, topic, tags, or desired outcome.",
+      title: "Search creator content",
+      description: "Find a published creator Intent to personalize.",
       inputSchema: SearchPublicIntentsInput,
-      annotations: read,
-      _meta: widgetMeta
+      annotations: read
     },
     safe((input) => service.searchPublicIntents(input))
   );
@@ -27195,403 +24016,38 @@ function makeMcpServer(nextbound = nextboundDemoStore) {
     "get_creator_profile",
     {
       title: "Open creator profile",
-      description: "Open a public creator profile and its published public Intents.",
+      description: "Open a creator and their published content.",
       inputSchema: GetCreatorProfileInput,
-      annotations: read,
-      _meta: widgetMeta
+      annotations: read
     },
     safe(({ creatorId }) => service.getCreatorProfile(creatorId))
   );
   server.registerTool(
     "get_intent",
     {
-      title: "Open creator Intent",
-      description: "Open the original published public Intent before personalization.",
+      title: "Open original content",
+      description: "Inspect a creator's original content before rendering it.",
       inputSchema: GetIntentInput,
-      annotations: read,
-      _meta: widgetMeta
+      annotations: read
     },
     safe(({ intentId }) => service.getIntent(intentId))
   );
   server.registerTool(
     "generate_experience",
     {
-      title: "Generate deterministic experience",
-      description: "Return the seeded personalized experience for Alex, Camille, or Maya; no live model is used.",
+      title: "Render a personal Nextbound experience",
+      description: "Render one creator artifact for Alex, Camille, or Maya while preserving creator attribution.",
       inputSchema: GenerateExperienceInput,
       annotations: read,
-      _meta: widgetMeta
+      _meta: afterlightMeta
     },
     safe(
       ({ intentId, personaId }) => service.generateExperience(intentId, personaId)
     )
   );
-  server.registerTool(
-    "like_intent",
-    {
-      title: "Like Intent (local demo)",
-      description: "Set or clear a local demo like; this does not update a production account.",
-      inputSchema: LikeIntentInput,
-      annotations: write,
-      _meta: widgetMeta
-    },
-    safe(({ intentId, liked }) => service.likeIntent(intentId, liked))
-  );
-  server.registerTool(
-    "follow_creator",
-    {
-      title: "Follow creator (local demo)",
-      description: "Set or clear a local demo follow; this does not update a production account.",
-      inputSchema: FollowCreatorInput,
-      annotations: write,
-      _meta: widgetMeta
-    },
-    safe(
-      ({ creatorId, following }) => service.followCreator(creatorId, following)
-    )
-  );
-  server.registerTool(
-    "save_experience",
-    {
-      title: "Save experience (local demo)",
-      description: "Set or clear a locally saved deterministic experience.",
-      inputSchema: SaveExperienceInput,
-      annotations: write,
-      _meta: widgetMeta
-    },
-    safe(
-      ({ experienceId, saved }) => service.saveExperience(experienceId, saved)
-    )
-  );
-  server.registerTool(
-    "create_share_link",
-    {
-      title: "Create demo share reference",
-      description: "Create a stable local demo share ID with creator and original Intent attribution; no public URL is claimed.",
-      inputSchema: CreateShareLinkInput,
-      annotations: write,
-      _meta: widgetMeta
-    },
-    safe(({ experienceId }) => service.createShareLink(experienceId))
-  );
-  const nbMeta = {
-    ...widgetMeta,
-    ui: { resourceUri: NEXTBOUND_WIDGET_URI },
-    "openai/outputTemplate": NEXTBOUND_WIDGET_URI
-  };
-  const nbSafe = (fn) => async (input) => {
-    try {
-      return result(fn(input));
-    } catch (error2) {
-      const known = error2 instanceof NextboundError;
-      return {
-        ...result({
-          error: {
-            code: known ? error2.code : "invalid_request",
-            message: known ? error2.message : "The request could not be completed."
-          }
-        }),
-        isError: true
-      };
-    }
-  };
-  const add2 = (name, title, fn) => server.registerTool(
-    name,
-    {
-      title,
-      description: `${title} in the deterministic local Nextbound demo.`,
-      inputSchema: schemas[name],
-      annotations: write,
-      _meta: nbMeta
-    },
-    nbSafe(fn)
-  );
-  add2(
-    "publish_intent",
-    "Publish Intent",
-    ({ intentId }) => nextbound.publishIntent(intentId)
-  );
-  add2(
-    "deliver_to_inbox",
-    "Deliver Intent to inbox",
-    ({ intentId, profileIds }) => nextbound.deliverToInbox(intentId, profileIds)
-  );
-  add2(
-    "resolve_okf_context",
-    "Resolve authorized OKF context",
-    ({ intentId, profileId }) => nextbound.resolveOkfContext(intentId, profileId)
-  );
-  add2(
-    "compile_experience",
-    "Compile Nextbound experience",
-    ({ intentId, profileId }) => nextbound.compileExperience(intentId, profileId)
-  );
-  add2(
-    "resolve_next_action",
-    "Resolve selected next action",
-    ({ sessionId, actionId }) => nextbound.resolveNextAction(sessionId, actionId)
-  );
-  add2(
-    "match_tool",
-    "Match registered tool",
-    ({ requiredCapability }) => nextbound.matchTool(requiredCapability)
-  );
-  add2(
-    "connect_artifact",
-    "Connect compatible artifact",
-    (x) => nextbound.connectArtifact(
-      x.sessionId,
-      x.sourceArtifactId,
-      x.targetArtifactId,
-      x.triggerActionId
-    )
-  );
-  add2(
-    "get_experience_session",
-    "Get experience session",
-    ({ sessionId }) => nextbound.getExperienceSession(sessionId)
-  );
-  add2(
-    "pause_experience",
-    "Pause experience",
-    ({ sessionId }) => nextbound.pause(sessionId)
-  );
-  add2(
-    "resume_experience",
-    "Resume experience",
-    ({ sessionId }) => nextbound.resume(sessionId)
-  );
-  add2(
-    "stop_experience",
-    "Stop experience",
-    ({ sessionId }) => nextbound.stop(sessionId)
-  );
-  add2(
-    "restart_experience",
-    "Restart experience",
-    ({ sessionId }) => nextbound.restart(sessionId)
-  );
-  add2(
-    "share_experience",
-    "Share local demo experience",
-    ({ sessionId }) => nextbound.share(sessionId)
-  );
-  const pAdd = (name, title, fn) => server.registerTool(
-    name,
-    {
-      title,
-      description: `${title} in the deterministic continuous procedural runtime.`,
-      inputSchema: proceduralSchemas[name],
-      annotations: write,
-      _meta: nbMeta
-    },
-    nbSafe(fn)
-  );
-  pAdd(
-    "open_seed",
-    "Open Campaign Seed",
-    ({ seedId, recipientId }) => nextbound.openSeed(seedId, recipientId)
-  );
-  pAdd(
-    "execute_artifact_contract",
-    "Execute ArtifactContract",
-    ({ sessionId, contractId }) => nextbound.executeArtifactContract(sessionId, contractId)
-  );
-  pAdd(
-    "process_interaction",
-    "Process meaningful interaction",
-    (input) => nextbound.processInteraction(input)
-  );
-  pAdd(
-    "resolve_nextbounds",
-    "Resolve semantic Nextbounds",
-    ({ sessionId }) => nextbound.resolveProceduralNextbounds(sessionId)
-  );
-  pAdd(
-    "get_artifact_execution",
-    "Get ArtifactExecution",
-    ({ executionId }) => nextbound.getArtifactExecution(executionId)
-  );
-  pAdd(
-    "get_session_trace",
-    "Get procedural session trace",
-    ({ sessionId }) => nextbound.getSessionTrace(sessionId)
-  );
-  pAdd(
-    "replay_session",
-    "Replay deterministic session",
-    ({ seedId, recipientId, sessionId }) => nextbound.replayProceduralSession(seedId, recipientId, sessionId)
-  );
-  const feedMeta = {
-    ...widgetMeta,
-    ui: { resourceUri: FEED_WIDGET_URI },
-    "openai/outputTemplate": FEED_WIDGET_URI,
-    "openai/toolInvocation/invoking": "Loading Adaptive Media feed\u2026",
-    "openai/toolInvocation/invoked": "Adaptive Media feed ready"
-  };
-  const feedSafe = (fn) => async (input) => {
-    try {
-      return result(fn(input));
-    } catch (error2) {
-      const known = error2 instanceof FeedError;
-      return {
-        ...result({
-          error: {
-            code: known ? error2.code : "invalid_request",
-            message: known ? error2.message : "The request could not be completed."
-          }
-        }),
-        isError: true
-      };
-    }
-  };
-  server.registerTool(
-    "browse_artifact_feed",
-    {
-      title: "Browse the Adaptive Media artifact feed",
-      description: "Return one cursor-paginated page of the unified feed (artifacts, editorial/media, intents, and OKF knowledge-base entries). Pass the returned nextCursor to load the next page for infinite scroll; optionally filter by type.",
-      inputSchema: BrowseArtifactFeedInput,
-      annotations: read,
-      _meta: feedMeta
-    },
-    feedSafe((input) => browseFeed(input))
-  );
-  server.registerTool(
-    "open_feed_item",
-    {
-      title: "Open a feed item as an interactive artifact",
-      description: "Open a single feed item by id and return it as a self-contained interactive artifact. For OKF sources backed by a ClickHouse table, the response includes the table schema (field name, type, and semantic description) for readable rendering.",
-      inputSchema: OpenFeedItemInput,
-      annotations: read,
-      _meta: feedMeta
-    },
-    feedSafe((input) => openFeedItem(input))
-  );
-  server.registerTool(
-    "save_feed_item",
-    {
-      title: "Save a feed item as a local document",
-      description: "Write the selected feed item as a Markdown document into the local tmp/ directory (deduplicated) so a terminal agent can read it as an attached document. Returns the file path. OKF sources include their ClickHouse schema as a Markdown table.",
-      inputSchema: SaveFeedItemInput,
-      annotations: write,
-      _meta: feedMeta
-    },
-    feedSafe((input) => saveFeedItem(input))
-  );
-  server.registerTool(
-    "run_procedural_loop",
-    {
-      title: "Run the Nextbound procedural loop",
-      description: "Open the Nextbound procedural-loop board (themed masonry: DESIGN modes, WORLD backgrounds, VIEW-AS persona, with the artifact feed rendered inside) as an inline interactive artifact. Optionally view as a persona (alex, camille, maya).",
-      inputSchema: RunProceduralLoopInput,
-      annotations: read,
-      _meta: nbMeta
-    },
-    nbSafe(({ persona = "camille", seedId } = {}) => {
-      const seed = seedId ?? "seed-afterlight-maya";
-      let opened = {};
-      try {
-        opened = nextbound.openSeed(seed, persona);
-      } catch {
-        opened = {};
-      }
-      return {
-        ...opened,
-        view: "procedural_loop",
-        scenario: "procedural-loop",
-        persona,
-        artifact: {
-          id: "nextbound-procedural-loop",
-          title: "Nextbound Procedural Loop",
-          resourceUri: NEXTBOUND_WIDGET_URI,
-          surface: "conversation_inline_artifact"
-        },
-        instructions: "Install everything and RUN THIS ARTIFACT IN PARALLEL so the board stays live beside the chat. One line on a fresh machine: `git clone -b deploy/procedural-loop https://github.com/42thefrog/adaptivemedia.git && cd adaptivemedia && npm install && npm run build:all && (npm start & npm run dev:nextbound &)` \u2014 then open http://127.0.0.1:4174/nextbound.html?scenario=procedural-loop. If you have only the MCP connection, call install_mcp_skill first and write the returned files locally."
-      };
-    })
-  );
-  const kAdd = (name, title, fn) => server.registerTool(
-    name,
-    {
-      title,
-      description: `${title} from the user's local knowledge base and display it in the inline Nextbound artifact.`,
-      inputSchema: knowledgeSchemas[name],
-      annotations: read,
-      _meta: nbMeta
-    },
-    nbSafe(fn)
-  );
-  kAdd(
-    "list_local_knowledge_profiles",
-    "List local knowledge profiles",
-    () => ({
-      view: "local_knowledge",
-      profiles: listLocalKnowledgeProfiles()
-    })
-  );
-  kAdd(
-    "open_local_knowledge_artifact",
-    "Open local knowledge artifact",
-    ({ profileId = "maya", seedId = "seed-afterlight-maya" }) => {
-      const profile = getLocalKnowledgeProfile(profileId);
-      if (!profile)
-        throw new NextboundError(
-          "unknown_profile",
-          "That local knowledge profile is not available."
-        );
-      const opened = nextbound.openSeed(seedId, profile.id);
-      return {
-        ...opened,
-        view: "local_knowledge_artifact",
-        localKnowledge: profile,
-        artifact: {
-          id: "nextbound-procedural-loop-artifact",
-          title: "Nextbound Experience Engine",
-          resourceUri: NEXTBOUND_WIDGET_URI,
-          surface: "conversation_inline_artifact"
-        }
-      };
-    }
-  );
-  const skillSafe = (fn) => async (input) => {
-    try {
-      return result(fn(input));
-    } catch (error2) {
-      const known = error2 instanceof SkillError;
-      return {
-        ...result({
-          error: {
-            code: known ? error2.code : "invalid_request",
-            message: known ? error2.message : "The request could not be completed."
-          }
-        }),
-        isError: true
-      };
-    }
-  };
-  server.registerTool(
-    "install_mcp_skill",
-    {
-      title: "Install the Adaptive Media agent skill (bootstrap)",
-      description: "START HERE on a fresh machine that has ONLY this MCP connection \u2014 no repo, no skill, nothing installed. Bootstraps the agent: returns the full 'adaptive-media-use' SKILL.md as a file manifest (relativePath + content) that the client must WRITE to its own local skills directory (it also writes to the server's skills dir when reachable). The installed skill then documents every MCP tool and the exact steps to run the procedural loop from zero \u2014 git clone -b deploy/procedural-loop, cd, npm install, build, start, dev:nextbound. Call this first, write the returned files, then read the skill.",
-      inputSchema: InstallMcpSkillInput,
-      annotations: write
-    },
-    skillSafe((input) => installMcpSkill(input))
-  );
-  server.registerTool(
-    "install_personality",
-    {
-      title: "Install an audience personality",
-      description: "Install an audience personality (e.g. 'get camille personnalit\xE9') by pulling that persona's knowledge bundle from knowledge/persona_<id>/ and writing it into the adaptive-media-use skill's personalities/ folder, at the exact path the functional skill loads from. Accepts loose phrasing like 'camille' or 'get camille personnalit\xE9'. Returns the file manifest for clients without server filesystem access.",
-      inputSchema: InstallPersonalityInput,
-      annotations: write
-    },
-    skillSafe((input) => installPersonality(input))
-  );
   return server;
 }
-var RunProceduralLoopInput, service, WIDGET_URI, NEXTBOUND_WIDGET_URI, FEED_WIDGET_URI, readWidget, widgetMeta, result, safe, nextboundDemoStore, port, host, httpServer;
+var service, AFTERLIGHT_WIDGET_URI, afterlightMeta, result, safe;
 var init_index = __esm({
   "server/index.ts"() {
     "use strict";
@@ -27599,42 +24055,13 @@ var init_index = __esm({
     init_streamableHttp();
     init_service();
     init_api2();
-    init_service2();
-    init_nextbound_api();
-    init_local_knowledge();
-    init_artifact_feed();
-    init_skills();
-    init_zod();
-    RunProceduralLoopInput = external_exports.object({
-      persona: external_exports.enum(["alex", "camille", "maya"]).optional(),
-      seedId: external_exports.string().min(1).max(120).optional()
-    }).strict();
     service = new AdaptiveMediaService();
-    WIDGET_URI = "ui://adaptive-media/widget.html";
-    NEXTBOUND_WIDGET_URI = "ui://nextbound/experience.html";
-    FEED_WIDGET_URI = "ui://adaptive-media/artifact-feed.html";
-    readWidget = (rel) => {
-      const candidates = [];
-      try {
-        candidates.push(fileURLToPath3(new URL("../web/" + rel, import.meta.url)));
-      } catch {
-      }
-      if (process.env.WIDGET_ROOT) candidates.push(join4(process.env.WIDGET_ROOT, rel));
-      candidates.push(join4(process.cwd(), "web", rel));
-      candidates.push(join4(process.cwd(), rel));
-      for (const p of candidates) {
-        try {
-          return readFileSync4(p, "utf8");
-        } catch {
-        }
-      }
-      throw new Error("Widget asset not found: web/" + rel);
-    };
-    widgetMeta = {
-      ui: { resourceUri: WIDGET_URI },
-      "openai/outputTemplate": WIDGET_URI,
-      "openai/toolInvocation/invoking": "Loading Adaptive Media\u2026",
-      "openai/toolInvocation/invoked": "Adaptive Media ready"
+    AFTERLIGHT_WIDGET_URI = "ui://nextbound/afterlight.html";
+    afterlightMeta = {
+      ui: { resourceUri: AFTERLIGHT_WIDGET_URI },
+      "openai/outputTemplate": AFTERLIGHT_WIDGET_URI,
+      "openai/toolInvocation/invoking": "Nextbound is building your experience\u2026",
+      "openai/toolInvocation/invoked": "Your personal experience is ready"
     };
     result = (structuredContent) => ({
       content: [{ type: "text", text: JSON.stringify(structuredContent) }],
@@ -27644,78 +24071,42 @@ var init_index = __esm({
       try {
         return result(fn(...args));
       } catch (error2) {
-        const known = error2 instanceof DemoError;
-        const body = {
-          error: {
-            code: known ? error2.code : "invalid_request",
-            message: known ? error2.message : "The request could not be completed."
-          }
-        };
-        return { ...result(body), isError: true };
+        const message = error2 instanceof DemoError ? error2.message : "The request could not be completed.";
+        return { ...result({ error: { message } }), isError: true };
       }
     };
-    nextboundDemoStore = new NextboundService();
-    port = Number(process.env.PORT ?? 3e3);
-    host = process.env.HOST ?? "0.0.0.0";
-    httpServer = createServer(async (req, res) => {
-      const pathname = new URL(
-        req.url ?? "/",
-        `http://${req.headers.host ?? "localhost"}`
-      ).pathname;
-      if (pathname === "/health" || pathname === "/healthz") {
-        res.writeHead(200, {
-          "content-type": "application/json",
-          "cache-control": "no-store"
+    if (process.env.AM_SERVERLESS !== "1") {
+      const port = Number(process.env.PORT ?? 3e3);
+      const httpServer = createServer(async (req, res) => {
+        const pathname = new URL(
+          req.url ?? "/",
+          `http://${req.headers.host ?? "localhost"}`
+        ).pathname;
+        if (pathname === "/health") {
+          res.writeHead(200, { "content-type": "application/json" });
+          res.end(JSON.stringify({ status: "ok", endpoint: "/mcp" }));
+          return;
+        }
+        if (pathname !== "/mcp") {
+          res.writeHead(404, { "content-type": "application/json" });
+          res.end(JSON.stringify({ error: "not_found" }));
+          return;
+        }
+        const server = makeMcpServer();
+        const transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: void 0
         });
-        res.end(
-          JSON.stringify({
-            status: "ok",
-            service: "adaptive-media",
-            version: "0.2.0",
-            transport: "streamable-http",
-            endpoint: "/mcp"
-          })
-        );
-        return;
-      }
-      if (pathname === "/run" || pathname === "/.well-known/ginse.json") {
-        res.writeHead(410, {
-          "content-type": "application/json",
-          "cache-control": "no-store"
+        res.on("close", () => {
+          void transport.close();
+          void server.close();
         });
-        res.end(JSON.stringify({ error: "ginse_integration_retired" }));
-        return;
-      }
-      if (pathname !== "/mcp") {
-        res.writeHead(404, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: "not_found" }));
-        return;
-      }
-      const server = makeMcpServer();
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: void 0
-      });
-      res.on("close", () => {
-        void transport.close();
-        void server.close();
-      });
-      try {
         await server.connect(transport);
         await transport.handleRequest(req, res);
-      } catch {
-        if (!res.headersSent)
-          res.writeHead(500, { "content-type": "application/json" });
-        if (!res.writableEnded)
-          res.end(JSON.stringify({ error: "mcp_request_failed" }));
-      }
-    });
-    if (process.env.AM_SERVERLESS !== "1") {
+      });
       httpServer.listen(
         port,
-        host,
-        () => console.error(
-          `Adaptive Media MCP server: http://${host}:${port}/mcp (health: /health)`
-        )
+        "127.0.0.1",
+        () => console.error(`Nextbound MCP: http://127.0.0.1:${port}/mcp`)
       );
     }
   }
@@ -27727,17 +24118,10 @@ async function handleMcpRequest(request) {
   process.env.AM_SERVERLESS = "1";
   const { makeMcpServer: makeMcpServer2 } = await Promise.resolve().then(() => (init_index(), index_exports));
   const url = new URL(request.url);
-  if (url.pathname === "/run" || url.pathname === "/.well-known/ginse.json") {
-    return Response.json(
-      { error: "ginse_integration_retired" },
-      { status: 410, headers: { "cache-control": "no-store" } }
-    );
-  }
-  if (request.method === "GET" || url.pathname.endsWith("/health") || url.pathname.endsWith("/healthz")) {
+  if (request.method === "GET" || url.pathname.endsWith("/health")) {
     return Response.json({
       status: "ok",
       service: "adaptive-media",
-      version: "0.2.0",
       transport: "streamable-http",
       endpoint: "/mcp"
     });
@@ -27752,7 +24136,7 @@ async function handleMcpRequest(request) {
 }
 
 // server/netlify-mcp-entry.ts
-var netlify_mcp_entry_default = async (req) => handleMcpRequest(req);
+var netlify_mcp_entry_default = async (request) => handleMcpRequest(request);
 export {
   netlify_mcp_entry_default as default
 };
