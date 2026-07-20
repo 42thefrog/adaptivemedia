@@ -4,20 +4,41 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { z } from "zod";
 import { AdaptiveMediaService, DemoError } from "./service.js";
 import * as api from "./tools/api.js";
 
 const service = new AdaptiveMediaService();
-// A versioned URI makes ChatGPT fetch this bundle rather than reusing a
-// previously cached widget after a deployment.
-const AFTERLIGHT_WIDGET_URI = "ui://nextbound/afterlight-v4.html";
+const widgetTemplate = readFileSync(
+  resolve(process.cwd(), "web/mcp-widget.html"),
+  "utf8",
+);
 
-const afterlightMeta = {
-  ui: { resourceUri: AFTERLIGHT_WIDGET_URI },
-  "openai/outputTemplate": AFTERLIGHT_WIDGET_URI,
-  "openai/toolInvocation/invoking": "Nextbound is building your experience…",
-  "openai/toolInvocation/invoked": "Your personal experience is ready",
+const artifacts = {
+  alex: {
+    name: "Alex", role: "CEO, tech company", collection: "NIHE | Executive Series",
+    headline: "Comfort that moves<br />with you.", image: "alex-executive-series.jpg", accent: "#679cff",
+  },
+  camille: {
+    name: "Camille", role: "Artistic director", collection: "NIHE | Atelier Édition",
+    headline: "The architecture<br />of softness.", image: "camille-atelier-edition.jpg", accent: "#c989bd",
+  },
+  maya: {
+    name: "Maya", role: "Developer", collection: "NIHE | Studio Drop",
+    headline: "Built for the<br />creative sprint.", image: "maya-studio-drop.jpg", accent: "#48c892",
+  },
+} as const;
+
+type Persona = keyof typeof artifacts;
+const widgetUri = (persona: Persona) => `ui://nextbound/${persona}-artifact-v1.html`;
+const widgetHtml = (persona: Persona) => {
+  const artifact = artifacts[persona];
+  return widgetTemplate
+    .replaceAll("{{NAME}}", artifact.name)
+    .replaceAll("{{ROLE}}", artifact.role)
+    .replaceAll("{{COLLECTION}}", artifact.collection)
+    .replaceAll("{{HEADLINE}}", artifact.headline)
+    .replaceAll("{{IMAGE}}", artifact.image)
+    .replaceAll("{{ACCENT}}", artifact.accent);
 };
 
 const result = (structuredContent: Record<string, unknown>) => ({
@@ -47,23 +68,14 @@ export function makeMcpServer() {
     openWorldHint: false,
   };
 
-  server.registerResource(
-    "nextbound-afterlight",
-    AFTERLIGHT_WIDGET_URI,
-    {
-      title: "Nextbound personal experience",
-      description: "One creator artifact, rendered for one person.",
-      mimeType: "text/html;profile=mcp-app",
-    },
-    async () => ({
-      contents: [
-        {
-          uri: AFTERLIGHT_WIDGET_URI,
+  (Object.keys(artifacts) as Persona[]).forEach((persona) => {
+    server.registerResource(
+      `nextbound-${persona}-artifact`, widgetUri(persona),
+      { title: `${artifacts[persona].name}'s artifact`, description: `Only ${artifacts[persona].name}'s personal artifact.`, mimeType: "text/html;profile=mcp-app" },
+      async () => ({ contents: [{
+          uri: widgetUri(persona),
           mimeType: "text/html;profile=mcp-app",
-          text: readFileSync(
-            resolve(process.cwd(), "web/mcp-widget.html"),
-            "utf8",
-          ),
+          text: widgetHtml(persona),
           _meta: {
             ui: {
               prefersBorder: false,
@@ -74,12 +86,11 @@ export function makeMcpServer() {
               },
             },
             "openai/widgetDescription":
-              "An interactive Nextbound personal artifact with Alex, Camille, and Maya views.",
+              `Only ${artifacts[persona].name}'s personal artifact.`,
           },
-        },
-      ],
-    }),
-  );
+        }], }),
+    );
+  });
 
   server.registerTool(
     "search_public_intents",
@@ -111,21 +122,24 @@ export function makeMcpServer() {
     },
     safe(({ intentId }) => service.getIntent(intentId)),
   );
-  server.registerTool(
-    "generate_experience",
-    {
-      title: "Render a personal Nextbound experience",
-      description:
-        "Show the interactive AFTERLIGHT visual artifact for Alex, Camille, or Maya. Use this tool whenever the user asks to generate, open, or view a personal Nextbound experience.",
-      inputSchema: api.GenerateExperienceInput,
-      outputSchema: { experience: z.unknown() },
-      annotations: read,
-      _meta: afterlightMeta,
-    },
-    safe(({ intentId, personaId }) =>
-      service.generateExperience(intentId, personaId),
-    ),
-  );
+  (Object.keys(artifacts) as Persona[]).forEach((persona) => {
+    const artifact = artifacts[persona];
+    server.registerTool(
+      `show_${persona}_artifact`,
+      {
+        title: `Show ${artifact.name}'s artifact`,
+        description: `Show only Luna's personal artifact for ${artifact.name}, ${artifact.role}. Do not show any other persona.`,
+        inputSchema: {}, annotations: read,
+        _meta: {
+          ui: { resourceUri: widgetUri(persona) },
+          "openai/outputTemplate": widgetUri(persona),
+          "openai/toolInvocation/invoking": `Opening ${artifact.name}'s artifact…`,
+          "openai/toolInvocation/invoked": `${artifact.name}'s artifact is ready`,
+        },
+      },
+      safe(() => service.generateExperience("intent_luna_main_character", persona)),
+    );
+  });
 
   return server;
 }
