@@ -23994,7 +23994,23 @@ import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 function makeMcpServer() {
-  const server = new McpServer({ name: "nextbound", version: "1.0.0" });
+  const server = new McpServer(
+    { name: "nextbound", version: "1.0.0" },
+    {
+      instructions: [
+        "When Nextbound is opened for the first time in a conversation, greet the user with exactly this, before doing anything else:",
+        "",
+        "Hi! Nextbound was built for OpenAI Build Week. One artifact, a different experience for every person. Try one of these:",
+        "",
+        "1. Show Luna's artifact for Alex.",
+        "2. Show Luna's artifact for Camille.",
+        "3. Show Luna's artifact for Maya.",
+        "4. Show Luna's original artifact.",
+        "",
+        "Then wait for the user to choose. Call show_alex_artifact, show_camille_artifact, show_maya_artifact or show_original_artifact, never generate_experience."
+      ].join("\n")
+    }
+  );
   const read = {
     readOnlyHint: true,
     idempotentHint: true,
@@ -24029,6 +24045,42 @@ function makeMcpServer() {
       }] })
     );
   });
+  server.registerResource(
+    "nextbound-original-artifact",
+    ORIGINAL_WIDGET_URI,
+    {
+      title: "Luna's original artifact",
+      description: "The unpersonalized artifact, as published.",
+      mimeType: "text/html;profile=mcp-app"
+    },
+    async () => ({
+      contents: [
+        {
+          uri: ORIGINAL_WIDGET_URI,
+          mimeType: "text/html;profile=mcp-app",
+          text: originalHtml(),
+          _meta: {
+            ui: {
+              prefersBorder: false,
+              csp: {
+                connectDomains: [],
+                resourceDomains: [
+                  "https://nextbound-adaptive-media.netlify.app"
+                ]
+              }
+            },
+            "openai/widgetCSP": {
+              connect_domains: [],
+              resource_domains: [
+                "https://nextbound-adaptive-media.netlify.app"
+              ]
+            },
+            "openai/widgetDescription": "Luna's artifact before any personalization."
+          }
+        }
+      ]
+    })
+  );
   server.registerResource(
     "nextbound-legacy-afterlight",
     LEGACY_WIDGET_URI,
@@ -24114,6 +24166,44 @@ function makeMcpServer() {
     );
   });
   server.registerTool(
+    "show_original_artifact",
+    {
+      title: "Show Luna's original artifact",
+      description: "Show Luna's original artifact exactly as published, with no personalization. Use it to compare against a persona version.",
+      inputSchema: {},
+      annotations: read,
+      _meta: {
+        ui: { resourceUri: ORIGINAL_WIDGET_URI },
+        "openai/outputTemplate": ORIGINAL_WIDGET_URI,
+        "openai/toolInvocation/invoking": "Opening the original artifact\u2026",
+        "openai/toolInvocation/invoked": "The original artifact is ready"
+      }
+    },
+    async () => {
+      const base = await safe(
+        () => service.getIntent("intent_luna_main_character")
+      )();
+      return {
+        ...base,
+        content: [
+          ...base.content,
+          {
+            type: "resource",
+            resource: {
+              uri: ORIGINAL_WIDGET_URI,
+              mimeType: "text/html;profile=mcp-app",
+              text: originalHtml()
+            }
+          }
+        ],
+        _meta: {
+          ui: { resourceUri: ORIGINAL_WIDGET_URI },
+          "openai/outputTemplate": ORIGINAL_WIDGET_URI
+        }
+      };
+    }
+  );
+  server.registerTool(
     "generate_experience",
     {
       title: "Generate experience (legacy compatibility)",
@@ -24127,7 +24217,7 @@ function makeMcpServer() {
   );
   return server;
 }
-var service, widgetTemplate, artifacts, widgetUri, LEGACY_WIDGET_URI, widgetHtml, result, safe;
+var service, widgetTemplate, artifacts, widgetUri, LEGACY_WIDGET_URI, widgetHtml, ORIGINAL_WIDGET_URI, originalHtml, result, safe;
 var init_index = __esm({
   "server/index.ts"() {
     "use strict";
@@ -24172,6 +24262,11 @@ var init_index = __esm({
       const artifact = artifacts[persona];
       return widgetTemplate.replaceAll("{{NAME}}", artifact.name).replaceAll("{{ROLE}}", artifact.role).replaceAll("{{COLLECTION}}", artifact.collection).replaceAll("{{HEADLINE}}", artifact.headline).replaceAll("{{IMAGE}}", artifact.image).replaceAll("{{ACCENT}}", artifact.accent);
     };
+    ORIGINAL_WIDGET_URI = "ui://nextbound/original-artifact-v1.html";
+    originalHtml = () => widgetTemplate.replace(
+      "Luna shared one artifact. This is {{NAME}}\u2019s personal version.",
+      "This is what Luna published. Everyone sees the same thing."
+    ).replace("for {{NAME}} \xB7 {{ROLE}}", "the original artifact").replaceAll("{{NAME}}", "everyone").replaceAll("{{ROLE}}", "before Nextbound").replaceAll("{{COLLECTION}}", "NIHE | Original").replaceAll("{{HEADLINE}}", "One artifact.<br />Published once.").replaceAll("{{IMAGE}}", "nihe-sneakers.jpg").replaceAll("{{ACCENT}}", "#101114");
     result = (structuredContent) => ({
       content: [{ type: "text", text: JSON.stringify(structuredContent) }],
       structuredContent
